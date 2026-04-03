@@ -22,9 +22,12 @@ import {
   vendedores,
   dadosMensais,
   calcularAtingimento,
-  formatCurrency,
-  formatCurrencyShort,
+  formatBRL,
+  formatK,
 } from '../../data/equipe'
+import { EmptyState } from '../../components/EmptyState'
+import { SkeletonCard, SkeletonTable } from '../../components/Skeleton'
+import { FileSpreadsheet } from 'lucide-react'
 
 type Periodo = 'mensal' | 'acumulado'
 type SortKey = 'nome' | 'regiao' | 'faturamento' | 'meta' | 'atingimento'
@@ -48,7 +51,7 @@ function CustomTooltip({ active, payload, label }: any) {
             style={{ background: entry.color }}
           />
           <span className="text-white/70">{entry.name === 'realizado' ? 'Realizado' : 'Meta'}:</span>
-          <span className="text-white font-semibold">{formatCurrencyShort(entry.value)}</span>
+          <span className="text-white font-semibold">{formatK(entry.value)}</span>
         </div>
       ))}
     </div>
@@ -139,10 +142,24 @@ export function EquipeDashboard() {
     )
   }
 
+  // Estado vazio: sem vendedores
+  if (vendedores.length === 0) {
+    return (
+      <div className="p-6 lg:p-8">
+        <div className="card">
+          <EmptyState
+            icon={FileSpreadsheet}
+            description="Importe uma planilha de fechamento para visualizar os resultados"
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="p-8">
+    <div className="p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#0D1B2A]">Dashboard da Equipe</h1>
           <p className="text-slate-500 text-sm mt-1">Resultados e performance dos vendedores</p>
@@ -166,8 +183,8 @@ export function EquipeDashboard() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-8">
+      {/* KPI Cards — 1 col mobile, 2 tablet, 4 desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {/* Faturamento Total */}
         <div className="card p-6">
           <div className="flex items-start justify-between mb-4">
@@ -177,10 +194,10 @@ export function EquipeDashboard() {
             </div>
           </div>
           <p className="text-[32px] font-bold text-[#0D1B2A] leading-none mb-3">
-            {formatCurrencyShort(totais.fat)}
+            {formatK(totais.fat)}
           </p>
           <div className="flex items-center gap-1.5">
-            <ArrowUpRight size={14} strokeWidth={2} className="text-[#10B981]" />
+            <ArrowUpRight size={14} strokeWidth={1.5} className="text-[#10B981]" />
             <span className="text-[#10B981] text-sm font-medium">+8,4%</span>
             <span className="text-slate-400 text-xs">vs mês anterior</span>
           </div>
@@ -195,7 +212,7 @@ export function EquipeDashboard() {
             </div>
           </div>
           <p className="text-[32px] font-bold text-[#0D1B2A] leading-none mb-3">
-            {formatCurrencyShort(totais.meta)}
+            {formatK(totais.meta)}
           </p>
           <div className="flex items-center gap-1.5">
             <span
@@ -276,7 +293,7 @@ export function EquipeDashboard() {
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#94A3B8', fontSize: 12, fontFamily: 'Inter' }}
-              tickFormatter={(v) => formatCurrencyShort(v)}
+              tickFormatter={(v: number) => formatK(v)}
               width={80}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F1F5F9' }} />
@@ -347,9 +364,9 @@ export function EquipeDashboard() {
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500">{v.regiao}</td>
                     <td className="px-6 py-4 text-sm font-semibold text-[#0D1B2A]">
-                      {formatCurrency(fat)}
+                      {formatBRL(fat)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{formatCurrency(meta)}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{formatBRL(meta)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-20 bg-[#E2E8F0] rounded-full h-1.5">

@@ -12,7 +12,7 @@ import {
 import { Plus, X, FileText } from 'lucide-react'
 import { linhasDRE, waterfallData } from '../../data/interno'
 import type { LinhaDRE, LancamentoManual } from '../../data/interno'
-import { formatCurrency } from '../../utils/calculos'
+import { formatBRL, formatK } from '../../utils/calculos'
 
 function varPct(mesAtual: number, acumulado: number): string {
   if (acumulado === 0) return '—'
@@ -38,7 +38,7 @@ function WaterfallTooltip({ active, payload }: any) {
   return (
     <div className="bg-[#0D1B2A] rounded-[8px] px-4 py-3 shadow-xl">
       <p className="text-white/60 text-xs mb-1">{d.name}</p>
-      <p className="text-white font-semibold text-sm">{formatCurrency(d.valor)}</p>
+      <p className="text-white font-semibold text-sm">{formatBRL(d.valor)}</p>
     </div>
   )
 }
@@ -105,7 +105,7 @@ export function InternoDRE() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -163,10 +163,10 @@ export function InternoDRE() {
                       {linha.descricao}
                     </td>
                     <td className={`py-3.5 px-4 text-sm text-right ${textWeight} ${textColor}`}>
-                      {formatCurrency(Math.abs(linha.mesAtual))}
+                      {formatBRL(Math.abs(linha.mesAtual))}
                     </td>
                     <td className={`py-3.5 px-4 text-sm text-right ${textWeight} ${textColor}`}>
-                      {formatCurrency(Math.abs(linha.acumulado))}
+                      {formatBRL(Math.abs(linha.acumulado))}
                     </td>
                     <td className={`py-3.5 px-4 text-sm text-right font-medium ${varColor(linha.mesAtual, linha.acumulado, linha.tipo)}`}>
                       {varPct(linha.mesAtual, linha.acumulado)}
@@ -196,7 +196,7 @@ export function InternoDRE() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className={`text-sm font-semibold ${l.tipo === 'receita' ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
-                    {l.tipo === 'receita' ? '+' : '-'}{formatCurrency(l.valor)}
+                    {l.tipo === 'receita' ? '+' : '-'}{formatBRL(l.valor)}
                   </span>
                   <button
                     onClick={() => setLancamentos((prev) => prev.filter((x) => x.id !== l.id))}
@@ -232,7 +232,7 @@ export function InternoDRE() {
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#94A3B8', fontSize: 11, fontFamily: 'Inter' }}
-              tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`}
+              tickFormatter={(v: number) => formatK(v)}
               width={60}
             />
             <Tooltip content={<WaterfallTooltip />} cursor={false} />

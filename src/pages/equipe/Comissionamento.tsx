@@ -19,7 +19,7 @@ import {
   calcularComissaoTotalProdutos,
   calcularFaturamentoProdutos,
   statusPagamentoPorId,
-  formatCurrency,
+  formatBRL,
   formatPct,
   type StatusPgto,
 } from '../../utils/calculos'
@@ -176,7 +176,7 @@ export function EquipeComissionamento() {
   )
 
   return (
-    <div className="p-8">
+    <div className="p-6 lg:p-8">
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -237,11 +237,11 @@ export function EquipeComissionamento() {
                 </div>
               </div>
               <p className="text-[28px] font-bold text-[#0D1B2A] leading-none mb-2">
-                {formatCurrency(comissao.fat)}
+                {formatBRL(comissao.fat)}
               </p>
               <div className="flex items-center justify-between">
                 <p className="text-slate-400 text-xs">
-                  Meta: {formatCurrency(comissao.meta)}
+                  Meta: {formatBRL(comissao.meta)}
                 </p>
                 <span
                   className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${
@@ -266,15 +266,15 @@ export function EquipeComissionamento() {
                 </div>
               </div>
               <p className="text-[28px] font-bold text-[#0D1B2A] leading-none mb-2">
-                {formatCurrency(comissao.comissaoTotal)}
+                {formatBRL(comissao.comissaoTotal)}
               </p>
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="text-slate-400 text-xs">
-                  Base: {formatCurrency(comissao.comissaoBase)}
+                  Base: {formatBRL(comissao.comissaoBase)}
                 </span>
                 {comissao.bonusValor > 0 && (
                   <span className="text-[#00C896] text-xs font-semibold">
-                    + Bônus: {formatCurrency(comissao.bonusValor)}
+                    + Bônus: {formatBRL(comissao.bonusValor)}
                   </span>
                 )}
               </div>
@@ -346,7 +346,7 @@ export function EquipeComissionamento() {
                           <span className="text-sm font-medium text-[#0D1B2A]">{p.produto}</span>
                         </td>
                         <td className="px-6 py-4 text-sm font-semibold text-[#0D1B2A]">
-                          {formatCurrency(p.valorVendido)}
+                          {formatBRL(p.valorVendido)}
                         </td>
                         <td className="px-6 py-4">
                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F8FAFC] text-slate-600 border border-[#E2E8F0]">
@@ -354,7 +354,7 @@ export function EquipeComissionamento() {
                           </span>
                         </td>
                         <td className="px-6 py-4 text-sm font-semibold text-[#0D1B2A]">
-                          {formatCurrency(valComissao)}
+                          {formatBRL(valComissao)}
                         </td>
                       </tr>
                     )
@@ -371,7 +371,7 @@ export function EquipeComissionamento() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-sm font-bold text-[#0D1B2A]">
-                        {formatCurrency(totalFaturamentoProdutos)}
+                        {formatBRL(totalFaturamentoProdutos)}
                       </span>
                     </td>
                     <td className="px-6 py-4" />
@@ -380,7 +380,7 @@ export function EquipeComissionamento() {
                       <span
                         style={{ fontFamily: 'Inter', fontSize: '18px', fontWeight: 700, color: '#00C896' }}
                       >
-                        {formatCurrency(totalComissaoProdutos)}
+                        {formatBRL(totalComissaoProdutos)}
                       </span>
                     </td>
                   </tr>
@@ -425,7 +425,7 @@ export function EquipeComissionamento() {
 
                   {/* Volume mensal */}
                   <div className="text-right flex-shrink-0">
-                    <p className="text-sm font-semibold text-[#0D1B2A]">{formatCurrency(c.volumeMensal)}</p>
+                    <p className="text-sm font-semibold text-[#0D1B2A]">{formatBRL(c.volumeMensal)}</p>
                     <p className="text-xs text-slate-400">vol. mensal</p>
                   </div>
 
@@ -445,7 +445,7 @@ export function EquipeComissionamento() {
               <span
                 style={{ fontFamily: 'Inter', fontSize: '18px', fontWeight: 700, color: '#00C896' }}
               >
-                {formatCurrency(carteira.clientes.reduce((s, c) => s + c.volumeMensal, 0))}
+                {formatBRL(carteira.clientes.reduce((s, c) => s + c.volumeMensal, 0))}
               </span>
             </div>
           </div>

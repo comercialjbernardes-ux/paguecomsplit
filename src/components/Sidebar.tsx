@@ -10,6 +10,7 @@ import {
   LineChart,
   Wallet,
   Briefcase,
+  X,
 } from 'lucide-react'
 
 interface NavItem {
@@ -71,20 +72,45 @@ const sections: NavSection[] = [
   },
 ]
 
-export function Sidebar() {
+interface SidebarProps {
+  /** Controla visibilidade em mobile (ignorado em ≥ lg, sempre visível) */
+  open?: boolean
+  /** Callback para fechar o sidebar em mobile */
+  onClose?: () => void
+}
+
+export function Sidebar({ open = false, onClose }: SidebarProps) {
   return (
-    <aside className="w-60 min-h-screen bg-[#0D1B2A] flex flex-col">
+    <aside
+      className={[
+        // Layout base
+        'w-60 min-h-screen bg-[#0D1B2A] flex flex-col flex-shrink-0',
+        // Mobile: posição fixa, z-50, desliza para dentro/fora
+        'fixed inset-y-0 left-0 z-50',
+        'transform transition-transform duration-300 ease-in-out',
+        open ? 'translate-x-0' : '-translate-x-full',
+        // Desktop (≥ 1024px): estático, sempre visível
+        'lg:static lg:translate-x-0 lg:z-auto',
+      ].join(' ')}
+    >
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-white/10">
+      <div className="px-6 py-6 border-b border-white/10 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-[#00C896] rounded-lg flex items-center justify-center">
-            <TrendingUp size={16} strokeWidth={2} className="text-white" />
+            <TrendingUp size={16} strokeWidth={1.5} className="text-white" />
           </div>
           <div>
             <p className="text-white font-bold text-sm leading-tight">Venda</p>
             <p className="text-[#00C896] font-bold text-sm leading-tight">Feita</p>
           </div>
         </div>
+        {/* Botão fechar — só aparece em mobile */}
+        <button
+          onClick={onClose}
+          className="lg:hidden text-white/50 hover:text-white transition-colors p-1 rounded-[8px] hover:bg-white/10"
+        >
+          <X size={18} strokeWidth={1.5} />
+        </button>
       </div>
 
       {/* Nav sections */}
@@ -99,6 +125,7 @@ export function Sidebar() {
                 <NavLink
                   key={item.to}
                   to={item.to}
+                  onClick={onClose}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium transition-all duration-150 group ${
                       isActive
@@ -109,12 +136,22 @@ export function Sidebar() {
                 >
                   {({ isActive }) => (
                     <>
-                      <span className={isActive ? 'text-[#00C896]' : 'text-white/50 group-hover:text-white/80'}>
+                      <span
+                        className={
+                          isActive
+                            ? 'text-[#00C896]'
+                            : 'text-white/50 group-hover:text-white/80'
+                        }
+                      >
                         {item.icon}
                       </span>
                       <span>{item.label}</span>
                       {isActive && (
-                        <ChevronRight size={14} strokeWidth={1.5} className="ml-auto text-[#00C896]" />
+                        <ChevronRight
+                          size={14}
+                          strokeWidth={1.5}
+                          className="ml-auto text-[#00C896]"
+                        />
                       )}
                     </>
                   )}

@@ -287,21 +287,6 @@ export function calcularAtingimento(faturamento: number, meta: number): number {
   return Math.round((faturamento / meta) * 100)
 }
 
-export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value)
-}
-
-export function formatCurrencyShort(value: number): string {
-  if (value >= 1_000_000) {
-    return `R$ ${(value / 1_000_000).toFixed(2)}M`
-  }
-  if (value >= 1_000) {
-    return `R$ ${(value / 1_000).toFixed(0)}K`
-  }
-  return formatCurrency(value)
-}
+// ─── Formatadores — delegados ao módulo central ─────────────────────────────
+export { formatBRL as formatCurrency, formatK as formatCurrencyShort } from '../utils/formatters'
+export { formatBRL, formatPct, formatDate, formatK } from '../utils/formatters'

@@ -12,13 +12,8 @@ import {
 import { Users, Trophy, Filter } from 'lucide-react'
 import { clientesCarteira, segmentos } from '../../data/interno'
 import { vendedores } from '../../data/equipe'
-import { formatCurrency } from '../../utils/calculos'
-
-function formatCurrencyShort(v: number): string {
-  if (Math.abs(v) >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`
-  if (Math.abs(v) >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}K`
-  return formatCurrency(v)
-}
+import { formatBRL, formatK } from '../../utils/calculos'
+import { EmptyState } from '../../components/EmptyState'
 
 function ScatterTooltip({ active, payload }: any) {
   if (!active || !payload?.length) return null
@@ -29,8 +24,8 @@ function ScatterTooltip({ active, payload }: any) {
       <p className="text-white/60 text-xs">{d.segmento} · {d.vendedorNome}</p>
       <div className="mt-2 space-y-0.5">
         <p className="text-white/80 text-xs">Frequência: {d.frequenciaCompra}x / tri</p>
-        <p className="text-white/80 text-xs">Ticket médio: {formatCurrency(d.ticketMedio)}</p>
-        <p className="text-white/80 text-xs">Total acumulado: {formatCurrency(d.totalAcumulado)}</p>
+        <p className="text-white/80 text-xs">Ticket médio: {formatBRL(d.ticketMedio)}</p>
+        <p className="text-white/80 text-xs">Total acumulado: {formatBRL(d.totalAcumulado)}</p>
       </div>
     </div>
   )
@@ -73,10 +68,23 @@ export function InternoCarteira() {
     return [...filtrados].sort((a, b) => b.totalAcumulado - a.totalAcumulado).slice(0, 10)
   }, [filtrados])
 
+  if (clientesCarteira.length === 0) {
+    return (
+      <div className="p-6 lg:p-8">
+        <div className="card">
+          <EmptyState
+            icon={Users}
+            description="Os dados de carteira aparecerão após a importação da planilha"
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="p-8">
+    <div className="p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#0D1B2A]">Análise de Carteira</h1>
           <p className="text-slate-500 text-sm mt-1">Segmentos, clientes e dispersão de performance</p>
@@ -126,7 +134,7 @@ export function InternoCarteira() {
               <span className="text-xs text-slate-400">clientes</span>
             </div>
             <p className="text-xs text-slate-500">
-              Ticket médio: <span className="font-semibold text-[#0D1B2A]">{formatCurrency(s.ticketMedio)}</span>
+              Ticket médio: <span className="font-semibold text-[#0D1B2A]">{formatBRL(s.ticketMedio)}</span>
             </p>
           </div>
         ))}
@@ -163,8 +171,8 @@ export function InternoCarteira() {
                   <td className="px-6 py-3.5 text-sm text-slate-500 whitespace-nowrap">
                     {new Date(c.ultimaCompra + 'T00:00').toLocaleDateString('pt-BR')}
                   </td>
-                  <td className="px-6 py-3.5 text-sm font-semibold text-[#0D1B2A]">{formatCurrency(c.totalAcumulado)}</td>
-                  <td className="px-6 py-3.5 text-sm text-slate-500">{formatCurrency(c.ticketMedio)}</td>
+                  <td className="px-6 py-3.5 text-sm font-semibold text-[#0D1B2A]">{formatBRL(c.totalAcumulado)}</td>
+                  <td className="px-6 py-3.5 text-sm text-slate-500">{formatBRL(c.ticketMedio)}</td>
                 </tr>
               ))}
             </tbody>
@@ -193,7 +201,7 @@ export function InternoCarteira() {
                     <p className="text-sm font-semibold text-[#0D1B2A] truncate">{c.nome}</p>
                     <p className="text-xs text-slate-400">{c.segmento} · {c.vendedorNome}</p>
                   </div>
-                  <span className="text-sm font-bold text-[#0D1B2A]">{formatCurrency(c.totalAcumulado)}</span>
+                  <span className="text-sm font-bold text-[#0D1B2A]">{formatBRL(c.totalAcumulado)}</span>
                 </div>
               )
             })}
@@ -229,7 +237,7 @@ export function InternoCarteira() {
                 axisLine={false}
                 tickLine={false}
                 tick={{ fill: '#94A3B8', fontSize: 11, fontFamily: 'Inter' }}
-                tickFormatter={(v) => formatCurrencyShort(v)}
+                tickFormatter={(v) => formatK(v)}
                 width={70}
                 label={{
                   value: 'Ticket médio',

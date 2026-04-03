@@ -4,9 +4,11 @@ import {
   vendedores,
   regioes,
   calcularAtingimento,
-  formatCurrency,
-  formatCurrencyShort,
+  formatBRL,
+  formatK,
 } from '../../data/equipe'
+import { EmptyState } from '../../components/EmptyState'
+import { Trophy as TrophyIcon } from 'lucide-react'
 
 type Periodo = 'mensal' | 'acumulado'
 
@@ -71,7 +73,7 @@ function PodioCard({
         >
           #{posicao}
         </span>
-        <p className="text-xs font-semibold text-[#0D1B2A]">{formatCurrencyShort(fat)}</p>
+        <p className="text-xs font-semibold text-[#0D1B2A]">{formatK(fat)}</p>
         <p className="text-xs text-slate-400">{pct}% meta</p>
       </div>
     </div>
@@ -97,10 +99,23 @@ export function EquipeRanking() {
 
   const top3 = ranked.slice(0, 3)
 
+  if (vendedores.length === 0) {
+    return (
+      <div className="p-6 lg:p-8">
+        <div className="card">
+          <EmptyState
+            icon={TrophyIcon}
+            description="Os dados de ranking aparecerão após a importação da planilha"
+          />
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="p-8">
+    <div className="p-6 lg:p-8">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#0D1B2A]">Ranking de Vendedores</h1>
           <p className="text-slate-500 text-sm mt-1">Classificação por faturamento</p>
@@ -214,12 +229,12 @@ export function EquipeRanking() {
 
                 {/* Faturamento */}
                 <div className="text-right">
-                  <p className="text-sm font-bold text-[#0D1B2A]">{formatCurrency(fat)}</p>
+                  <p className="text-sm font-bold text-[#0D1B2A]">{formatBRL(fat)}</p>
                   <div className="flex items-center justify-end gap-0.5 mt-0.5">
                     {isPositivo ? (
-                      <ArrowUpRight size={12} strokeWidth={2} className="text-[#10B981]" />
+                      <ArrowUpRight size={12} strokeWidth={1.5} className="text-[#10B981]" />
                     ) : (
-                      <ArrowDownRight size={12} strokeWidth={2} className="text-[#EF4444]" />
+                      <ArrowDownRight size={12} strokeWidth={1.5} className="text-[#EF4444]" />
                     )}
                     <span
                       className={`text-xs font-medium ${

@@ -96,8 +96,10 @@ export function statusPagamentoPorId(id: number): StatusPgto {
   return _statusMap[id] ?? 'pendente'
 }
 
-// ─── Formatação (re-exportadas de equipe para centralizar) ─────────────────
+// ─── Formatação — delegada para src/utils/formatters.ts ────────────────────
+export { formatBRL, formatPct, formatDate, formatK } from './formatters'
 
+/** @deprecated Use formatBRL (2 decimals) or formatK (compact). Kept for legacy callers. */
 export function formatCurrency(value: number): string {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
@@ -105,8 +107,4 @@ export function formatCurrency(value: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value)
-}
-
-export function formatPct(value: number): string {
-  return `${value.toFixed(1).replace('.', ',')}%`
 }

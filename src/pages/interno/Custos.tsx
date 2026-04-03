@@ -22,15 +22,9 @@ import {
   caixaProjetado,
 } from '../../data/interno'
 import type { LancamentoCusto } from '../../data/interno'
-import { formatCurrency } from '../../utils/calculos'
+import { formatBRL, formatK } from '../../utils/calculos'
 
 const PIE_COLORS = ['#0D1B2A', '#00C896', '#F59E0B', '#EF4444', '#8B5CF6', '#3B82F6', '#EC4899', '#14B8A6', '#64748B', '#F97316']
-
-function formatCurrencyShort(v: number): string {
-  if (Math.abs(v) >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`
-  if (Math.abs(v) >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}K`
-  return formatCurrency(v)
-}
 
 function ChartTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
@@ -40,7 +34,7 @@ function ChartTooltip({ active, payload, label }: any) {
       {payload.map((p: any, i: number) => (
         <div key={i} className="flex items-center gap-2 text-sm">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color || p.fill }} />
-          <span className="text-white font-semibold">{formatCurrency(Math.abs(p.value))}</span>
+          <span className="text-white font-semibold">{formatBRL(Math.abs(p.value))}</span>
         </div>
       ))}
     </div>
@@ -53,7 +47,7 @@ function PieTooltip({ active, payload }: any) {
   return (
     <div className="bg-[#0D1B2A] rounded-[8px] px-4 py-3 shadow-xl">
       <p className="text-white/60 text-xs mb-1">{d.name}</p>
-      <p className="text-white font-semibold text-sm">{formatCurrency(d.value)}</p>
+      <p className="text-white font-semibold text-sm">{formatBRL(d.value)}</p>
     </div>
   )
 }
@@ -128,7 +122,7 @@ export function InternoCustos() {
   }, [])
 
   return (
-    <div className="p-8">
+    <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
@@ -215,7 +209,7 @@ export function InternoCustos() {
                   </td>
                   <td className="px-6 py-3 text-sm text-[#0D1B2A] font-medium">{l.descricao}</td>
                   <td className={`px-6 py-3 text-sm font-semibold whitespace-nowrap ${l.valor >= 0 ? 'text-[#10B981]' : 'text-[#EF4444]'}`}>
-                    {l.valor >= 0 ? '+' : ''}{formatCurrency(l.valor)}
+                    {l.valor >= 0 ? '+' : ''}{formatBRL(l.valor)}
                   </td>
                   <td className="px-6 py-3">
                     <select
@@ -292,7 +286,7 @@ export function InternoCustos() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: '#94A3B8', fontSize: 11, fontFamily: 'Inter' }}
-                  tickFormatter={(v) => formatCurrencyShort(v)}
+                  tickFormatter={(v) => formatK(v)}
                   width={70}
                 />
                 <Tooltip content={<ChartTooltip />} cursor={{ fill: '#F1F5F9' }} />
@@ -322,7 +316,7 @@ export function InternoCustos() {
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#94A3B8', fontSize: 12, fontFamily: 'Inter' }}
-              tickFormatter={(v) => formatCurrencyShort(v)}
+              tickFormatter={(v) => formatK(v)}
               width={70}
             />
             <Tooltip content={<ChartTooltip />} />

@@ -12,16 +12,10 @@ import {
 import { Save, Trash2, Sliders, Target } from 'lucide-react'
 import { dadosProjecaoBase } from '../../data/interno'
 import type { CenarioSalvo } from '../../data/interno'
-import { formatCurrency } from '../../utils/calculos'
+import { formatBRL, formatK } from '../../utils/calculos'
 
 const EBITDA_BASE = 443300 // mensal
 const STORAGE_KEY = 'vf_cenarios'
-
-function formatCurrencyShort(v: number): string {
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(2)}M`
-  if (v >= 1_000) return `R$ ${(v / 1_000).toFixed(0)}K`
-  return formatCurrency(v)
-}
 
 function ProjecaoTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null
@@ -32,7 +26,7 @@ function ProjecaoTooltip({ active, payload, label }: any) {
         <div key={p.name} className="flex items-center gap-2 text-sm">
           <span className="w-2 h-2 rounded-full" style={{ background: p.color }} />
           <span className="text-white/70">{p.name === 'realizado' ? 'Realizado' : 'Projetado'}:</span>
-          <span className="text-white font-semibold">{formatCurrencyShort(p.value)}</span>
+          <span className="text-white font-semibold">{formatK(p.value)}</span>
         </div>
       ))}
     </div>
@@ -110,7 +104,7 @@ export function InternoProjecao() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-6 lg:p-8">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-[#0D1B2A]">Projeção de Crescimento</h1>
@@ -134,7 +128,7 @@ export function InternoProjecao() {
             className="w-56 h-10 px-3 text-sm font-semibold text-[#0D1B2A] border border-[#E2E8F0] rounded-[8px] focus:outline-none focus:ring-2 focus:ring-[#00C896]/30 focus:border-[#00C896]"
           />
           <span className="text-xs text-slate-400">
-            = {formatCurrency(Math.round(metaAnual / 12))} / mês
+            = {formatBRL(Math.round(metaAnual / 12))} / mês
           </span>
         </div>
 
@@ -168,7 +162,7 @@ export function InternoProjecao() {
                 {dadosProjecaoBase.map((d, i) => (
                   <td key={i} className="py-1 px-1 text-center">
                     <span className={`text-xs ${d.realizado ? 'text-slate-500' : 'text-slate-300'}`}>
-                      {d.realizado ? formatCurrencyShort(d.realizado) : '—'}
+                      {d.realizado ? formatK(d.realizado) : '—'}
                     </span>
                   </td>
                 ))}
@@ -195,7 +189,7 @@ export function InternoProjecao() {
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#94A3B8', fontSize: 12, fontFamily: 'Inter' }}
-              tickFormatter={(v) => formatCurrencyShort(v)}
+              tickFormatter={(v) => formatK(v)}
               width={80}
             />
             <Tooltip content={<ProjecaoTooltip />} />
@@ -301,10 +295,10 @@ export function InternoProjecao() {
           <div>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">EBITDA Mensal Projetado</p>
             <p className="text-[32px] font-bold text-[#00C896] leading-none">
-              {formatCurrency(ebitdaProjetado)}
+              {formatBRL(ebitdaProjetado)}
             </p>
             <p className="text-xs text-slate-400 mt-1">
-              vs base {formatCurrency(EBITDA_BASE)} ({ebitdaProjetado > EBITDA_BASE ? '+' : ''}{(((ebitdaProjetado - EBITDA_BASE) / EBITDA_BASE) * 100).toFixed(1)}%)
+              vs base {formatBRL(EBITDA_BASE)} ({ebitdaProjetado > EBITDA_BASE ? '+' : ''}{(((ebitdaProjetado - EBITDA_BASE) / EBITDA_BASE) * 100).toFixed(1)}%)
             </p>
           </div>
           <button
@@ -333,7 +327,7 @@ export function InternoProjecao() {
                 <span className="text-xs text-slate-500">+{c.crescimento}% receita</span>
                 <span className="text-xs text-slate-500">{c.reducaoCustos}% custos</span>
                 <span className="text-xs text-slate-500">+{c.novosVendedores} vendedores</span>
-                <span className="text-sm font-bold text-[#00C896]">{formatCurrency(c.ebitdaProjetado)}</span>
+                <span className="text-sm font-bold text-[#00C896]">{formatBRL(c.ebitdaProjetado)}</span>
                 <button
                   onClick={() => removerCenario(i)}
                   className="text-slate-300 hover:text-[#EF4444] transition-colors"
