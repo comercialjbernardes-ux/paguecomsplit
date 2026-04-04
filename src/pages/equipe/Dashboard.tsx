@@ -26,7 +26,6 @@ import {
   formatK,
 } from '../../data/equipe'
 import { EmptyState } from '../../components/EmptyState'
-import { SkeletonCard, SkeletonTable } from '../../components/Skeleton'
 import { FileSpreadsheet } from 'lucide-react'
 
 type Periodo = 'mensal' | 'acumulado'
