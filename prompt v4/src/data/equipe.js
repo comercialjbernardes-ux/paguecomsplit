@@ -1,150 +1,15 @@
-export interface Vendedor {
-  id: number
-  nome: string
-  regiao: string
-  avatar: string
-  faturamentoMensal: number
-  metaMensal: number
-  faturamentoAcumulado: number
-  metaAcumulada: number
-  variacaoMes: number // % vs mês anterior
-  comissaoBase: number // % de comissão base
-  bonus: number // % bônus ao atingir meta
-}
-
-export interface ProdutoVenda {
-  produto: string
-  valorVendido: number
-  pctComissao: number // % de comissão específica do produto
-}
-
-export interface Cliente {
-  nome: string
-  cidade: string
-  volumeMensal: number
-  status: 'ativo' | 'em risco' | 'novo'
-}
-
-export interface CarteiraVendedor {
-  produtos: ProdutoVenda[]
-  clientes: Cliente[]
-}
-
-export interface DadosMensais {
-  mes: string
-  realizado: number
-  meta: number
-}
-
-export const vendedores: Vendedor[] = [
-  {
-    id: 1,
-    nome: 'Ana Beatriz Lima',
-    regiao: 'Sul',
-    avatar: 'AB',
-    faturamentoMensal: 187400,
-    metaMensal: 160000,
-    faturamentoAcumulado: 1823400,
-    metaAcumulada: 1600000,
-    variacaoMes: 12.4,
-    comissaoBase: 3.5,
-    bonus: 1.5,
-  },
-  {
-    id: 2,
-    nome: 'Carlos Eduardo Sousa',
-    regiao: 'Sudeste',
-    avatar: 'CE',
-    faturamentoMensal: 162300,
-    metaMensal: 180000,
-    faturamentoAcumulado: 1521000,
-    metaAcumulada: 1800000,
-    variacaoMes: -5.2,
-    comissaoBase: 3.5,
-    bonus: 1.5,
-  },
-  {
-    id: 3,
-    nome: 'Fernanda Rocha',
-    regiao: 'Centro-Oeste',
-    avatar: 'FR',
-    faturamentoMensal: 143700,
-    metaMensal: 150000,
-    faturamentoAcumulado: 1389000,
-    metaAcumulada: 1500000,
-    variacaoMes: 3.8,
-    comissaoBase: 3.0,
-    bonus: 1.5,
-  },
-  {
-    id: 4,
-    nome: 'Gabriel Martins',
-    regiao: 'Norte',
-    avatar: 'GM',
-    faturamentoMensal: 98500,
-    metaMensal: 140000,
-    faturamentoAcumulado: 876000,
-    metaAcumulada: 1400000,
-    variacaoMes: -8.1,
-    comissaoBase: 3.0,
-    bonus: 1.5,
-  },
-  {
-    id: 5,
-    nome: 'Juliana Ferreira',
-    regiao: 'Nordeste',
-    avatar: 'JF',
-    faturamentoMensal: 175200,
-    metaMensal: 170000,
-    faturamentoAcumulado: 1672000,
-    metaAcumulada: 1700000,
-    variacaoMes: 6.3,
-    comissaoBase: 3.5,
-    bonus: 1.5,
-  },
-  {
-    id: 6,
-    nome: 'Lucas Andrade',
-    regiao: 'Sudeste',
-    avatar: 'LA',
-    faturamentoMensal: 211800,
-    metaMensal: 200000,
-    faturamentoAcumulado: 2015000,
-    metaAcumulada: 2000000,
-    variacaoMes: 9.7,
-    comissaoBase: 4.0,
-    bonus: 2.0,
-  },
-  {
-    id: 7,
-    nome: 'Mariana Costa',
-    regiao: 'Sul',
-    avatar: 'MC',
-    faturamentoMensal: 134600,
-    metaMensal: 160000,
-    faturamentoAcumulado: 1241000,
-    metaAcumulada: 1600000,
-    variacaoMes: -2.4,
-    comissaoBase: 3.0,
-    bonus: 1.5,
-  },
-  {
-    id: 8,
-    nome: 'Roberto Pinheiro',
-    regiao: 'Nordeste',
-    avatar: 'RP',
-    faturamentoMensal: 156900,
-    metaMensal: 150000,
-    faturamentoAcumulado: 1498000,
-    metaAcumulada: 1500000,
-    variacaoMes: 4.5,
-    comissaoBase: 3.5,
-    bonus: 1.5,
-  },
+export const vendedores = [
+  { id: 1, nome: 'Ana Beatriz Lima', regiao: 'Sul', avatar: 'AB', faturamentoMensal: 187400, metaMensal: 160000, faturamentoAcumulado: 1823400, metaAcumulada: 1600000, variacaoMes: 12.4, comissaoBase: 3.5, bonus: 1.5 },
+  { id: 2, nome: 'Carlos Eduardo Sousa', regiao: 'Sudeste', avatar: 'CE', faturamentoMensal: 162300, metaMensal: 180000, faturamentoAcumulado: 1521000, metaAcumulada: 1800000, variacaoMes: -5.2, comissaoBase: 3.5, bonus: 1.5 },
+  { id: 3, nome: 'Fernanda Rocha', regiao: 'Centro-Oeste', avatar: 'FR', faturamentoMensal: 143700, metaMensal: 150000, faturamentoAcumulado: 1389000, metaAcumulada: 1500000, variacaoMes: 3.8, comissaoBase: 3.0, bonus: 1.5 },
+  { id: 4, nome: 'Gabriel Martins', regiao: 'Norte', avatar: 'GM', faturamentoMensal: 98500, metaMensal: 140000, faturamentoAcumulado: 876000, metaAcumulada: 1400000, variacaoMes: -8.1, comissaoBase: 3.0, bonus: 1.5 },
+  { id: 5, nome: 'Juliana Ferreira', regiao: 'Nordeste', avatar: 'JF', faturamentoMensal: 175200, metaMensal: 170000, faturamentoAcumulado: 1672000, metaAcumulada: 1700000, variacaoMes: 6.3, comissaoBase: 3.5, bonus: 1.5 },
+  { id: 6, nome: 'Lucas Andrade', regiao: 'Sudeste', avatar: 'LA', faturamentoMensal: 211800, metaMensal: 200000, faturamentoAcumulado: 2015000, metaAcumulada: 2000000, variacaoMes: 9.7, comissaoBase: 4.0, bonus: 2.0 },
+  { id: 7, nome: 'Mariana Costa', regiao: 'Sul', avatar: 'MC', faturamentoMensal: 134600, metaMensal: 160000, faturamentoAcumulado: 1241000, metaAcumulada: 1600000, variacaoMes: -2.4, comissaoBase: 3.0, bonus: 1.5 },
+  { id: 8, nome: 'Roberto Pinheiro', regiao: 'Nordeste', avatar: 'RP', faturamentoMensal: 156900, metaMensal: 150000, faturamentoAcumulado: 1498000, metaAcumulada: 1500000, variacaoMes: 4.5, comissaoBase: 3.5, bonus: 1.5 },
 ]
 
-// Carteira de produtos e clientes por vendedor (chave = vendedor.id)
-export const carteiraPorVendedor: Record<number, CarteiraVendedor> = {
+export const carteiraPorVendedor = {
   1: {
     produtos: [
       { produto: 'Plano Empresarial Plus', valorVendido: 74200, pctComissao: 4.0 },
@@ -265,7 +130,7 @@ export const carteiraPorVendedor: Record<number, CarteiraVendedor> = {
   },
 }
 
-export const dadosMensais: DadosMensais[] = [
+export const dadosMensais = [
   { mes: 'Jan', realizado: 1210000, meta: 1200000 },
   { mes: 'Fev', realizado: 1087000, meta: 1200000 },
   { mes: 'Mar', realizado: 1342000, meta: 1300000 },
@@ -282,11 +147,5 @@ export const dadosMensais: DadosMensais[] = [
 
 export const regioes = ['Todas', 'Sul', 'Sudeste', 'Centro-Oeste', 'Norte', 'Nordeste']
 
-// Mantidas para compatibilidade com Dashboard e Ranking
-export function calcularAtingimento(faturamento: number, meta: number): number {
-  return Math.round((faturamento / meta) * 100)
-}
-
-// ─── Formatadores — delegados ao módulo central ─────────────────────────────
-export { formatBRL as formatCurrency, formatK as formatCurrencyShort } from '../utils/formatters'
-export { formatBRL, formatPct, formatDate, formatK } from '../utils/formatters'
+// Re-exporta da fonte centralizada para compatibilidade com imports existentes
+export { calcularAtingimento, formatCurrency, formatCurrencyShort } from '../utils/formatters'

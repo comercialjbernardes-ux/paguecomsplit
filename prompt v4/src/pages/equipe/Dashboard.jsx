@@ -22,35 +22,29 @@ import {
   vendedores,
   dadosMensais,
   calcularAtingimento,
-  formatBRL,
-  formatK,
+  formatCurrency,
+  formatCurrencyShort,
 } from '../../data/equipe'
-import { EmptyState } from '../../components/EmptyState'
-import { FileSpreadsheet } from 'lucide-react'
 
-type Periodo = 'mensal' | 'acumulado'
-type SortKey = 'nome' | 'regiao' | 'faturamento' | 'meta' | 'atingimento'
-type SortDir = 'asc' | 'desc'
-
-function StatusBadge({ pct }: { pct: number }) {
+function StatusBadge({ pct }) {
   if (pct >= 100) return <span className="badge-success">Atingido</span>
   if (pct >= 70) return <span className="badge-warning">Em progresso</span>
   return <span className="badge-error">Abaixo</span>
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null
   return (
     <div className="bg-[#0D1B2A] rounded-[8px] px-4 py-3 shadow-xl">
       <p className="text-white/60 text-xs mb-2">{label}</p>
-      {payload.map((entry: any) => (
+      {payload.map((entry) => (
         <div key={entry.name} className="flex items-center gap-2 text-sm">
           <span
             className="w-2 h-2 rounded-full inline-block"
             style={{ background: entry.color }}
           />
           <span className="text-white/70">{entry.name === 'realizado' ? 'Realizado' : 'Meta'}:</span>
-          <span className="text-white font-semibold">{formatK(entry.value)}</span>
+          <span className="text-white font-semibold">{formatCurrencyShort(entry.value)}</span>
         </div>
       ))}
     </div>
@@ -58,9 +52,9 @@ function CustomTooltip({ active, payload, label }: any) {
 }
 
 export function EquipeDashboard() {
-  const [periodo, setPeriodo] = useState<Periodo>('mensal')
-  const [sortKey, setSortKey] = useState<SortKey>('atingimento')
-  const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [periodo, setPeriodo] = useState('mensal')
+  const [sortKey, setSortKey] = useState('atingimento')
+  const [sortDir, setSortDir] = useState('desc')
 
   const totais = useMemo(() => {
     const fat =
@@ -78,7 +72,6 @@ export function EquipeDashboard() {
     if (periodo === 'mensal') {
       return dadosMensais.slice(-6)
     }
-    // acumulado: running total
     let accR = 0
     let accM = 0
     return dadosMensais.map((d) => {
@@ -88,7 +81,7 @@ export function EquipeDashboard() {
     })
   }, [periodo])
 
-  function handleSort(key: SortKey) {
+  function handleSort(key) {
     if (key === sortKey) {
       setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
     } else {
@@ -99,14 +92,11 @@ export function EquipeDashboard() {
 
   const sortedVendedores = useMemo(() => {
     return [...vendedores].sort((a, b) => {
-      let av: number | string
-      let bv: number | string
+      let av, bv
       if (sortKey === 'nome') {
-        av = a.nome
-        bv = b.nome
+        av = a.nome; bv = b.nome
       } else if (sortKey === 'regiao') {
-        av = a.regiao
-        bv = b.regiao
+        av = a.regiao; bv = b.regiao
       } else if (sortKey === 'faturamento') {
         av = periodo === 'mensal' ? a.faturamentoMensal : a.faturamentoAcumulado
         bv = periodo === 'mensal' ? b.faturamentoMensal : b.faturamentoAcumulado
@@ -124,15 +114,13 @@ export function EquipeDashboard() {
         )
       }
       if (typeof av === 'string') {
-        return sortDir === 'asc'
-          ? av.localeCompare(bv as string)
-          : (bv as string).localeCompare(av)
+        return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av)
       }
-      return sortDir === 'asc' ? (av as number) - (bv as number) : (bv as number) - (av as number)
+      return sortDir === 'asc' ? av - bv : bv - av
     })
   }, [sortKey, sortDir, periodo])
 
-  function SortIcon({ col }: { col: SortKey }) {
+  function SortIcon({ col }) {
     if (sortKey !== col) return <ChevronUp size={14} strokeWidth={1.5} className="text-slate-300" />
     return sortDir === 'asc' ? (
       <ChevronUp size={14} strokeWidth={1.5} className="text-[#00C896]" />
@@ -141,32 +129,16 @@ export function EquipeDashboard() {
     )
   }
 
-  // Estado vazio: sem vendedores
-  if (vendedores.length === 0) {
-    return (
-      <div className="p-6 lg:p-8">
-        <div className="card">
-          <EmptyState
-            icon={FileSpreadsheet}
-            description="Importe uma planilha de fechamento para visualizar os resultados"
-          />
-        </div>
-      </div>
-    )
-  }
-
   return (
-    <div className="p-6 lg:p-8">
+    <div className="p-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+      <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-2xl font-bold text-[#0D1B2A]">Dashboard da Equipe</h1>
           <p className="text-slate-500 text-sm mt-1">Resultados e performance dos vendedores</p>
         </div>
-
-        {/* Toggle */}
         <div className="flex bg-white border border-[#E2E8F0] rounded-[8px] p-1 gap-1">
-          {(['mensal', 'acumulado'] as Periodo[]).map((p) => (
+          {['mensal', 'acumulado'].map((p) => (
             <button
               key={p}
               onClick={() => setPeriodo(p)}
@@ -182,9 +154,8 @@ export function EquipeDashboard() {
         </div>
       </div>
 
-      {/* KPI Cards — 1 col mobile, 2 tablet, 4 desktop */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        {/* Faturamento Total */}
+      {/* KPI Cards */}
+      <div className="grid grid-cols-4 gap-4 mb-8">
         <div className="card p-6">
           <div className="flex items-start justify-between mb-4">
             <p className="text-slate-500 text-sm font-medium">Faturamento Total</p>
@@ -193,16 +164,15 @@ export function EquipeDashboard() {
             </div>
           </div>
           <p className="text-[32px] font-bold text-[#0D1B2A] leading-none mb-3">
-            {formatK(totais.fat)}
+            {formatCurrencyShort(totais.fat)}
           </p>
           <div className="flex items-center gap-1.5">
-            <ArrowUpRight size={14} strokeWidth={1.5} className="text-[#10B981]" />
+            <ArrowUpRight size={14} strokeWidth={2} className="text-[#10B981]" />
             <span className="text-[#10B981] text-sm font-medium">+8,4%</span>
             <span className="text-slate-400 text-xs">vs mês anterior</span>
           </div>
         </div>
 
-        {/* Meta Total */}
         <div className="card p-6">
           <div className="flex items-start justify-between mb-4">
             <p className="text-slate-500 text-sm font-medium">Meta Total</p>
@@ -211,7 +181,7 @@ export function EquipeDashboard() {
             </div>
           </div>
           <p className="text-[32px] font-bold text-[#0D1B2A] leading-none mb-3">
-            {formatK(totais.meta)}
+            {formatCurrencyShort(totais.meta)}
           </p>
           <div className="flex items-center gap-1.5">
             <span
@@ -228,7 +198,6 @@ export function EquipeDashboard() {
           </div>
         </div>
 
-        {/* % Atingimento */}
         <div className="card p-6">
           <div className="flex items-start justify-between mb-4">
             <p className="text-slate-500 text-sm font-medium">% Atingimento</p>
@@ -250,7 +219,6 @@ export function EquipeDashboard() {
           </div>
         </div>
 
-        {/* Vendedores Ativos */}
         <div className="card p-6">
           <div className="flex items-start justify-between mb-4">
             <p className="text-slate-500 text-sm font-medium">Vendedores Ativos</p>
@@ -292,7 +260,7 @@ export function EquipeDashboard() {
               axisLine={false}
               tickLine={false}
               tick={{ fill: '#94A3B8', fontSize: 12, fontFamily: 'Inter' }}
-              tickFormatter={(v: number) => formatK(v)}
+              tickFormatter={(v) => formatCurrencyShort(v)}
               width={80}
             />
             <Tooltip content={<CustomTooltip />} cursor={{ fill: '#F1F5F9' }} />
@@ -318,15 +286,13 @@ export function EquipeDashboard() {
           <table className="w-full">
             <thead>
               <tr className="bg-[#F8FAFC]">
-                {(
-                  [
-                    { key: 'nome', label: 'Nome' },
-                    { key: 'regiao', label: 'Região' },
-                    { key: 'faturamento', label: 'Faturamento' },
-                    { key: 'meta', label: 'Meta' },
-                    { key: 'atingimento', label: '% Ating.' },
-                  ] as { key: SortKey; label: string }[]
-                ).map(({ key, label }) => (
+                {[
+                  { key: 'nome', label: 'Nome' },
+                  { key: 'regiao', label: 'Região' },
+                  { key: 'faturamento', label: 'Faturamento' },
+                  { key: 'meta', label: 'Meta' },
+                  { key: 'atingimento', label: '% Ating.' },
+                ].map(({ key, label }) => (
                   <th
                     key={key}
                     onClick={() => handleSort(key)}
@@ -349,10 +315,7 @@ export function EquipeDashboard() {
                 const meta = periodo === 'mensal' ? v.metaMensal : v.metaAcumulada
                 const pct = calcularAtingimento(fat, meta)
                 return (
-                  <tr
-                    key={v.id}
-                    className="hover:bg-[#F0FDF9] transition-colors duration-100"
-                  >
+                  <tr key={v.id} className="hover:bg-[#F0FDF9] transition-colors duration-100">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-[#0D1B2A] rounded-full flex items-center justify-center flex-shrink-0">
@@ -363,9 +326,9 @@ export function EquipeDashboard() {
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500">{v.regiao}</td>
                     <td className="px-6 py-4 text-sm font-semibold text-[#0D1B2A]">
-                      {formatBRL(fat)}
+                      {formatCurrency(fat)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500">{formatBRL(meta)}</td>
+                    <td className="px-6 py-4 text-sm text-slate-500">{formatCurrency(meta)}</td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-20 bg-[#E2E8F0] rounded-full h-1.5">

@@ -1,0 +1,3365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Venda Feita · Central de Gestão</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --teal:#00B4A6;--teal-d:#007A70;--teal-dd:#004D47;
+  --orange:#FF6B2B;--orange-d:#b34400;
+  --ink:#07111C;--ink2:#0D1E2D;
+  --mist:#6B8FA8;--fog:#A8C2D4;
+  --white:#FFFFFF;--green:#1DC98A;--red:#FF4D6A;--yellow:#FFD166;--purple:#7C5CFC;
+  --card:rgba(255,255,255,0.035);--border:rgba(255,255,255,0.07);
+  --r:16px;--font:'Poppins',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--ink);font-family:var(--font);color:var(--white);min-height:100vh;overflow-x:hidden}
+.ambient{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background:radial-gradient(ellipse 70% 60% at -5% -10%,rgba(0,180,166,.12) 0%,transparent 65%),
+             radial-gradient(ellipse 50% 40% at 105% 105%,rgba(255,107,43,.07) 0%,transparent 60%)}
+
+/* ── TOPBAR ── */
+.topbar{position:sticky;top:0;z-index:300;height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(7,17,28,.9);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:12px}
+.logo-img{height:30px;width:auto}
+.logo-fallback{display:flex;align-items:center;gap:10px}
+.logo-icon{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--teal),var(--teal-d));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;box-shadow:0 0 18px rgba(0,180,166,.3)}
+.logo-name{font-weight:700;font-size:15px}
+.logo-sub{font-size:9px;color:var(--mist);letter-spacing:2px;text-transform:uppercase;margin-top:1px}
+.switcher{display:flex;gap:3px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:4px}
+.sw-btn{padding:6px 16px;border-radius:9px;border:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600;transition:all .22s;background:transparent;color:var(--mist)}
+.sw-btn.ceo{background:linear-gradient(135deg,var(--teal-dd),var(--teal-d));color:#fff;box-shadow:0 3px 12px rgba(0,122,112,.35)}
+.sw-btn.team{background:linear-gradient(135deg,var(--orange-d),var(--orange));color:#fff;box-shadow:0 3px 12px rgba(201,78,0,.35)}
+.topbar-r{display:flex;align-items:center;gap:10px}
+.pill{font-size:10px;font-weight:600;letter-spacing:1px;padding:4px 12px;border-radius:20px;background:rgba(0,180,166,.1);border:1px solid rgba(0,180,166,.2);color:var(--teal)}
+.pill.proj{background:rgba(255,209,102,.1);border-color:rgba(255,209,102,.2);color:var(--yellow)}
+.live{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:500;color:var(--green)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+
+/* ── STATUS BADGE (realizado / projeção) ── */
+.status-flag{display:inline-flex;align-items:center;gap:5px;font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:3px 9px;border-radius:20px}
+.flag-real{background:rgba(29,201,138,.12);color:var(--green);border:1px solid rgba(29,201,138,.2)}
+.flag-proj{background:rgba(255,209,102,.12);color:var(--yellow);border:1px solid rgba(255,209,102,.25)}
+.flag-lock{background:rgba(0,180,166,.12);color:var(--teal);border:1px solid rgba(0,180,166,.2)}
+
+/* ── VIEWS ── */
+.view{display:none;position:relative;z-index:1}
+.view.active{display:block;animation:reveal .28s ease}
+@keyframes reveal{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── CEO TABS ── */
+.ceo-tabs{display:flex;gap:3px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:4px;margin-bottom:20px;width:fit-content;flex-wrap:wrap}
+.ct-btn{padding:7px 16px;border-radius:9px;border:none;cursor:pointer;font-family:var(--font);font-size:12px;font-weight:600;transition:all .22s;background:transparent;color:var(--mist)}
+.ct-btn.active{background:rgba(0,180,166,.15);color:var(--teal);border:1px solid rgba(0,180,166,.25)}
+.ceo-panel{display:none}
+.ceo-panel.active{display:block;animation:reveal .25s ease}
+
+/* ── PAGE ── */
+.page{padding:24px 28px;max-width:1440px;margin:0 auto}
+.ph{margin-bottom:22px}
+.ph-title{font-size:22px;font-weight:800}
+.ph-title span{color:var(--teal)}
+.ph-sub{font-size:12px;color:var(--mist);margin-top:3px}
+
+/* ── GRIDS ── */
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:18px}
+.g12{display:grid;grid-template-columns:1fr 2fr;gap:14px;margin-bottom:18px}
+
+/* ── CARD ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:20px;position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s}
+.card:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(0,0,0,.35)}
+.c-label{font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--mist);margin-bottom:8px}
+.c-val{font-size:28px;font-weight:800;line-height:1}
+.c-sub{font-size:11px;color:var(--mist);margin-top:5px}
+.c-delta{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;margin-top:9px;padding:2px 8px;border-radius:20px}
+.up{background:rgba(29,201,138,.1);color:var(--green)}.down{background:rgba(255,77,106,.1);color:var(--red)}.neu{background:rgba(255,209,102,.1);color:var(--yellow)}
+.a-t::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--teal),transparent);border-radius:3px 0 0 3px}
+.a-o::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--orange),transparent);border-radius:3px 0 0 3px}
+.a-g::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--green),transparent);border-radius:3px 0 0 3px}
+.a-r::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--red),transparent);border-radius:3px 0 0 3px}
+.a-y::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--yellow),transparent);border-radius:3px 0 0 3px}
+.card-hero{background:linear-gradient(135deg,rgba(0,77,71,.55),rgba(0,20,18,.4));border-color:rgba(0,180,166,.22)}
+.card-hero .c-val{color:var(--teal);font-size:34px}
+
+/* ── SECTION HDR ── */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sh-name{font-size:14px;font-weight:700}
+.sh-name span{color:var(--teal)}
+.sh-tag{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist)}
+
+/* ── GROWTH CENTER ── */
+.growth-center{background:linear-gradient(135deg,rgba(0,77,71,.4) 0%,rgba(7,17,28,.8) 50%,rgba(13,30,45,.9) 100%);border:1px solid rgba(0,180,166,.18);border-radius:var(--r);padding:24px;margin-bottom:18px;position:relative;overflow:hidden}
+.growth-center::before{content:'';position:absolute;right:-80px;top:-80px;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle,rgba(0,180,166,.1),transparent 70%);pointer-events:none}
+.gc-title{font-size:18px;font-weight:800}.gc-title span{color:var(--teal)}
+.gc-sub{font-size:11px;color:var(--mist);margin-top:4px}
+.gc-charts{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}
+.gc-chart-wrap{height:200px;position:relative}
+.accum-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+.accum-item{background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center}
+.accum-item.real{background:rgba(0,180,166,.08);border-color:rgba(0,180,166,.25)}
+.accum-item.active{background:rgba(0,180,166,.12);border-color:rgba(0,180,166,.4)}
+.accum-item.proj{border-style:dashed;border-color:rgba(255,209,102,.2)}
+.am-month{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);margin-bottom:5px}
+.am-val{font-size:12px;font-weight:800}
+.am-acum{font-size:9px;color:var(--mist);margin-top:3px}
+.am-dot{width:5px;height:5px;border-radius:50%;background:var(--teal);margin:4px auto 0}
+.am-dot.proj{background:var(--yellow);opacity:.5}
+.am-dot.empty{background:rgba(255,255,255,.15)}
+
+/* ── PROGRESS ── */
+.prog{margin-top:12px}
+.prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(--mist);margin-bottom:5px}
+.prog-track{height:5px;background:rgba(255,255,255,.06);border-radius:99px;overflow:hidden}
+.prog-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--teal),var(--green));transition:width 1s cubic-bezier(.4,0,.2,1)}
+.prog-fill-o{background:linear-gradient(90deg,var(--orange),var(--yellow))}
+
+/* ── TABLE ── */
+.tbl{width:100%;border-collapse:collapse;font-size:12px}
+.tbl th{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);padding:9px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.tbl td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.025);color:var(--fog)}
+.tbl tr:hover td{background:rgba(255,255,255,.02)}
+.tbl tr:last-child td{border:none}
+.mono{font-family:monospace;font-size:11px}
+.tc{color:var(--teal)}.tg{color:var(--green)}.tr{color:var(--red)}.to{color:var(--orange)}.tw{color:var(--white);font-weight:600}.ty{color:var(--yellow)}
+
+/* ── DRE TABLE ── */
+.dre-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.dre-tbl th{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);padding:9px 14px;text-align:left;border-bottom:1px solid var(--border)}
+.dre-tbl td{padding:9px 14px;border-bottom:1px solid rgba(255,255,255,.025);color:var(--fog)}
+.dre-row-sec td{background:rgba(0,180,166,.06);color:var(--white);font-weight:700;border-bottom:1px solid rgba(0,180,166,.15)}
+.dre-row-cost td{color:var(--red)}
+.dre-row-com td{color:var(--orange)}
+.dre-row-res td{background:rgba(29,201,138,.07);color:var(--green);font-weight:700;border-bottom:none}
+.dre-row-sub td{color:var(--fog);font-size:11px;padding-left:28px}
+
+/* ── BADGE ── */
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:9px;font-weight:700;letter-spacing:.8px}
+.bg-g{background:rgba(29,201,138,.12);color:var(--green)}.bg-t{background:rgba(0,180,166,.12);color:var(--teal)}
+.bg-o{background:rgba(255,107,43,.12);color:var(--orange)}.bg-y{background:rgba(255,209,102,.12);color:var(--yellow)}
+.bg-r{background:rgba(255,77,106,.12);color:var(--red)}
+
+/* ── UPLOAD ── */
+.upload-zone{border:2px dashed rgba(0,180,166,.25);border-radius:var(--r);padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(0,180,166,.02)}
+.upload-zone:hover,.upload-zone.drag-over{border-color:var(--teal);background:rgba(0,180,166,.05)}
+.u-icon{font-size:32px;margin-bottom:10px}
+.u-title{font-size:14px;font-weight:700;margin-bottom:5px}
+.u-sub{font-size:11px;color:var(--mist)}
+.btn-up{margin-top:14px;padding:9px 20px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--teal-d),var(--teal));color:#fff;font-family:var(--font);font-size:12px;font-weight:700;transition:all .2s}
+.btn-up:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(0,180,166,.3)}
+
+/* ── INPUTS ── */
+.il{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);margin-bottom:5px;display:block}
+input[type=number],input[type=text],select,textarea{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:8px;padding:8px 11px;color:#fff;font-family:var(--font);font-size:12px;outline:none;margin-bottom:10px}
+input:focus,select:focus,textarea:focus{border-color:var(--teal)}
+select option{background:var(--ink2)}
+textarea{resize:vertical;min-height:60px}
+.btn-apply{width:100%;padding:10px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,var(--teal-d),var(--teal));color:#fff;font-family:var(--font);font-size:12px;font-weight:700;transition:all .2s}
+.btn-apply.danger{background:linear-gradient(135deg,#8B0000,var(--red))}
+.btn-sm{padding:5px 12px;border-radius:7px;border:1px solid var(--border);background:transparent;color:var(--mist);font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-sm:hover{border-color:var(--teal);color:var(--teal)}
+.btn-sm.active{background:rgba(0,180,166,.15);border-color:rgba(0,180,166,.3);color:var(--teal)}
+
+/* ── STATUS BAR ── */
+.sbar{display:flex;gap:18px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:rgba(0,180,166,.05);border:1px solid rgba(0,180,166,.12);border-radius:10px;margin-bottom:18px}
+.si{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--fog)}
+.sd{width:7px;height:7px;border-radius:50%}
+
+/* ── DIVIDER ── */
+.div{height:1px;background:var(--border);margin:18px 0}
+
+/* ── DRE CONTROLS ── */
+.dre-controls{display:flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(0,180,166,.06);border:1px solid rgba(0,180,166,.15);border-radius:12px;margin-bottom:18px;flex-wrap:wrap}
+.dre-label{font-size:11px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.dre-month-btns{display:flex;gap:5px;flex-wrap:wrap}
+.dmb{padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:transparent;color:var(--mist);font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer;transition:all .2s}
+.dmb:hover{border-color:var(--teal);color:var(--teal)}
+.dmb.active{background:rgba(0,180,166,.15);border-color:rgba(0,180,166,.3);color:var(--teal)}
+.dmb.real{border-color:rgba(0,180,166,.25)}
+.dmb.proj{border-style:dashed;border-color:rgba(255,209,102,.3);color:var(--yellow)}
+.dmb.proj.active{background:rgba(255,209,102,.12);border-color:rgba(255,209,102,.4)}
+
+/* ── DELTA PANEL ── */
+.delta-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}
+.delta-row:last-child{border:none}
+.delta-label{flex:1;color:var(--fog)}
+.delta-prev{font-family:monospace;font-size:11px;color:var(--mist);min-width:90px;text-align:right}
+.delta-curr{font-family:monospace;font-size:11px;min-width:90px;text-align:right}
+.delta-diff{font-family:monospace;font-size:11px;font-weight:700;min-width:80px;text-align:right}
+.delta-pct-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;white-space:nowrap}
+
+/* ── COSTS ── */
+.cost-category{background:rgba(255,77,106,.04);border:1px solid rgba(255,77,106,.12);border-radius:12px;padding:16px;margin-bottom:12px}
+.cost-cat-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cost-cat-name{font-size:12px;font-weight:700;color:var(--red)}
+.cost-cat-total{font-size:14px;font-weight:800;font-family:monospace;color:var(--red)}
+.cost-item-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.cost-item-row:last-child{border:none}
+.cost-item-desc{flex:1;font-size:12px;color:var(--fog)}
+.cost-item-val{font-size:12px;font-weight:700;font-family:monospace;color:var(--red)}
+.cost-item-del{background:none;border:none;color:var(--mist);cursor:pointer;font-size:14px;padding:2px 6px;border-radius:5px;transition:.15s}
+.cost-item-del:hover{color:var(--red);background:rgba(255,77,106,.1)}
+
+/* ── TEAM BANNER ── */
+.tbanner{background:linear-gradient(135deg,rgba(0,77,71,.6) 0%,rgba(7,17,28,1) 60%);border:1px solid rgba(0,180,166,.2);border-radius:var(--r);padding:28px 32px;margin-bottom:18px;position:relative;overflow:hidden}
+.tbanner::before{content:'';position:absolute;right:-50px;top:-50px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(0,180,166,.12),transparent 70%)}
+.tb-title{font-size:26px;font-weight:900;margin-bottom:6px}
+.tb-sub{font-size:13px;color:rgba(255,255,255,.65);max-width:480px;line-height:1.6}
+.tb-pill{display:inline-block;margin-top:12px;background:rgba(0,180,166,.18);border:1px solid rgba(0,180,166,.28);padding:5px 14px;border-radius:20px;font-size:10px;font-weight:700;color:var(--teal);letter-spacing:2px}
+
+/* ── PERIOD SELECTOR ── */
+.period-selector{display:flex;align-items:center;gap:12px;padding:14px 20px;background:rgba(0,180,166,.06);border:1px solid rgba(0,180,166,.15);border-radius:12px;margin-bottom:18px;flex-wrap:wrap}
+.ps-label{font-size:11px;font-weight:700;color:var(--teal);letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+
+/* ── RANK ROWS ── */
+.rank-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid var(--border);margin-bottom:7px;transition:background .18s}
+.rank-row:hover{background:rgba(255,255,255,.04)}
+.rn{font-size:18px;font-weight:900;width:28px;flex-shrink:0}
+.rn.gold{color:#FFD700}.rn.silver{color:#C0C0C0}.rn.bronze{color:#CD7F32}
+.rname{font-size:13px;font-weight:700;flex:1}
+.rclients{font-size:10px;color:var(--mist)}
+.rval{text-align:right}
+.rval-main{font-size:13px;font-weight:800}
+.rval-sub{font-size:9px;color:var(--mist)}
+
+/* ── COM DETAIL ── */
+.com-detail-panel{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:14px}
+.cdp-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.cdp-name{font-size:16px;font-weight:800}
+.cdp-body{padding:20px}
+.cdp-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.cdp-kpi{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
+.cdp-kpi .label{font-size:9px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--mist);margin-bottom:6px}
+.cdp-kpi .val{font-size:18px;font-weight:800}
+.cdp-clients-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cli-item{background:rgba(255,255,255,.025);border:1px solid var(--border);border-radius:10px;padding:11px;display:flex;justify-content:space-between;align-items:center}
+.cli-item-name{font-size:12px;font-weight:600;color:var(--white)}
+.cli-item-val{font-size:11px;font-family:monospace;color:var(--teal)}
+
+/* ── CHART HEIGHTS ── */
+.ch220{height:220px;position:relative}.ch260{height:260px;position:relative}.ch280{height:280px;position:relative}
+
+/* ── CLIENT VENDOR TABLE ── */
+.vendor-select-cell select{background:transparent;border:none;color:var(--teal);font-size:11px;font-family:var(--font);cursor:pointer;outline:none;padding:2px 4px}
+
+/* ── GESTÃO CHECKBOXES ── */
+input[type=checkbox]{accent-color:var(--teal);cursor:pointer}
+.txn-chk:disabled{opacity:.3}
+tr:has(.txn-chk:checked) td{background:rgba(0,180,166,.06)!important}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:20px;right:20px;z-index:999;background:var(--teal-dd);border:1px solid rgba(0,180,166,.3);border-radius:12px;padding:12px 18px;font-size:12px;font-weight:500;animation:su .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+@keyframes su{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:3px}
+
+/* ── PARAMETRIZAÇÃO ── */
+.param-tabs{display:flex;gap:0;margin-bottom:22px;border-bottom:1px solid var(--border)}
+.param-tab{padding:10px 22px;border:none;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:600;background:transparent;color:#6B7280;border-bottom:2px solid transparent;transition:all .2s}
+.param-tab.active{color:#0D1B2A;color:var(--white);border-bottom-color:#00C896;font-weight:700}
+.param-tab:hover:not(.active){color:var(--fog)}
+.param-section{display:none}.param-section.active{display:block;animation:reveal .25s ease}
+.param-add-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,#007A70,#00C896);color:#fff;font-family:var(--font);font-size:12px;font-weight:700;transition:all .2s}
+.param-add-btn:hover{transform:translateY(-1px);box-shadow:0 5px 18px rgba(0,200,150,.3)}
+.param-icon-btn{background:none;border:none;cursor:pointer;padding:4px 6px;border-radius:6px;transition:all .15s;color:var(--mist);font-size:15px}
+.param-icon-btn.edit:hover{color:#00C896;background:rgba(0,200,150,.1)}
+.param-icon-btn.delete:hover{color:var(--red);background:rgba(255,77,106,.1)}
+.badge-amber{display:inline-block;padding:2px 8px;border-radius:20px;font-size:9px;font-weight:700;background:rgba(255,180,0,.12);color:#F59E0B;border:1px solid rgba(245,158,11,.25)}
+.param-modal-overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.param-modal{background:#fff;border-radius:12px;padding:28px;width:420px;max-width:92vw;box-shadow:0 10px 28px rgba(0,0,0,.35);animation:modalUp .25s ease}
+@keyframes modalUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.param-modal h3{font-size:16px;font-weight:800;color:#0D1B2A;margin-bottom:18px}
+.param-modal label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#6B7280;margin-bottom:4px;display:block}
+.param-modal input,.param-modal select{width:100%;background:#F3F4F6;border:1px solid #E5E7EB;border-radius:8px;padding:9px 12px;color:#0D1B2A;font-family:var(--font);font-size:13px;outline:none;margin-bottom:12px}
+.param-modal input:focus,.param-modal select:focus{border-color:#00C896;box-shadow:0 0 0 3px rgba(0,200,150,.12)}
+.param-modal-actions{display:flex;gap:10px;margin-top:8px}
+.param-modal-actions .btn-save{flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;background:linear-gradient(135deg,#007A70,#00C896);color:#fff;font-family:var(--font);font-size:13px;font-weight:700}
+.param-modal-actions .btn-cancel{flex:1;padding:10px;border-radius:10px;border:1px solid #E5E7EB;cursor:pointer;background:#fff;color:#6B7280;font-family:var(--font);font-size:13px;font-weight:600}
+.param-modal-actions .btn-cancel:hover{background:#F3F4F6}
+.meta-input-big{font-size:20px!important;font-weight:700!important;text-align:center;padding:14px!important}
+.meta-month-input{background:rgba(255,255,255,.04)!important;border:1px solid var(--border)!important;border-radius:8px;padding:8px 11px;color:#fff!important;font-family:var(--font);font-size:12px;text-align:right;width:140px}
+.meta-month-input:focus{border-color:var(--teal)!important}
+</style>
+</head>
+<body>
+<div class="ambient"></div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">
+    <img class="logo-img" id="logo-img" src="https://framerusercontent.com/images/9ybQz9U1WgFA4WmYBIRIfjhAOs.png" alt="VF" onerror="this.style.display='none';document.getElementById('lf').style.display='flex'">
+    <div class="logo-fallback" id="lf" style="display:none">
+      <div class="logo-icon">VF</div>
+      <div><div class="logo-name">Venda Feita</div><div class="logo-sub">Hub PME</div></div>
+    </div>
+  </div>
+  <div class="switcher">
+    <button class="sw-btn ceo" onclick="swView('ceo',this)">🔒 Gestão CEO</button>
+    <button class="sw-btn" onclick="swView('team',this)">📊 Equipe</button>
+  </div>
+  <div class="topbar-r">
+    <div class="pill" id="pill-period">FEV · 2026</div>
+    <div class="live"><div class="live-dot"></div>CAPPTA</div>
+  </div>
+</div>
+
+<!-- ════════════ CEO VIEW ════════════ -->
+<div class="view active" id="view-ceo">
+<div class="page">
+  <div class="ph"><div class="ph-title">Central de <span>Gestão</span></div><div class="ph-sub">Fonte de verdade: DB transacional · Motor isolado · Dashboard como farol</div></div>
+
+  <div class="ceo-tabs">
+    <button class="ct-btn active" onclick="swCEO('dashboard',this)">📈 Dashboard</button>
+    <button class="ct-btn" onclick="swCEO('dre',this)">📋 DRE Mensal</button>
+    <button class="ct-btn" onclick="swCEO('lancamento',this)">📥 Lançamento</button>
+    <button class="ct-btn" onclick="swCEO('clientes',this)">👥 Clientes</button>
+    <button class="ct-btn" onclick="swCEO('custos',this)">💸 Custos</button>
+    <button class="ct-btn" onclick="swCEO('gestao',this)">🗂️ Gestão</button>
+    <button class="ct-btn" onclick="swCEO('dados',this)">🗄️ Dados</button>
+    <button class="ct-btn" onclick="swCEO('parametrizacao',this)">⚙️ Parametrização</button>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div class="ceo-panel active" id="panel-dashboard">
+    <div class="sbar" id="dash-sbar"></div>
+    <div class="g4" id="dash-kpis"></div>
+
+    <!-- GROWTH CENTER -->
+    <div class="growth-center">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+        <div><div class="gc-title">Centro de <span>Crescimento Anual</span></div><div class="gc-sub">TPV acumulado · Resultado mês a mês · Realizado vs Projeção claramente separados</div></div>
+        <div style="text-align:right">
+          <div style="font-size:11px;font-weight:700;color:var(--teal);letter-spacing:2px">2026</div>
+          <div style="display:flex;gap:8px;margin-top:6px;align-items:center">
+            <span class="status-flag flag-real">● Realizado</span>
+            <span class="status-flag flag-proj">◌ Projeção</span>
+          </div>
+        </div>
+      </div>
+      <div class="accum-row" id="accum-row"></div>
+      <div class="gc-charts">
+        <div>
+          <div class="sh"><div class="sh-name">TPV <span>Acumulado</span></div><div class="sh-tag">META R$ 24M</div></div>
+          <div class="gc-chart-wrap"><canvas id="chart-accum"></canvas></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:12px;justify-content:center">
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+            <div style="font-size:11px;color:var(--mist)">TPV Acumulado (real)</div>
+            <div style="font-size:18px;font-weight:800;color:var(--teal);margin-top:4px" id="gs-tpv">—</div>
+          </div>
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+            <div style="font-size:11px;color:var(--mist)">Markup Acumulado</div>
+            <div style="font-size:18px;font-weight:800;color:var(--teal);margin-top:4px" id="gs-mkp">—</div>
+          </div>
+          <div style="background:rgba(29,201,138,.06);border:1px solid rgba(29,201,138,.15);border-radius:10px;padding:14px 16px">
+            <div style="font-size:11px;color:var(--mist)">Resultado Acumulado</div>
+            <div style="font-size:18px;font-weight:800;color:var(--green);margin-top:4px" id="gs-res">—</div>
+          </div>
+          <div style="background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+            <div style="font-size:10px;color:var(--mist);margin-bottom:8px">Meta Anual R$ 24M</div>
+            <div class="prog-row"><span id="meta-pct">0%</span><span id="meta-val">— / R$ 24M</span></div>
+            <div class="prog-track"><div class="prog-fill" id="meta-bar" style="width:0%"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJEÇÃO -->
+    <div class="card" style="margin-bottom:18px">
+      <div class="sh">
+        <div class="sh-name">Projeção <span>Anual 2026</span></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="status-flag flag-real">● Real</span>
+          <span class="status-flag flag-proj">◌ Proj.</span>
+          <div class="sh-tag">MOTOR ENGINE</div>
+        </div>
+      </div>
+      <div class="ch260"><canvas id="chart-proj"></canvas></div>
+    </div>
+
+    <!-- CLIENTES TOP -->
+    <div class="card">
+      <div class="sh"><div class="sh-name">Top Clientes <span>por Markup</span></div><div class="sh-tag" id="cli-period-tag">PERÍODO ATUAL</div></div>
+      <table class="tbl">
+        <thead><tr><th>#</th><th>CLIENTE</th><th>COMERCIAL</th><th>TPV</th><th>MARKUP</th><th>MARGEM %</th><th>STATUS</th></tr></thead>
+        <tbody id="cli-body"></tbody>
+      </table>
+    </div>
+  </div><!-- /panel-dashboard -->
+
+  <!-- ── DRE MENSAL ── -->
+  <div class="ceo-panel" id="panel-dre">
+    <div class="dre-controls">
+      <span class="dre-label">📋 Mês</span>
+      <div class="dre-month-btns" id="dre-month-btns"></div>
+      <div style="display:flex;gap:8px;align-items:center;margin-left:auto">
+        <span style="font-size:10px;color:var(--mist)">Comparar com:</span>
+        <select id="dre-cmp-sel" onchange="renderDRE()" style="width:130px;margin-bottom:0;font-size:11px;padding:5px 8px">
+          <option value="">Nenhum</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sh">
+      <div class="sh-name">DRE <span id="dre-title">— Selecione um mês</span></div>
+      <div id="dre-period-status"></div>
+    </div>
+    <div id="dre-content"></div>
+  </div><!-- /panel-dre -->
+
+  <!-- ── LANÇAMENTO ── -->
+  <div class="ceo-panel" id="panel-lancamento">
+    <div class="g21">
+      <div class="card">
+        <div class="sh"><div class="sh-name">Lançamento <span>Mensal Cappta</span></div><div class="sh-tag">UPLOAD GRANULAR</div></div>
+
+        <div class="upload-zone" id="drop-zone"
+          ondragover="event.preventDefault();this.classList.add('drag-over')"
+          ondragleave="this.classList.remove('drag-over')"
+          ondrop="handleDrop(event)">
+          <div class="u-icon">📂</div>
+          <div class="u-title">Carregar Fechamento Cappta</div>
+          <div class="u-sub">Importa por cliente (granular) · MarkupPOS + Repasses + Cobranças</div>
+          <div style="margin-top:8px">
+            <label class="il">Período do fechamento</label>
+            <select id="upload-period" style="max-width:180px;margin:0 auto 0;display:block">
+              <option value="2026-01">Janeiro 2026</option>
+              <option value="2026-02" selected>Fevereiro 2026</option>
+              <option value="2026-03">Março 2026</option>
+              <option value="2026-04">Abril 2026</option>
+              <option value="2026-05">Maio 2026</option>
+              <option value="2026-06">Junho 2026</option>
+            </select>
+          </div>
+          <button class="btn-up" onclick="document.getElementById('fi').click()">Selecionar .xlsx</button>
+          <input type="file" id="fi" accept=".xlsx,.xls" style="display:none" onchange="loadFile(this.files[0])">
+          <div id="up-status" style="margin-top:8px;font-size:11px;color:var(--mist)"></div>
+        </div>
+
+        <div class="div"></div>
+        <div class="sh-name" style="margin-bottom:12px">Lacrar <span style="color:var(--teal)">Fechamento</span></div>
+        <div style="font-size:11px;color:var(--mist);margin-bottom:12px;line-height:1.6">
+          Após conferir todos os dados, lacare o mês para torná-lo imutável.<br>
+          O DRE lacrado é a fonte oficial do período.
+        </div>
+        <select id="lock-period" style="margin-bottom:10px">
+          <option value="2026-01">Janeiro 2026</option>
+          <option value="2026-02" selected>Fevereiro 2026</option>
+          <option value="2026-03">Março 2026</option>
+        </select>
+        <button class="btn-apply" onclick="lockPeriod()">🔒 Lacar Fechamento</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card" id="upload-preview">
+          <div class="c-label">PREVIEW DO LANÇAMENTO</div>
+          <div style="color:var(--mist);font-size:12px;text-align:center;padding:20px">Carregue um arquivo para ver o preview</div>
+        </div>
+        <div class="card">
+          <div class="c-label">FECHAMENTOS LACRADOS</div>
+          <div id="closings-list" style="margin-top:10px"></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /panel-lancamento -->
+
+  <!-- ── CLIENTES ── -->
+  <div class="ceo-panel" id="panel-clientes">
+    <div class="sh">
+      <div class="sh-name">Base de <span>Clientes</span></div>
+      <div style="display:flex;gap:8px">
+        <select id="client-period-filter" onchange="renderClients()" style="margin-bottom:0;width:150px;font-size:11px;padding:5px 8px">
+          <option value="2026-02">Fev/2026</option>
+          <option value="2026-01">Jan/2026</option>
+        </select>
+        <button class="btn-sm" onclick="renderClients()">↻ Atualizar</button>
+      </div>
+    </div>
+    <div class="card">
+      <table class="tbl" id="clients-full-table">
+        <thead><tr><th>#</th><th>CLIENTE</th><th>CNPJ/ID</th><th>COMERCIAL</th><th>TPV</th><th>MARKUP</th><th>MARGEM</th><th>PRODUTO</th></tr></thead>
+        <tbody id="clients-full-body"></tbody>
+      </table>
+    </div>
+  </div><!-- /panel-clientes -->
+
+  <!-- ── CUSTOS & RECEITAS ── -->
+  <div class="ceo-panel" id="panel-custos">
+    <div class="g21">
+      <div class="card">
+        <div class="sh"><div class="sh-name">Novo <span>Lançamento</span></div><div class="sh-tag">CUSTO OU RECEITA</div></div>
+
+        <!-- TIPO: CUSTO ou RECEITA -->
+        <label class="il">Tipo de lançamento</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+          <button id="tipo-custo-btn" onclick="setTipoLancamento('custo')"
+            style="padding:10px;border-radius:10px;border:2px solid rgba(255,77,106,.4);background:rgba(255,77,106,.12);color:var(--red);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s">
+            💸 Custo / Despesa
+          </button>
+          <button id="tipo-receita-btn" onclick="setTipoLancamento('receita')"
+            style="padding:10px;border-radius:10px;border:2px solid var(--border);background:transparent;color:var(--mist);font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer;transition:all .2s">
+            💰 Receita Extra
+          </button>
+        </div>
+        <input type="hidden" id="cost-tipo" value="custo">
+
+        <label class="il">Descrição</label>
+        <input type="text" id="cost-desc" placeholder="Ex: Contador, Receita DChef, Aluguel...">
+
+        <label class="il" id="cost-cat-label">Categoria do Custo</label>
+        <select id="cost-cat">
+          <optgroup label="── Custos ──" id="optgrp-custos">
+            <option value="Cappta">Cappta</option>
+            <option value="Administrativo">Administrativo</option>
+            <option value="Pessoal">Pessoal</option>
+            <option value="Tecnologia">Tecnologia / SaaS</option>
+            <option value="Estrutura">Estrutura / Escritório</option>
+            <option value="Marketing">Marketing</option>
+            <option value="Financeiro">Financeiro / Contábil</option>
+            <option value="Outros Custos">Outros</option>
+          </optgroup>
+          <optgroup label="── Receitas ──" id="optgrp-receitas">
+            <option value="DChef">DChef</option>
+            <option value="Alimente">Alimente</option>
+            <option value="Consultoria">Consultoria</option>
+            <option value="Comissão Extra">Comissão Extra</option>
+            <option value="Serviço Avulso">Serviço Avulso</option>
+            <option value="Outras Receitas">Outras Receitas</option>
+          </optgroup>
+        </select>
+
+        <label class="il">Produto / Solução (opcional)</label>
+        <select id="cost-product">
+          <option value="">— Nenhum —</option>
+          <option value="cappta">Cappta</option>
+          <option value="dchef">DChef</option>
+          <option value="alimente">Alimente</option>
+          <option value="outro">Outro</option>
+        </select>
+
+        <label class="il">Valor (R$)</label>
+        <input type="number" id="cost-amount" placeholder="0,00" step="0.01">
+
+        <label class="il">Frequência</label>
+        <select id="cost-freq">
+          <option value="mensal">Mensal (recorrente)</option>
+          <option value="único">Único (pontual)</option>
+          <option value="trimestral">Trimestral</option>
+          <option value="anual">Anual</option>
+        </select>
+
+        <label class="il">Período (YYYY-MM)</label>
+        <input type="text" id="cost-period" value="2026-02" placeholder="2026-03">
+
+        <label class="il">Observação</label>
+        <textarea id="cost-notes" placeholder="Opcional..."></textarea>
+
+        <button class="btn-apply" id="cost-submit-btn" onclick="addCost()">+ Registrar Custo</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- RESUMO: CUSTOS E RECEITAS SEPARADOS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="padding:14px;background:rgba(255,77,106,.06);border:1px solid rgba(255,77,106,.15);border-radius:12px">
+            <div class="c-label" style="color:var(--red)">CUSTOS DO MÊS</div>
+            <div style="font-size:22px;font-weight:800;color:var(--red);margin-top:4px" id="cost-total-month">R$ 0</div>
+            <div style="font-size:10px;color:var(--mist);margin-top:4px" id="cost-breakdown-label">Recorrente: R$0 · Variável: R$0</div>
+          </div>
+          <div style="padding:14px;background:rgba(29,201,138,.06);border:1px solid rgba(29,201,138,.15);border-radius:12px">
+            <div class="c-label" style="color:var(--green)">RECEITAS EXTRAS</div>
+            <div style="font-size:22px;font-weight:800;color:var(--green);margin-top:4px" id="cost-total-receitas">R$ 0</div>
+            <div style="font-size:10px;color:var(--mist);margin-top:4px" id="receita-breakdown-label">Lançamentos: 0</div>
+          </div>
+        </div>
+        <!-- Saldo líquido -->
+        <div style="padding:12px 16px;background:rgba(0,180,166,.06);border:1px solid rgba(0,180,166,.15);border-radius:10px;display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:11px;color:var(--mist);font-weight:600;text-transform:uppercase;letter-spacing:1px">Saldo (Receitas − Custos)</span>
+          <span style="font-family:monospace;font-size:16px;font-weight:800" id="cost-saldo-liq">R$ 0</span>
+        </div>
+
+        <div class="card">
+          <div class="sh">
+            <div class="sh-name">Lançamentos</div>
+            <div style="display:flex;gap:6px;align-items:center">
+              <select id="cost-tipo-filter" onchange="renderCosts()" style="width:100px;margin-bottom:0;font-size:11px;padding:5px 6px">
+                <option value="todos">Todos</option>
+                <option value="custo">Custos</option>
+                <option value="receita">Receitas</option>
+              </select>
+              <select id="cost-filter-period" onchange="renderCosts()" style="width:100px;margin-bottom:0;font-size:11px;padding:5px 6px">
+                <option value="todos">Todos</option>
+                <option value="2026-02" selected>Fev/2026</option>
+                <option value="2026-01">Jan/2026</option>
+                <option value="2026-03">Mar/2026</option>
+              </select>
+              <button class="btn-sm" style="border-color:rgba(255,77,106,.3);color:var(--red)" onclick="clearCostsPeriod()">Limpar</button>
+            </div>
+          </div>
+          <div id="costs-list" style="max-height:380px;overflow-y:auto"></div>
+          <div id="costs-empty" style="text-align:center;padding:28px;color:var(--mist);font-size:12px">
+            <div style="font-size:24px;margin-bottom:8px">📋</div>Nenhum lançamento neste período.
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="sh"><div class="sh-name">Distribuição <span>por Categoria</span></div></div>
+          <div class="ch220"><canvas id="chart-costs"></canvas></div>
+        </div>
+      </div>
+    </div>
+  </div><!-- /panel-custos -->
+
+  <!-- ── EXTRATO BANCÁRIO ── -->
+  <div class="ceo-panel" id="panel-extrato">
+    <div class="g21">
+      <!-- COLUNA ESQUERDA: UPLOAD + FILTROS -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <div class="card">
+          <div class="sh"><div class="sh-name">Importar <span>Extrato</span></div><div class="sh-tag">CSV / OFX / TXT</div></div>
+          <div class="upload-zone" id="extrato-drop"
+            ondragover="event.preventDefault();this.classList.add('drag-over')"
+            ondragleave="this.classList.remove('drag-over')"
+            ondrop="handleExtratoDrop(event)">
+            <div class="u-icon">🏦</div>
+            <div class="u-title">Carregar Extrato Bancário</div>
+            <div class="u-sub">Suporte: CSV (Itaú, BB, Caixa, Nubank, Bradesco, Sicoob)<br>Colunas detectadas automaticamente</div>
+            <button class="btn-up" onclick="document.getElementById('extrato-fi').click()">Selecionar arquivo</button>
+            <input type="file" id="extrato-fi" accept=".csv,.txt,.ofx,.ret" style="display:none" onchange="loadExtrato(this.files[0])">
+            <div id="extrato-status" style="margin-top:8px;font-size:11px;color:var(--mist)"></div>
+          </div>
+
+          <div class="div"></div>
+          <div class="sh-name" style="margin-bottom:10px">Configurar <span style="color:var(--teal)">Leitura</span></div>
+
+          <label class="il">Banco / Formato</label>
+          <select id="extrato-banco" style="margin-bottom:10px">
+            <option value="auto">Detectar automaticamente</option>
+            <option value="itau">Itaú (CSV)</option>
+            <option value="bb">Banco do Brasil (CSV)</option>
+            <option value="caixa">Caixa Econômica (CSV)</option>
+            <option value="nubank">Nubank (CSV)</option>
+            <option value="bradesco">Bradesco (CSV)</option>
+            <option value="sicoob">Sicoob (CSV)</option>
+            <option value="generico">Genérico (Data, Descrição, Valor)</option>
+          </select>
+
+          <label class="il">Período de referência</label>
+          <select id="extrato-period" style="margin-bottom:10px">
+            <option value="2026-01">Janeiro 2026</option>
+            <option value="2026-02" selected>Fevereiro 2026</option>
+            <option value="2026-03">Março 2026</option>
+            <option value="2026-04">Abril 2026</option>
+          </select>
+
+          <label class="il">Separador CSV</label>
+          <select id="extrato-sep" style="margin-bottom:10px">
+            <option value="auto">Auto-detectar</option>
+            <option value=";">Ponto e vírgula ( ; )</option>
+            <option value=",">Vírgula ( , )</option>
+            <option value="	">Tab</option>
+          </select>
+        </div>
+
+        <!-- AÇÕES DE APROVAÇÃO EM LOTE -->
+        <div class="card">
+          <div class="sh-name" style="margin-bottom:12px">Aprovação <span style="color:var(--teal)">em Lote</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn-sm" style="width:100%" onclick="aprovarTodosExtrato('custo')">✅ Aprovar todos como Custo</button>
+            <button class="btn-sm" style="width:100%" onclick="aprovarTodosExtrato('receita')">✅ Aprovar todos como Receita</button>
+            <button class="btn-sm" style="width:100%" onclick="ignorarTodosExtrato()">🚫 Ignorar todos</button>
+            <div class="div"></div>
+            <button class="btn-apply" onclick="importarAprovados()">⬇ Importar aprovados para DRE</button>
+          </div>
+          <div id="extrato-import-status" style="margin-top:8px;font-size:11px;color:var(--mist)"></div>
+        </div>
+
+      </div>
+
+      <!-- COLUNA DIREITA: TABELA DE CLASSIFICAÇÃO -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- RESUMO DO EXTRATO -->
+        <div id="extrato-resumo" style="display:none">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+            <div style="padding:12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;text-align:center">
+              <div class="c-label">ENTRADAS</div><div style="font-size:16px;font-weight:800;color:var(--green)" id="ext-entradas">R$ 0</div>
+            </div>
+            <div style="padding:12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;text-align:center">
+              <div class="c-label">SAÍDAS</div><div style="font-size:16px;font-weight:800;color:var(--red)" id="ext-saidas">R$ 0</div>
+            </div>
+            <div style="padding:12px;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:10px;text-align:center">
+              <div class="c-label">TRANSAÇÕES</div><div style="font-size:16px;font-weight:800" id="ext-total">0</div>
+            </div>
+            <div style="padding:12px;background:rgba(0,180,166,.06);border:1px solid rgba(0,180,166,.2);border-radius:10px;text-align:center">
+              <div class="c-label">APROVADOS</div><div style="font-size:16px;font-weight:800;color:var(--teal)" id="ext-aprovados">0</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TABELA DE CLASSIFICAÇÃO -->
+        <div class="card" style="flex:1">
+          <div class="sh">
+            <div class="sh-name">Classificar <span>Lançamentos</span></div>
+            <div style="display:flex;gap:6px">
+              <button class="btn-sm active" id="ext-filter-todos" onclick="filtrarExtrato('todos',this)">Todos</button>
+              <button class="btn-sm" id="ext-filter-pendente" onclick="filtrarExtrato('pendente',this)">Pendentes</button>
+              <button class="btn-sm" id="ext-filter-aprovado" onclick="filtrarExtrato('aprovado',this)">Aprovados</button>
+            </div>
+          </div>
+          <div id="extrato-empty" style="text-align:center;padding:40px;color:var(--mist);font-size:12px">
+            <div style="font-size:32px;margin-bottom:10px">🏦</div>
+            Importe um extrato para classificar os lançamentos.<br>
+            <span style="font-size:10px;opacity:.6">Cada linha será classificada como custo, receita extra ou ignorada.</span>
+          </div>
+          <div id="extrato-table-wrap" style="display:none;overflow-x:auto">
+            <table class="tbl" style="min-width:680px">
+              <thead>
+                <tr>
+                  <th>DATA</th>
+                  <th>DESCRIÇÃO</th>
+                  <th>VALOR</th>
+                  <th>TIPO</th>
+                  <th>CATEGORIA</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody id="extrato-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /panel-extrato -->
+
+  <!-- ── GESTÃO DE LANÇAMENTOS ── -->
+  <div class="ceo-panel" id="panel-gestao">
+
+    <!-- FILTRO GLOBAL -->
+    <div class="dre-controls" style="margin-bottom:18px">
+      <span class="dre-label">🗂️ Filtrar por Período</span>
+      <select id="gestao-period" onchange="renderGestao()" style="margin-bottom:0;width:160px">
+        <option value="todos">Todos os períodos</option>
+        <option value="2026-01">Janeiro 2026</option>
+        <option value="2026-02" selected>Fevereiro 2026</option>
+        <option value="2026-03">Março 2026</option>
+        <option value="2026-04">Abril 2026</option>
+      </select>
+      <select id="gestao-vendor" onchange="renderGestao()" style="margin-bottom:0;width:160px">
+        <option value="todos">Todos os comerciais</option>
+        <option value="joao">João</option>
+        <option value="arthur">Arthur</option>
+        <option value="rafael">Rafael</option>
+        <option value="empresa">Empresa</option>
+      </select>
+      <div style="display:flex;gap:6px;margin-left:auto">
+        <button class="btn-sm" onclick="selectAllTxns(true)">Selecionar todos</button>
+        <button class="btn-sm" onclick="selectAllTxns(false)">Limpar seleção</button>
+        <button class="btn-sm" id="btn-delete-sel" style="border-color:rgba(255,77,106,.3);color:var(--red);display:none" onclick="deleteSelected()">🗑 Excluir selecionados</button>
+      </div>
+    </div>
+
+    <!-- RESUMO SELEÇÃO -->
+    <div id="gestao-sel-bar" style="display:none;padding:10px 16px;background:rgba(255,77,106,.08);border:1px solid rgba(255,77,106,.2);border-radius:10px;margin-bottom:14px;display:none;align-items:center;justify-content:space-between">
+      <span style="font-size:12px;color:var(--fog)"><span id="sel-count">0</span> transações selecionadas · TPV: <span id="sel-tpv" class="tc">R$ 0</span> · Markup: <span id="sel-mkp" class="to">R$ 0</span></span>
+      <button onclick="deleteSelected()" style="padding:6px 14px;border-radius:8px;border:none;background:linear-gradient(135deg,#8B0000,var(--red));color:#fff;font-size:12px;font-weight:700;cursor:pointer">🗑 Confirmar Exclusão</button>
+    </div>
+
+    <div class="g21">
+      <!-- TABELA DE TRANSAÇÕES -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card">
+          <div class="sh">
+            <div class="sh-name">Transações <span>por Cliente</span></div>
+            <div id="gestao-txn-count" style="font-size:11px;color:var(--mist)"></div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="tbl" style="min-width:700px">
+              <thead>
+                <tr>
+                  <th style="width:32px"><input type="checkbox" id="chk-all" onchange="selectAllTxns(this.checked)" style="width:14px;height:14px;margin:0;cursor:pointer"></th>
+                  <th>PERÍODO</th>
+                  <th>CLIENTE</th>
+                  <th>COMERCIAL</th>
+                  <th>PRODUTO</th>
+                  <th>TPV</th>
+                  <th>MARKUP</th>
+                  <th>STATUS</th>
+                  <th>AÇÃO</th>
+                </tr>
+              </thead>
+              <tbody id="gestao-txn-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- CUSTOS DO PERÍODO -->
+        <div class="card">
+          <div class="sh">
+            <div class="sh-name">Custos <span>Operacionais</span></div>
+            <div id="gestao-cost-count" style="font-size:11px;color:var(--mist)"></div>
+          </div>
+          <div id="gestao-cost-body"></div>
+        </div>
+      </div>
+
+      <!-- PAINEL DIREITO: RESUMO + FECHAMENTOS -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+
+        <!-- RESUMO DO PERÍODO -->
+        <div class="card">
+          <div class="c-label">RESUMO DO PERÍODO</div>
+          <div id="gestao-summary" style="margin-top:12px"></div>
+        </div>
+
+        <!-- FECHAMENTOS -->
+        <div class="card">
+          <div class="sh"><div class="sh-name">Fechamentos <span>Lacrados</span></div></div>
+          <div style="font-size:11px;color:var(--mist);margin-bottom:12px;line-height:1.6">
+            Períodos lacrados são imutáveis. Para corrigir, desbloqueie o mês, faça as alterações e relace.
+          </div>
+          <div id="gestao-closings"></div>
+        </div>
+
+        <!-- AÇÕES DE PERÍODO -->
+        <div class="card" style="background:rgba(255,77,106,.04);border-color:rgba(255,77,106,.15)">
+          <div class="sh-name" style="margin-bottom:12px;color:var(--red)">⚠️ Ações Destrutivas</div>
+          <label class="il">Período alvo</label>
+          <select id="gestao-action-period" style="margin-bottom:10px">
+            <option value="2026-01">Janeiro 2026</option>
+            <option value="2026-02" selected>Fevereiro 2026</option>
+            <option value="2026-03">Março 2026</option>
+          </select>
+          <button class="btn-sm" style="width:100%;margin-bottom:8px;border-color:rgba(255,209,102,.3);color:var(--yellow)" onclick="unlockPeriod()">🔓 Desbloquear Fechamento</button>
+          <button class="btn-sm" style="width:100%;margin-bottom:8px;border-color:rgba(255,77,106,.3);color:var(--red)" onclick="deleteAllTxnsPeriod()">🗑 Apagar todas as transações do mês</button>
+          <button class="btn-sm" style="width:100%;border-color:rgba(255,77,106,.3);color:var(--red)" onclick="deleteAllCostsPeriod()">🗑 Apagar todos os custos do mês</button>
+        </div>
+
+      </div>
+    </div>
+  </div><!-- /panel-gestao -->
+
+  <!-- ── DADOS ── -->
+  <div class="ceo-panel" id="panel-dados">
+    <div class="g2">
+      <div class="card">
+        <div class="sh"><div class="sh-name">Exportar / <span>Importar</span></div></div>
+        <div style="font-size:12px;color:var(--mist);line-height:1.7;margin-bottom:16px">
+          Exporte os dados como JSON para backup no Google Drive.<br>
+          Importe para restaurar em qualquer dispositivo.
+        </div>
+        <button class="btn-apply" style="margin-bottom:10px" onclick="VF.Storage.exportJSON();toast('✅ Backup exportado!')">⬇ Exportar JSON (Backup)</button>
+        <button class="btn-apply" style="margin-bottom:10px;background:linear-gradient(135deg,#1a3e1a,var(--green))" onclick="document.getElementById('import-fi').click()">⬆ Importar JSON</button>
+        <input type="file" id="import-fi" accept=".json" style="display:none" onchange="importData(this.files[0])">
+        <div class="div"></div>
+        <button class="btn-apply danger" onclick="resetData()">🗑 Resetar Todos os Dados</button>
+      </div>
+      <div class="card">
+        <div class="sh"><div class="sh-name">Configurações de <span>Projeção</span></div></div>
+        <label class="il">Crescimento mensal TPV (%)</label>
+        <input type="number" id="cfg-growth" value="3" step="0.1" onchange="updateConfig()">
+        <label class="il">Meta Anual (R$)</label>
+        <input type="number" id="cfg-annual" value="24000000" onchange="updateConfig()">
+        <label class="il">Caixa Inicial (R$)</label>
+        <input type="number" id="cfg-caixa" value="120000" onchange="updateConfig()">
+        <button class="btn-apply" onclick="updateConfig();toast('✅ Configuração salva!')">Salvar Configuração</button>
+        <div class="div"></div>
+        <div class="sh-name" style="margin-bottom:10px">Status do <span style="color:var(--teal)">Banco</span></div>
+        <div id="db-stats" style="font-size:12px;color:var(--fog);line-height:2"></div>
+      </div>
+    </div>
+  </div><!-- /panel-dados -->
+
+  <!-- ── PARAMETRIZAÇÃO ── -->
+  <div class="ceo-panel" id="panel-parametrizacao">
+    <div class="param-tabs">
+      <button class="param-tab active" onclick="swParam('vendedores',this)">Vendedores</button>
+      <button class="param-tab" onclick="swParam('comissionamento',this)">Comissionamento</button>
+      <button class="param-tab" onclick="swParam('metas',this)">Metas</button>
+    </div>
+
+    <!-- VENDEDORES -->
+    <div class="param-section active" id="param-vendedores">
+      <div class="sh">
+        <div class="sh-name">Vendedores <span>Cadastrados</span></div>
+        <button class="param-add-btn" onclick="openVendorModal()">+ Adicionar Vendedor</button>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>NOME</th>
+                <th>REGIÃO</th>
+                <th>META INDIVIDUAL (R$)</th>
+                <th>COMISSÃO BASE (%)</th>
+                <th>AÇÕES</th>
+              </tr>
+            </thead>
+            <tbody id="param-vendedores-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- COMISSIONAMENTO -->
+    <div class="param-section" id="param-comissionamento">
+      <div class="sh">
+        <div class="sh-name">Regras de <span>Comissionamento</span></div>
+        <button class="param-add-btn" onclick="openComissaoModal()">+ Adicionar Regra</button>
+      </div>
+      <div id="param-comissao-warnings" style="margin-top:10px"></div>
+      <div class="card" style="margin-top:14px">
+        <div style="overflow-x:auto">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>PRODUTO</th>
+                <th>% COMISSÃO</th>
+                <th>META MÍNIMA P/ ATIVAR</th>
+                <th>AÇÕES</th>
+              </tr>
+            </thead>
+            <tbody id="param-comissao-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- METAS -->
+    <div class="param-section" id="param-metas">
+      <div class="sh">
+        <div class="sh-name">Metas <span>Anuais e Mensais</span></div>
+        <button class="param-add-btn" onclick="distribuirMetasUniforme()">Distribuir uniformemente</button>
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="c-label" style="margin-bottom:10px">META GLOBAL ANUAL</div>
+        <input type="text" id="param-meta-anual" class="meta-input-big" placeholder="R$ 0,00" oninput="onMetaAnualInput(this)" onblur="onMetaAnualBlur(this)">
+      </div>
+      <div class="card" style="margin-top:14px">
+        <div class="c-label" style="margin-bottom:14px">DISTRIBUIÇÃO MENSAL</div>
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>MÊS</th>
+              <th style="text-align:right">META (R$)</th>
+              <th style="text-align:right">% DO ANUAL</th>
+            </tr>
+          </thead>
+          <tbody id="param-metas-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div><!-- /panel-parametrizacao -->
+
+  <!-- MODAL CONTAINER -->
+  <div id="param-modal-container"></div>
+
+</div>
+</div><!-- /view-ceo -->
+
+<!-- ════════════ TEAM VIEW ════════════ -->
+<div class="view" id="view-team">
+<div class="page">
+  <div class="tbanner">
+    <div class="tb-title">📊 Resultados da Equipe</div>
+    <div class="tb-sub">Dados calculados pelo motor · Realizado separado de projeção · Farol de performance</div>
+    <div class="tb-pill" id="team-period-badge">FEVEREIRO · 2026</div>
+  </div>
+
+  <div class="period-selector">
+    <span class="ps-label">📅 Período</span>
+    <select id="team-period-sel" onchange="updateTeamView()" style="max-width:200px;margin-bottom:0">
+      <option value="ano">📊 Ano completo (acumulado)</option>
+      <option value="2026-01">Janeiro 2026</option>
+      <option value="2026-02" selected>Fevereiro 2026</option>
+      <option value="2026-03">Março 2026 (projeção)</option>
+      <option value="2026-04">Abril 2026 (projeção)</option>
+      <option value="2026-05">Maio 2026 (projeção)</option>
+    </select>
+    <div style="display:flex;gap:5px">
+      <button class="btn-sm active" id="ft-mensal" onclick="setTeamFilter('mensal',this)">Mensal</button>
+      <button class="btn-sm" id="ft-quinzenal" onclick="setTeamFilter('quinzenal',this)">Quinzenal</button>
+      <button class="btn-sm" id="ft-semanal" onclick="setTeamFilter('semanal',this)">Semanal</button>
+    </div>
+    <div id="team-status-badge" style="margin-left:auto"></div>
+  </div>
+
+  <div class="g4" id="team-kpis"></div>
+
+  <!-- PAINEL ANUAL -->
+  <div id="year-section" style="display:none">
+    <div style="background:linear-gradient(135deg,rgba(0,77,71,.4),rgba(7,17,28,.8));border:1px solid rgba(0,180,166,.2);border-radius:var(--r);padding:22px;margin-bottom:18px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div><div style="font-size:16px;font-weight:800">Resultado <span style="color:var(--teal)">Acumulado 2026</span></div><div style="font-size:11px;color:var(--mist);margin-top:3px">Apenas meses com dados realizados</div></div>
+        <div class="status-flag flag-real" id="year-cutoff-badge">ATÉ —</div>
+      </div>
+      <div id="year-months-strip" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px"></div>
+      <div class="g4" id="year-kpis"></div>
+      <div class="ch260" style="margin-top:12px"><canvas id="chart-year"></canvas></div>
+    </div>
+    <div class="g3" id="year-com-cards"></div>
+  </div>
+
+  <!-- PAINEL MENSAL -->
+  <div id="monthly-section">
+    <div class="sh" style="margin-bottom:14px">
+      <div class="sh-name">Performance <span>Individual</span></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn-sm active" id="btn-all" onclick="showCom('all',this)">Todos</button>
+        <button class="btn-sm" id="btn-joao" onclick="showCom('joao',this)">João</button>
+        <button class="btn-sm" id="btn-arthur" onclick="showCom('arthur',this)">Arthur</button>
+        <button class="btn-sm" id="btn-rafael" onclick="showCom('rafael',this)">Rafael</button>
+      </div>
+    </div>
+    <div id="team-com-panels"></div>
+    <div class="g12">
+      <div class="card">
+        <div class="sh"><div class="sh-name">🏆 Ranking</div><div class="sh-tag" id="ranking-tag">MARKUP</div></div>
+        <div id="ranking-list"></div>
+      </div>
+      <div class="card">
+        <div class="sh"><div class="sh-name">Markup <span>Comparativo</span></div><div class="sh-tag" id="chart-com-tag"></div></div>
+        <div class="ch280"><canvas id="chart-com"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROWTH EQUIPE -->
+  <div class="growth-center" style="margin-top:18px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px">
+      <div><div class="gc-title">Evolução <span>TPV da Equipe</span></div><div class="gc-sub">Realizado (sólido) × Projeção (tracejado) · Meta R$ 24M</div></div>
+    </div>
+    <div class="accum-row" id="accum-team"></div>
+    <div class="gc-chart-wrap" style="height:220px"><canvas id="chart-tpv-team"></canvas></div>
+  </div>
+
+</div>
+</div><!-- /view-team -->
+
+<!-- ENGINE SCRIPT -->
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// VENDA FEITA — MOTOR DE CÁLCULO v1.0
+// Caminho A com disciplina de engenharia
+// ─────────────────────────────────────────────────────────────────
+// PRINCÍPIOS:
+//   1. DB é a única fonte de verdade
+//   2. Engine só lê do DB, nunca assume valores
+//   3. Dashboard só chama Engine, nunca calcula
+//   4. Realizado ≠ Projetado — sempre separados com flag visual
+// ═══════════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────────────────────────
+// CAMADA 1: BANCO DE DADOS (fonte de verdade)
+// ─────────────────────────────────────────────────────────────────
+const DB = {
+
+  // Metadados
+  version: '1.0',
+  company: 'Venda Feita',
+  lastSaved: null,
+
+  // Transações (granularidade por cliente/produto/período)
+  // status: 'realizado' | 'projetado'
+  transactions: [],
+
+  // Custos operacionais
+  // status: 'realizado' | 'projetado'
+  costs: [],
+
+  // Fechamentos mensais oficiais (imutáveis após lock)
+  // status: 'fechado' | 'aberto' | 'projetado'
+  closings: {},
+
+  // Cadastro de clientes
+  clients: {},
+
+  // Cadastro de vendedores e suas regras de comissão
+  vendors: {
+    empresa: { name: 'Empresa (Força Própria)', commissionRate: 0 },
+    joao:    { name: 'João',   commissionRate: 0.50 },
+    arthur:  { name: 'Arthur', commissionRate: 0.50 },
+    rafael:  { name: 'Rafael', commissionRate: 0.50 },
+  },
+
+  // Produtos e suas regras
+  products: {
+    cappta: {
+      name: 'Cappta',
+      revenueType: 'tpv_markup', // markup sobre TPV
+      defaultMarkupRate: 0.0108,
+      mensalidade: 149.00,
+    },
+    dchef: {
+      name: 'DChef',
+      revenueType: 'setup_mensalidade',
+      setupCommissionRate: 0.40,
+      mensalidadeCommissionRate: 0.30,
+    },
+    alimente: {
+      name: 'Alimente',
+      revenueType: 'tpv_rate',
+      rate: 0.005,
+    },
+  },
+
+  // Configurações de projeção
+  projectionConfig: {
+    tpvGrowthRate: 0.03,     // 3% ao mês
+    annualTarget: 24000000,   // R$ 24M
+    monthlyTarget: 2000000,   // R$ 2M/mês
+    baseMonth: '2026-02',
+    caixaInicial: 120000,
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────
+// CAMADA 2: PERSISTÊNCIA (localStorage com export/import)
+// ─────────────────────────────────────────────────────────────────
+const Storage = {
+
+  KEY: 'vf_db_v1',
+
+  save() {
+    try {
+      DB.lastSaved = new Date().toISOString();
+      localStorage.setItem(this.KEY, JSON.stringify(DB));
+      return true;
+    } catch(e) {
+      console.error('Storage.save error:', e);
+      return false;
+    }
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (!raw) return false;
+      const saved = JSON.parse(raw);
+      // Merge: preserva estrutura, restaura dados
+      Object.assign(DB, {
+        transactions: saved.transactions || [],
+        costs:        saved.costs        || [],
+        closings:     saved.closings     || {},
+        clients:      saved.clients      || {},
+        lastSaved:    saved.lastSaved    || null,
+        projectionConfig: { ...DB.projectionConfig, ...(saved.projectionConfig || {}) },
+      });
+      return true;
+    } catch(e) {
+      console.error('Storage.load error:', e);
+      return false;
+    }
+  },
+
+  exportJSON() {
+    const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `VendaFeita_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+  },
+
+  importJSON(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const data = JSON.parse(e.target.result);
+          Object.assign(DB, data);
+          this.save();
+          resolve(true);
+        } catch(err) { reject(err); }
+      };
+      reader.readAsText(file);
+    });
+  },
+
+  clear() {
+    localStorage.removeItem(this.KEY);
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────
+// CAMADA 3: REPOSITÓRIO (operações no DB)
+// ─────────────────────────────────────────────────────────────────
+const Repo = {
+
+  // ── TRANSAÇÕES ──────────────────────────────────────────────────
+  addTransaction(t) {
+    // FIX: bloqueia adição em período oficialmente lacrado
+    // (permite seed/unlock via flag force:true)
+    const period = t.period || (t.date || '').slice(0,7);
+    if (!t.force && period && DB.closings[period]?.status === 'fechado') {
+      console.warn(`addTransaction bloqueado: período ${period} está lacrado.`);
+      return null;
+    }
+    const txn = {
+      id:        't_' + Date.now() + '_' + Math.random().toString(36).slice(2,6),
+      date:      t.date,
+      period:    t.period || t.date.slice(0,7), // 'YYYY-MM'
+      product:   t.product,
+      clientId:  t.clientId,
+      clientName:t.clientName || '',
+      vendorId:  t.vendorId || 'empresa',
+      tpv:       parseFloat(t.tpv)    || 0,
+      markup:    parseFloat(t.markup) || 0,
+      mensalidade: parseFloat(t.mensalidade) || 0,
+      contaDigital: parseFloat(t.contaDigital) || 0,
+      status:    t.status || 'realizado',
+      source:    t.source || 'manual',
+      createdAt: new Date().toISOString(),
+    };
+    DB.transactions.push(txn);
+    // Registra cliente automaticamente
+    if (txn.clientId && !DB.clients[txn.clientId]) {
+      DB.clients[txn.clientId] = {
+        id: txn.clientId,
+        name: txn.clientName,
+        vendorId: txn.vendorId,
+        product: txn.product,
+        active: true,
+        createdAt: txn.createdAt,
+      };
+    }
+    Storage.save();
+    return txn;
+  },
+
+  getTransactions(filters = {}) {
+    let txns = [...DB.transactions];
+    if (filters.period)   txns = txns.filter(t => t.period === filters.period);
+    if (filters.vendorId) txns = txns.filter(t => t.vendorId === filters.vendorId);
+    if (filters.product)  txns = txns.filter(t => t.product === filters.product);
+    if (filters.status)   txns = txns.filter(t => t.status === filters.status);
+    if (filters.clientId) txns = txns.filter(t => t.clientId === filters.clientId);
+    return txns;
+  },
+
+  // ── CUSTOS ──────────────────────────────────────────────────────
+  addCost(c) {
+    const cost = {
+      id:          'c_' + Date.now(),
+      description: c.description,
+      category:    c.category,
+      amount:      parseFloat(c.amount) || 0,
+      frequency:   c.frequency || 'mensal', // 'mensal'|'único'|'trimestral'|'anual'
+      period:      c.period,  // 'YYYY-MM'
+      recurrent:   c.recurrent || c.frequency === 'mensal',
+      status:      c.status || (c.period >= Engine.currentPeriod() ? 'projetado' : 'realizado'),
+      notes:       c.notes || '',
+      createdAt:   new Date().toISOString(),
+    };
+    DB.costs.push(cost);
+    Storage.save();
+    return cost;
+  },
+
+  getCosts(filters = {}) {
+    let costs = [...DB.costs];
+    if (filters.period)   costs = costs.filter(c => c.period === filters.period);
+    if (filters.status)   costs = costs.filter(c => c.status === filters.status);
+    if (filters.category) costs = costs.filter(c => c.category === filters.category);
+    return costs;
+  },
+
+  deleteCost(id) {
+    DB.costs = DB.costs.filter(c => c.id !== id);
+    Storage.save();
+  },
+
+  // ── FECHAMENTOS ─────────────────────────────────────────────────
+  lockClosing(period) {
+    const dre = Engine.calcDRE(period);
+    DB.closings[period] = {
+      period,
+      status:    'fechado',
+      lockedAt:  new Date().toISOString(),
+      ...dre,
+    };
+    // Marca transações e custos do período como realizados
+    DB.transactions.filter(t => t.period === period).forEach(t => t.status = 'realizado');
+    DB.costs.filter(c => c.period === period).forEach(c => c.status = 'realizado');
+    Storage.save();
+    return DB.closings[period];
+  },
+
+  getClosing(period) {
+    return DB.closings[period] || null;
+  },
+
+  // ── UPLOAD XLSX (granular) ───────────────────────────────────────
+  importFromXLSX(wb, period) {
+    const results = { imported: 0, skipped: 0, clients: new Set() };
+
+    // Remove transações antigas do mesmo período/fonte para reimportar
+    DB.transactions = DB.transactions.filter(
+      t => !(t.period === period && t.source === 'xlsx_upload')
+    );
+
+    // MarkupPOS — linha por cliente
+    if (wb.SheetNames.includes('MarkupPOS')) {
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets['MarkupPOS'], { header: 1, defval: '' });
+      const headerRow = rows.findIndex(r => r[1] && String(r[1]).includes('CNPJ'));
+      const dataRows  = rows.slice(headerRow + 1);
+
+      // Agrupa por cliente (doc_ec = col 3)
+      const byClient = {};
+      dataRows.forEach(r => {
+        const cnpj   = String(r[2] || '').trim();
+        const docEc  = String(r[3] || '').trim();
+        const ecName = String(r[4] || '').trim();
+        const tpv    = parseFloat(r[6]) || 0;
+        const markup = parseFloat(r[8]) || 0;
+        // Conta linhas descartadas (linha não vazia mas sem tpv válido)
+        if (!docEc) return;
+        if (tpv <= 0) { results.skipped++; return; }
+        if (!byClient[docEc]) {
+          byClient[docEc] = { cnpj, docEc, ecName, tpv: 0, markup: 0 };
+        }
+        byClient[docEc].tpv    += tpv;
+        byClient[docEc].markup += markup;
+      });
+
+      Object.values(byClient).forEach(cl => {
+        // Tenta encontrar vendedor vinculado
+        const existing = DB.clients[cl.docEc];
+        const vendorId = existing ? existing.vendorId : 'empresa';
+        Repo.addTransaction({
+          date:       period + '-01',
+          period:     period,
+          product:    'cappta',
+          clientId:   cl.docEc,
+          clientName: cl.ecName,
+          vendorId:   vendorId,
+          tpv:        cl.tpv,
+          markup:     cl.markup,
+          mensalidade: 0,
+          contaDigital: 0,
+          status:     'realizado',
+          source:     'xlsx_upload',
+        });
+        results.imported++;
+        results.clients.add(cl.ecName);
+      });
+    }
+
+    // RepasseAjustesFinanceiros — mensalidades e conta digital
+    if (wb.SheetNames.includes('RepasseAjustesFinanceiros')) {
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets['RepasseAjustesFinanceiros'], { header: 1, defval: '' });
+      const headerRow = rows.findIndex(r => String(r[1] || '').includes('CNPJ'));
+      const dataRows  = rows.slice(headerRow + 1);
+
+      let totalMens = 0, totalConta = 0;
+      dataRows.forEach(r => {
+        const val  = parseFloat(r[7]) || 0;
+        const tipo = String(r[8] || '').toLowerCase();
+        if (tipo.includes('aluguel')) totalMens  += val;
+        if (tipo.includes('digital')) totalConta += val;
+      });
+
+      // Adiciona como transação de repasses (nível empresa)
+      if (totalMens > 0 || totalConta > 0) {
+        Repo.addTransaction({
+          date:        period + '-01',
+          period:      period,
+          product:     'cappta',
+          clientId:    '_repasses_' + period,
+          clientName:  'Repasses Cappta',
+          vendorId:    'empresa',
+          tpv:         0,
+          markup:      0,
+          mensalidade: totalMens,
+          contaDigital: totalConta,
+          status:      'realizado',
+          source:      'xlsx_upload',
+        });
+      }
+    }
+
+    // OutrasCobranças — lança como custos
+    if (wb.SheetNames.includes('OutrasCobranças')) {
+      const rows = XLSX.utils.sheet_to_json(wb.Sheets['OutrasCobranças'], { header: 1, defval: '' });
+      const headerRow = rows.findIndex(r => String(r[1] || '').includes('CNPJ'));
+      const dataRows  = rows.slice(headerRow + 1);
+
+      // Remove custos de xlsx do mesmo período
+      DB.costs = DB.costs.filter(c => !(c.period === period && c.source === 'xlsx_upload'));
+
+      dataRows.forEach(r => {
+        const val  = parseFloat(r[3]) || 0;
+        const tipo = String(r[4] || '').trim();
+        if (!tipo || val === 0) return;
+        Repo.addCost({
+          description: tipo,
+          category:    'Cappta',
+          amount:      Math.abs(val),
+          frequency:   'único',
+          period:      period,
+          status:      'realizado',
+          source:      'xlsx_upload',
+        });
+      });
+    }
+
+    Storage.save();
+    return results;
+  },
+
+  // ── VINCULAR CLIENTE A VENDEDOR ──────────────────────────────────
+  assignClientToVendor(clientId, vendorId) {
+    if (DB.clients[clientId]) {
+      DB.clients[clientId].vendorId = vendorId;
+    }
+    // Atualiza transações existentes
+    DB.transactions
+      .filter(t => t.clientId === clientId)
+      .forEach(t => t.vendorId = vendorId);
+    Storage.save();
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────
+// CAMADA 4: ENGINE DE CÁLCULO (nunca assume valores)
+// ─────────────────────────────────────────────────────────────────
+const Engine = {
+
+  // ── UTILIDADE: arredondamento financeiro (evita floating-point drift) ──
+  // Converte para centavos, arredonda, volta para reais
+  r2(v) { return Math.round((v || 0) * 100) / 100; },
+  sum(arr) { return Engine.r2(arr.reduce((a, b) => a + (b || 0), 0)); },
+
+  // Período corrente (pode ser sobrescrito para testes)
+  currentPeriod() {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  },
+
+  // ── DRE DE UM PERÍODO ────────────────────────────────────────────
+  // NUNCA mistura realizado com projetado
+  // Retorna cada linha com valor E status
+  calcDRE(period) {
+    const closing = Repo.getClosing(period);
+
+    // Se tem fechamento oficial lacrado, usa ele
+    if (closing && closing.status === 'fechado') {
+      return { ...closing, fromClosing: true };
+    }
+
+    // Busca transações do período
+    const txns  = Repo.getTransactions({ period });
+    const costs = Repo.getCosts({ period });
+
+    // Status do período
+    const hasRealTxns = txns.some(t => t.status === 'realizado');
+    const hasProjTxns = txns.some(t => t.status === 'projetado');
+    const isProjected = !hasRealTxns || hasProjTxns;
+
+    // ── RECEITAS ── (r2 previne floating-point drift)
+    const totalTPV         = Engine.r2(txns.reduce((a, t) => a + (t.tpv || 0), 0));
+    const totalMarkup      = Engine.r2(txns.reduce((a, t) => a + (t.markup || 0), 0));
+    const totalMensalidade = Engine.r2(txns.reduce((a, t) => a + (t.mensalidade || 0), 0));
+    const totalContaDigital= Engine.r2(txns.reduce((a, t) => a + (t.contaDigital || 0), 0));
+
+    // Receitas extras (tipo='receita' nos custos)
+    const receitasExtras   = Engine.r2(costs.filter(c=>c.tipo==='receita').reduce((a,c)=>a+c.amount,0));
+    const receitaBruta     = Engine.r2(totalMarkup + totalMensalidade + totalContaDigital + receitasExtras);
+
+    // ── CUSTOS OPERACIONAIS ── (apenas tipo='custo' ou sem tipo definido)
+    const totalCustos = Engine.r2(costs.filter(c=>c.tipo!=='receita').reduce((a, c) => a + (c.amount || 0), 0));
+
+    // ── COMISSÕES ── (calculadas por vendedor sobre markup das transações)
+    const commissions = {};
+    Object.keys(DB.vendors).forEach(vid => {
+      const vendorTxns   = txns.filter(t => t.vendorId === vid);
+      const vendorMarkup = Engine.r2(vendorTxns.reduce((a, t) => a + (t.markup || 0), 0));
+      const rate         = DB.vendors[vid].commissionRate || 0;
+      commissions[vid]   = {
+        markup: vendorMarkup,
+        rate,
+        amount: Engine.r2(vendorMarkup * rate),
+        name:   DB.vendors[vid].name,
+      };
+    });
+    const totalComissoes = Engine.r2(Object.values(commissions).reduce((a, c) => a + c.amount, 0));
+
+    // ── RESULTADO ──
+    const receitaLiquida   = Engine.r2(receitaBruta - totalCustos);
+    const resultadoLiquido = Engine.r2(receitaLiquida - totalComissoes);
+
+    return {
+      period,
+      status:          isProjected ? 'projetado' : 'realizado',
+      fromClosing:     false,
+
+      // Receitas
+      tpv:             totalTPV,
+      markup:          totalMarkup,
+      mensalidade:     totalMensalidade,
+      contaDigital:    totalContaDigital,
+      receitaBruta,
+
+      // Custos
+      custos:          totalCustos,
+      receitaLiquida,
+
+      // Comissões
+      commissions,
+      totalComissoes,
+
+      // Resultado
+      resultadoLiquido,
+
+      // Meta
+      numClients:      new Set(txns.map(t => t.clientId)).size,
+    };
+  },
+
+  // ── PROJEÇÃO (motor real, sem hardcode) ──────────────────────────
+  // Para cada mês futuro:
+  //   1. Pega o último mês real como base
+  //   2. Aplica crescimento de TPV
+  //   3. Recalcula markup proporcional
+  //   4. Adiciona custos já lançados (mesmo sem receita)
+  //   5. Projeta comissões sobre markup projetado
+  calcProjection(targetPeriod) {
+    const cfg = DB.projectionConfig;
+
+    // Encontra o mês real mais recente
+    const realPeriods = Object.keys(DB.closings)
+      .filter(p => DB.closings[p].status === 'fechado')
+      .sort();
+
+    let baseDRE = null;
+    let baseMarkupRate = 0.0108; // fallback conservador
+
+    if (realPeriods.length > 0) {
+      const lastReal = realPeriods[realPeriods.length - 1];
+      baseDRE = DB.closings[lastReal];
+      if (baseDRE.tpv > 0) {
+        baseMarkupRate = baseDRE.markup / baseDRE.tpv;
+      }
+    } else {
+      // Sem fechamentos: usa todas as transações reais disponíveis como base
+      const allReal = DB.transactions.filter(t => t.status === 'realizado');
+      const allTpv  = Engine.r2(allReal.reduce((a,t) => a+(t.tpv||0), 0));
+      const allMkp  = Engine.r2(allReal.reduce((a,t) => a+(t.markup||0), 0));
+      const allMens = Engine.r2(allReal.reduce((a,t) => a+(t.mensalidade||0), 0));
+      const allCont = Engine.r2(allReal.reduce((a,t) => a+(t.contaDigital||0), 0));
+      if (allTpv > 0) {
+        baseMarkupRate = allMkp / allTpv; // taxa real calculada dos dados existentes
+        baseDRE = {
+          tpv: allTpv, markup: allMkp,
+          mensalidade: allMens, contaDigital: allCont,
+          receitaBruta: Engine.r2(allMkp + allMens + allCont),
+          // Custos: média dos custos reais por mês
+          custos: Engine.r2(DB.costs.filter(c=>c.status==='realizado'&&c.tipo!=='receita').reduce((a,c)=>a+c.amount,0)),
+        };
+      }
+    }
+    // Refinamento: se há fechamentos, verifica se a taxa difere muito das transações reais
+    // Para evitar "salto visual" no gráfico ao fechar o primeiro mês
+    if (baseDRE && realPeriods.length > 0) {
+      const openReal = DB.transactions.filter(t => t.status === 'realizado');
+      const oTpv = openReal.reduce((a,t)=>a+(t.tpv||0), 0);
+      const oMkp = openReal.reduce((a,t)=>a+(t.markup||0), 0);
+      if (oTpv > 0) {
+        const realRate = oMkp / oTpv;
+        const closedRate = baseMarkupRate;
+        // Se divergência > 15%, usa média ponderada para suavizar
+        if (Math.abs(realRate - closedRate) / closedRate > 0.15) {
+          baseMarkupRate = (realRate + closedRate) / 2;
+        }
+      }
+    }
+
+    if (!baseDRE) {
+      // Sem nenhum dado: retorna projeção zerada com aviso
+      return {
+        period: targetPeriod, status: 'projetado',
+        tpv: 0, markup: 0, receitaBruta: 0,
+        custos: 0, receitaLiquida: 0,
+        totalComissoes: 0, resultadoLiquido: 0,
+        warning: 'Sem dados reais como base de projeção',
+      };
+    }
+
+    // Calcula meses entre base e target
+    const basePeriod = baseDRE.period || '2026-02';
+    const monthsDiff = Engine._monthsDiff(basePeriod, targetPeriod);
+    const growthFactor = Math.pow(1 + cfg.tpvGrowthRate, monthsDiff);
+
+    const projTPV    = (baseDRE.tpv || 0) * growthFactor;
+    const projMarkup = projTPV * baseMarkupRate;
+    const projMens   = (baseDRE.mensalidade || 0) * growthFactor;
+    const projConta  = (baseDRE.contaDigital || 0);
+
+    // Custos já lançados para o período (mesmo que receita = 0)
+    const launchedCosts = Repo.getCosts({ period: targetPeriod });
+    const projCustos = launchedCosts.length > 0
+      ? launchedCosts.reduce((a, c) => a + c.amount, 0)
+      : (baseDRE.custos || 0); // fallback: replica custos do mês base
+
+    // Comissões projetadas
+    const projComRate = Object.values(DB.vendors)
+      .filter(v => v.commissionRate > 0)
+      .reduce((a, v) => a + v.commissionRate, 0) / 3; // média dos vendedores ativos
+
+    const projRec  = projMarkup + projMens + projConta;
+    const projLiq  = projRec - projCustos;
+    const projCom  = projMarkup * projComRate;
+    const projRes  = projLiq - projCom;
+
+    return {
+      period:          targetPeriod,
+      status:          'projetado',
+      tpv:             projTPV,
+      markup:          projMarkup,
+      mensalidade:     projMens,
+      contaDigital:    projConta,
+      receitaBruta:    projRec,
+      custos:          projCustos,
+      receitaLiquida:  projLiq,
+      totalComissoes:  projCom,
+      resultadoLiquido:projRes,
+      growthFactor,
+      monthsDiff,
+    };
+  },
+
+  // ── DRE INTELIGENTE: real se existir, projeção se não ──────────
+  calcPeriod(period) {
+    const current = Engine.currentPeriod();
+    const txns    = Repo.getTransactions({ period, status: 'realizado' });
+    const hasReal = txns.length > 0 || Repo.getClosing(period)?.status === 'fechado';
+
+    if (hasReal || period <= current) {
+      return Engine.calcDRE(period);
+    } else {
+      return Engine.calcProjection(period);
+    }
+  },
+
+  // ── ANÁLISE POR VENDEDOR (período) ──────────────────────────────
+  calcByVendor(period) {
+    const txns = Repo.getTransactions({ period });
+    const result = {};
+
+    Object.keys(DB.vendors).forEach(vid => {
+      const vTxns   = txns.filter(t => t.vendorId === vid);
+      const tpv     = vTxns.reduce((a, t) => a + t.tpv, 0);
+      const markup  = vTxns.reduce((a, t) => a + t.markup, 0);
+      const rate    = DB.vendors[vid].commissionRate || 0;
+      result[vid] = {
+        vendorId:   vid,
+        name:       DB.vendors[vid].name,
+        clients:    new Set(vTxns.map(t => t.clientId)).size,
+        tpv,
+        markup,
+        commission: markup * rate,
+        netForCompany: markup * (1 - rate),
+        transactions: vTxns,
+      };
+    });
+
+    return result;
+  },
+
+  // ── ANÁLISE POR CLIENTE (período) ───────────────────────────────
+  calcByClient(period) {
+    const txns = Repo.getTransactions({ period });
+    const byClient = {};
+
+    txns.forEach(t => {
+      if (!byClient[t.clientId]) {
+        byClient[t.clientId] = {
+          clientId:   t.clientId,
+          clientName: t.clientName,
+          vendorId:   t.vendorId,
+          tpv: 0, markup: 0, mensalidade: 0,
+          markupRate: 0,
+        };
+      }
+      byClient[t.clientId].tpv        += t.tpv;
+      byClient[t.clientId].markup     += t.markup;
+      byClient[t.clientId].mensalidade+= t.mensalidade;
+    });
+
+    // Calcula margem real por cliente
+    Object.values(byClient).forEach(c => {
+      c.markupRate = c.tpv > 0 ? c.markup / c.tpv : 0;
+    });
+
+    return byClient;
+  },
+
+  // ── EVOLUÇÃO ANUAL ───────────────────────────────────────────────
+  calcYearEvolution(year = 2026) {
+    const months = Array.from({ length: 12 }, (_, i) =>
+      `${year}-${String(i + 1).padStart(2, '0')}`
+    );
+
+    let accumulatedTPV = 0;
+    let accumulatedResult = 0;
+
+    return months.map(period => {
+      const dre = Engine.calcPeriod(period);
+      accumulatedTPV    += dre.tpv || 0;
+      accumulatedResult += dre.resultadoLiquido || 0;
+
+      return {
+        period,
+        label:            period.slice(5, 7) === '01' ? 'Jan' :
+                          ['','Jan','Fev','Mar','Abr','Mai','Jun',
+                           'Jul','Ago','Set','Out','Nov','Dez'][parseInt(period.slice(5,7))],
+        status:           dre.status,
+        tpv:              dre.tpv || 0,
+        markup:           dre.markup || 0,
+        receitaBruta:     dre.receitaBruta || 0,
+        custos:           dre.custos || 0,
+        resultadoLiquido: dre.resultadoLiquido || 0,
+        accumulatedTPV,
+        accumulatedResult,
+        metaProgress:     (accumulatedTPV / DB.projectionConfig.annualTarget) * 100,
+      };
+    });
+  },
+
+  // ── CAIXA PROJETADO ─────────────────────────────────────────────
+  calcCaixa(period) {
+    const cfg = DB.projectionConfig;
+    const months = Engine.calcYearEvolution(parseInt(period.slice(0,4)));
+    const targetIdx = months.findIndex(m => m.period === period);
+    if (targetIdx < 0) return cfg.caixaInicial;
+    const totalResult = months
+      .slice(0, targetIdx + 1)
+      .reduce((a, m) => a + m.resultadoLiquido, 0);
+    return cfg.caixaInicial + totalResult;
+  },
+
+  // ── HELPERS ─────────────────────────────────────────────────────
+  _monthsDiff(from, to) {
+    const [fy, fm] = from.split('-').map(Number);
+    const [ty, tm] = to.split('-').map(Number);
+    return (ty - fy) * 12 + (tm - fm);
+  },
+
+  _periodLabel(period) {
+    const mo = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const m  = parseInt(period.slice(5, 7)) - 1;
+    const y  = period.slice(0, 4);
+    return mo[m] + '/' + y.slice(2);
+  },
+};
+
+// ─────────────────────────────────────────────────────────────────
+// CAMADA 5: CONFIG CONTEXT (parametrização com persistência)
+// ─────────────────────────────────────────────────────────────────
+const ConfigContext = {
+  KEY: 'vf_config_v1',
+
+  // Estado
+  vendedores: [],
+  regrasComissao: [],
+  metaAnual: 0,
+  metasMensais: [0,0,0,0,0,0,0,0,0,0,0,0],
+
+  save() {
+    try {
+      localStorage.setItem(this.KEY, JSON.stringify({
+        vendedores: this.vendedores,
+        regrasComissao: this.regrasComissao,
+        metaAnual: this.metaAnual,
+        metasMensais: this.metasMensais,
+      }));
+    } catch(e) { console.error('ConfigContext.save:', e); }
+  },
+
+  load() {
+    try {
+      const raw = localStorage.getItem(this.KEY);
+      if (!raw) return false;
+      const d = JSON.parse(raw);
+      this.vendedores = d.vendedores || [];
+      this.regrasComissao = d.regrasComissao || [];
+      this.metaAnual = d.metaAnual || 0;
+      this.metasMensais = d.metasMensais || [0,0,0,0,0,0,0,0,0,0,0,0];
+      return true;
+    } catch(e) { console.error('ConfigContext.load:', e); return false; }
+  },
+
+  // Seed inicial a partir do DB existente
+  seedFromDB() {
+    if (this.vendedores.length > 0) return;
+    // Importa vendedores do DB.vendors
+    Object.entries(DB.vendors).forEach(([id, v]) => {
+      if (id === 'empresa') return;
+      this.vendedores.push({
+        id,
+        nome: v.name,
+        regiao: 'Minas Gerais',
+        metaIndividual: Math.round(DB.projectionConfig.annualTarget / 12 / 3),
+        comissaoBase: (v.commissionRate || 0) * 100,
+      });
+    });
+    // Importa produtos como regras de comissionamento
+    Object.entries(DB.products).forEach(([id, p]) => {
+      const rate = p.defaultMarkupRate ? (p.defaultMarkupRate * 100) :
+                   p.setupCommissionRate ? (p.setupCommissionRate * 100) :
+                   p.rate ? (p.rate * 100) : 5;
+      this.regrasComissao.push({
+        id: 'rc_' + id,
+        produto: p.name,
+        comissao: parseFloat(rate.toFixed(2)),
+        metaMinima: 0,
+      });
+    });
+    // Meta anual do projectionConfig
+    this.metaAnual = DB.projectionConfig.annualTarget || 24000000;
+    const mensal = Math.round(this.metaAnual / 12);
+    this.metasMensais = Array(12).fill(mensal);
+    this.save();
+  },
+
+  // CRUD Vendedores
+  addVendedor(v) {
+    v.id = 'v_' + Date.now();
+    this.vendedores.push(v);
+    this.save();
+  },
+  updateVendedor(id, data) {
+    const idx = this.vendedores.findIndex(v => v.id === id);
+    if (idx >= 0) { Object.assign(this.vendedores[idx], data); this.save(); }
+  },
+  deleteVendedor(id) {
+    this.vendedores = this.vendedores.filter(v => v.id !== id);
+    this.save();
+  },
+
+  // CRUD Regras Comissão
+  addRegraComissao(r) {
+    r.id = 'rc_' + Date.now();
+    this.regrasComissao.push(r);
+    this.save();
+  },
+  updateRegraComissao(id, data) {
+    const idx = this.regrasComissao.findIndex(r => r.id === id);
+    if (idx >= 0) { Object.assign(this.regrasComissao[idx], data); this.save(); }
+  },
+  deleteRegraComissao(id) {
+    this.regrasComissao = this.regrasComissao.filter(r => r.id !== id);
+    this.save();
+  },
+
+  // Metas
+  setMetaAnual(val) {
+    this.metaAnual = val;
+    this.save();
+  },
+  setMetaMensal(mesIdx, val) {
+    this.metasMensais[mesIdx] = val;
+    this.save();
+  },
+  distribuirUniforme() {
+    const mensal = Math.round(this.metaAnual / 12);
+    this.metasMensais = Array(12).fill(mensal);
+    this.save();
+  },
+};
+
+// Alias
+const _Config = ConfigContext;
+
+// ─────────────────────────────────────────────────────────────────
+// SEEDS: Dados reais de Jan/2026 e Fev/2026
+// ─────────────────────────────────────────────────────────────────
+function seedRealData() {
+  // Só faz seed se DB está vazio
+  if (DB.transactions.length > 0) return;
+
+  // ── JANEIRO 2026 ──
+  const jan = '2026-01';
+
+  // Clientes João — Janeiro
+  [
+    { id: 'c_lagoa',    name: 'Lagoa da Prata',       tpv: 79863.01, markup: 968.14 },
+    { id: 'c_cupim',    name: 'Cupim (C.H.Pedrini)',  tpv: 56951.81, markup: 680.44 },
+    { id: 'c_figueiral',name: 'Figueiral',             tpv: 0,        markup: 0 },
+    { id: 'c_oficina',  name: 'Oficina da Pizza',      tpv: 39250.94, markup: 504.65 },
+  ].forEach(c => Repo.addTransaction({ date: jan+'-01', period: jan, product: 'cappta', clientId: c.id, clientName: c.name, vendorId: 'joao', tpv: c.tpv, markup: c.markup, mensalidade: 149, status: 'realizado', source: 'seed' }));
+
+  // Clientes Arthur — Janeiro
+  [
+    { id: 'c_planeta',  name: 'Planeta Shop e Animais',        tpv: 152416.15, markup: 964.31 },
+    { id: 'c_murilo',   name: 'Murilo Games',                  tpv: 12299.21,  markup: 193.70 },
+    { id: 'c_sabor',    name: 'Sabor de Portugal',             tpv: 177380.30, markup: 2443.69 },
+    { id: 'c_betrod',   name: 'Betim Rodas',                   tpv: 0,         markup: 0 },
+    { id: 'c_pepito',   name: 'Açai Pepito',                   tpv: 6450.62,   markup: 72.15 },
+    { id: 'c_spralt',   name: 'Super Prime Açai Alterosas',    tpv: 45420.67,  markup: 342.64 },
+    { id: 'c_central',  name: 'Central Car',                   tpv: 3475.00,   markup: 66.80 },
+    { id: 'c_patrao',   name: 'Açai do Patrão',                tpv: 11030.71,  markup: 90.16 },
+    { id: 'c_springa',  name: 'Super Prime Ingá',              tpv: 33860.10,  markup: 271.07 },
+    { id: 'c_sprfat',   name: 'Super Prime Senhora de Fátima', tpv: 90690.28,  markup: 728.24 },
+    { id: 'c_king',     name: 'King Colchões / Alexsandro',    tpv: 37057.00,  markup: 101.75 },
+  ].forEach(c => Repo.addTransaction({ date: jan+'-01', period: jan, product: 'cappta', clientId: c.id, clientName: c.name, vendorId: 'arthur', tpv: c.tpv, markup: c.markup, mensalidade: 149, status: 'realizado', source: 'seed' }));
+
+  // Clientes Rafael — Janeiro
+  [
+    { id: 'c_trembao', name: 'Trem Bão',   tpv: 42404.83, markup: 509.89 },
+    { id: 'c_pneus',   name: 'Pneus Recape', tpv: 15879.20, markup: 248.51 },
+    { id: 'c_anjo1',   name: 'Anjo Azul',   tpv: 41429.41, markup: 441.74 },
+    { id: 'c_anjo2',   name: 'Anjo Azul II',tpv: 10895.27, markup: 114.81 },
+  ].forEach(c => Repo.addTransaction({ date: jan+'-01', period: jan, product: 'cappta', clientId: c.id, clientName: c.name, vendorId: 'rafael', tpv: c.tpv, markup: c.markup, mensalidade: 149, status: 'realizado', source: 'seed' }));
+
+  // Empresa (demais clientes) — Janeiro
+  [
+    { id: 'c_betmad', name: 'Betim Madeiras Ltda',     tpv: 309363.96, markup: 3279.44 },
+    { id: 'c_lbm',    name: 'Mercearia LBM Ltda',      tpv: 155491.46, markup: 1283.26 },
+    { id: 'c_doral',  name: 'Maria Doralice',           tpv: 88461.30,  markup: 1624.41 },
+    { id: 'c_camrao', name: 'Casa do Camarão Betim',    tpv: 67190.98,  markup: 605.74 },
+    { id: 'c_dasousa',name: 'D A De Sousa Ltda',        tpv: 64641.78,  markup: 327.31 },
+  ].forEach(c => Repo.addTransaction({ date: jan+'-01', period: jan, product: 'cappta', clientId: c.id, clientName: c.name, vendorId: 'empresa', tpv: c.tpv, markup: c.markup, mensalidade: 149, status: 'realizado', source: 'seed' }));
+
+  // Repasses Janeiro
+  Repo.addTransaction({ date: jan+'-01', period: jan, product: 'cappta', clientId: '_rep_jan', clientName: 'Repasses Cappta', vendorId: 'empresa', tpv: 0, markup: 0, mensalidade: 4360, contaDigital: 1896, status: 'realizado', source: 'seed' });
+
+  // Custos Janeiro
+  [
+    { d: 'Cobrança contas digitais', cat: 'Cappta', v: 1196,   f: 'mensal' },
+    { d: 'Outras cobranças (máquinas)', cat: 'Cappta', v: 6767, f: 'único' },
+    { d: 'Retenção CHIP',             cat: 'Cappta', v: 94.8,  f: 'mensal' },
+    { d: 'Custo plataforma',          cat: 'Cappta', v: 5171,  f: 'mensal' },
+  ].forEach(c => Repo.addCost({ description: c.d, category: c.cat, amount: c.v, frequency: c.f, period: jan, status: 'realizado', source: 'seed' }));
+
+  // Laca Janeiro
+  Repo.lockClosing(jan);
+
+  // ── FEVEREIRO 2026 ──
+  const fev = '2026-02';
+
+  // Replica clientes com dados do fechamento real de Fev
+  [
+    { id: 'c_lagoa',  vendorId: 'joao',   tpv: 79863.01, markup: 968.14 },
+    { id: 'c_cupim',  vendorId: 'joao',   tpv: 56951.81, markup: 680.44 },
+    { id: 'c_figueiral', vendorId: 'joao', tpv: 0,       markup: 0 },
+    { id: 'c_oficina',vendorId: 'joao',   tpv: 39250.94, markup: 504.65 },
+    { id: 'c_planeta',vendorId: 'arthur', tpv: 152416.15,markup: 964.31 },
+    { id: 'c_murilo', vendorId: 'arthur', tpv: 12299.21, markup: 193.70 },
+    { id: 'c_sabor',  vendorId: 'arthur', tpv: 177380.30,markup: 2443.69 },
+    { id: 'c_betrod', vendorId: 'arthur', tpv: 0,        markup: 0 },
+    { id: 'c_pepito', vendorId: 'arthur', tpv: 6450.62,  markup: 72.15 },
+    { id: 'c_spralt', vendorId: 'arthur', tpv: 45420.67, markup: 342.64 },
+    { id: 'c_central',vendorId: 'arthur', tpv: 3475.00,  markup: 66.80 },
+    { id: 'c_patrao', vendorId: 'arthur', tpv: 11030.71, markup: 90.16 },
+    { id: 'c_springa',vendorId: 'arthur', tpv: 33860.10, markup: 271.07 },
+    { id: 'c_sprfat', vendorId: 'arthur', tpv: 90690.28, markup: 728.24 },
+    { id: 'c_king',   vendorId: 'arthur', tpv: 37057.00, markup: 101.75 },
+    { id: 'c_trembao',vendorId: 'rafael', tpv: 42404.83, markup: 509.89 },
+    { id: 'c_pneus',  vendorId: 'rafael', tpv: 15879.20, markup: 248.51 },
+    { id: 'c_anjo1',  vendorId: 'rafael', tpv: 41429.41, markup: 441.74 },
+    { id: 'c_anjo2',  vendorId: 'rafael', tpv: 10895.27, markup: 114.81 },
+    { id: 'c_betmad', vendorId: 'empresa', tpv: 309363.96, markup: 3279.44 },
+    { id: 'c_lbm',    vendorId: 'empresa', tpv: 155491.46, markup: 1283.26 },
+    { id: 'c_doral',  vendorId: 'empresa', tpv: 88461.30,  markup: 1624.41 },
+    { id: 'c_camrao', vendorId: 'empresa', tpv: 67190.98,  markup: 605.74 },
+    { id: 'c_dasousa',vendorId: 'empresa', tpv: 64641.78,  markup: 327.31 },
+  ].forEach(c => {
+    const client = DB.clients[c.id] || {};
+    Repo.addTransaction({ date: fev+'-01', period: fev, product: 'cappta', clientId: c.id, clientName: client.name || c.id, vendorId: c.vendorId, tpv: c.tpv, markup: c.markup, mensalidade: 149, status: 'realizado', source: 'seed' });
+  });
+
+  // Repasses Fevereiro
+  Repo.addTransaction({ date: fev+'-01', period: fev, product: 'cappta', clientId: '_rep_fev', clientName: 'Repasses Cappta', vendorId: 'empresa', tpv: 0, markup: 0, mensalidade: 5690, contaDigital: 1965.70, status: 'realizado', source: 'seed' });
+
+  // Custos Fevereiro
+  [
+    { d: 'Cobrança contas digitais', cat: 'Cappta', v: 1196,   f: 'mensal' },
+    { d: 'Outras cobranças (máquinas)', cat: 'Cappta', v: 6767, f: 'único' },
+    { d: 'Retenção CHIP',             cat: 'Cappta', v: 94.8,  f: 'mensal' },
+    { d: 'Custo plataforma',          cat: 'Cappta', v: 4747.2,f: 'mensal' },
+  ].forEach(c => Repo.addCost({ description: c.d, category: c.cat, amount: c.v, frequency: c.f, period: fev, status: 'realizado', source: 'seed' }));
+
+  // Laca Fevereiro
+  Repo.lockClosing(fev);
+
+  Storage.save();
+  console.log('✅ Seed completo: Jan e Fev/2026 carregados e lacrados');
+}
+
+// Exporta para uso global no HTML
+window.VF = { DB, Storage, Repo, Engine, ConfigContext, seedRealData };
+
+
+</script>
+
+<!-- DASHBOARD CONTROLLER -->
+<script>
+// ══════════════════════════════════════════════════════════════════
+// CONTROLLER — consome VF.Engine, nunca calcula diretamente
+// ══════════════════════════════════════════════════════════════════
+
+// Aliases via VF namespace — evita redeclaração de const
+const _DB      = VF.DB;
+const _Storage = VF.Storage;
+const _Repo    = VF.Repo;
+const _Engine  = VF.Engine;
+
+// ── ESTADO DA UI ──────────────────────────────────────────────────
+const UI = {
+  currentDREMonth: null,
+  teamPeriod:      '2026-02',
+  teamFilter:      'mensal',   // 'mensal'|'quinzenal'|'semanal'
+  currentCom:      'all',
+  teamMode:        'month',    // 'month'|'year'
+  charts:          {},
+};
+
+// ── FORMAT ────────────────────────────────────────────────────────
+const fB = v => {
+  const a = Math.abs(v);
+  const s = a >= 1e6 ? 'R$ '+(a/1e6).toFixed(2)+'M'
+          : a >= 1e3 ? 'R$ '+(a/1e3).toFixed(1)+'K'
+          : 'R$ '+Math.round(a).toLocaleString('pt-BR');
+  return v < 0 ? '-'+s : s;
+};
+const fF = v => (v<0?'-':'')+'R$ '+Math.abs(v).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fPct = (v, b) => b === 0 ? '—' : (v/b*100).toFixed(1)+'%';
+
+// ── SWITCH VIEWS ──────────────────────────────────────────────────
+function swView(env, btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.sw-btn').forEach(b=>b.classList.remove('ceo','team'));
+  document.getElementById('view-'+env).classList.add('active');
+  btn.classList.add(env);
+}
+
+function swCEO(panel, btn) {
+  document.querySelectorAll('.ceo-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.ct-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+panel).classList.add('active');
+  btn.classList.add('active');
+  // Lazy render
+  if (panel === 'gestao')   renderGestao();
+  if (panel === 'dre')      buildDREPanel();
+  if (panel === 'custos')   renderCosts();
+  if (panel === 'clientes') renderClients();
+  if (panel === 'dados')    renderDBStats();
+  if (panel === 'parametrizacao') renderParametrizacao();
+}
+
+// ── DASHBOARD PRINCIPAL ───────────────────────────────────────────
+function renderDashboard() {
+  const activePeriod = '2026-02';
+  const dre  = _Engine.calcDRE(activePeriod);
+  const prev = _Engine.calcDRE('2026-01');
+  const byVendor = _Engine.calcByVendor(activePeriod);
+  const evolution = _Engine.calcYearEvolution(2026);
+
+  // Status bar
+  const numClients = new Set(_Repo.getTransactions({ period: activePeriod }).map(t=>t.clientId)).size;
+  document.getElementById('dash-sbar').innerHTML = `
+    <div class="si"><div class="sd" style="background:var(--green)"></div>${numClients} clientes ativos</div>
+    <div class="si"><div class="sd" style="background:var(--teal)"></div>3 comerciais</div>
+    <div class="si"><div class="sd" style="background:${dre.status==='realizado'?'var(--green)':'var(--yellow)'}"></div>
+      <span class="status-flag ${dre.status==='realizado'?'flag-real':'flag-proj'}">${dre.status==='realizado'?'● Realizado':'◌ Projeção'}</span>
+    </div>
+    <div class="si" style="margin-left:auto">
+      <span style="font-size:10px;color:var(--mist)">Markup médio:</span>
+      <span style="font-size:11px;font-weight:700;color:var(--teal);margin-left:4px">${dre.tpv>0?(dre.markup/dre.tpv*100).toFixed(3)+'%':'—'}</span>
+    </div>`;
+
+  // Delta vs mês anterior
+  const deltaRes = prev.resultadoLiquido !== 0
+    ? ((dre.resultadoLiquido - prev.resultadoLiquido) / Math.abs(prev.resultadoLiquido) * 100).toFixed(1)
+    : null;
+
+  // KPIs
+  document.getElementById('dash-kpis').innerHTML = `
+    <div class="card card-hero">
+      <div class="c-label">RESULTADO LÍQUIDO</div>
+      <div class="c-val">${fB(dre.resultadoLiquido)}</div>
+      <div class="c-sub">Após comissões e custos</div>
+      ${deltaRes ? `<div class="c-delta ${parseFloat(deltaRes)>=0?'up':'down'}">${parseFloat(deltaRes)>=0?'↑':'↓'} ${Math.abs(deltaRes)}% vs Jan</div>` : ''}
+    </div>
+    <div class="card a-t">
+      <div class="c-label">RECEITA BRUTA</div>
+      <div class="c-val tc" style="font-size:22px">${fB(dre.receitaBruta)}</div>
+      <div class="c-sub">Markup + repasses</div>
+    </div>
+    <div class="card a-r">
+      <div class="c-label">CUSTOS TOTAIS</div>
+      <div class="c-val tr" style="font-size:22px">${fB(dre.custos)}</div>
+      <div class="c-sub">Cappta + operacionais</div>
+    </div>
+    <div class="card a-o">
+      <div class="c-label">COMISSÕES PAGAS</div>
+      <div class="c-val to" style="font-size:22px">${fB(dre.totalComissoes)}</div>
+      <div class="c-sub">João + Arthur + Rafael</div>
+    </div>`;
+
+  // Growth center
+  const realMonths = evolution.filter(m => m.status === 'realizado');
+  const totalTPV = realMonths.reduce((a,m)=>a+m.tpv, 0);
+  const totalMKP = realMonths.reduce((a,m)=>a+m.markup, 0);
+  const totalRES = realMonths.reduce((a,m)=>a+m.resultadoLiquido, 0);
+  const metaPct  = (totalTPV / _DB.projectionConfig.annualTarget * 100).toFixed(1);
+
+  document.getElementById('gs-tpv').textContent  = fB(totalTPV);
+  document.getElementById('gs-mkp').textContent  = fF(totalMKP);
+  document.getElementById('gs-res').textContent  = fF(totalRES);
+  document.getElementById('meta-pct').textContent = metaPct+'%';
+  document.getElementById('meta-val').textContent = fB(totalTPV)+' / R$ 24M';
+  document.getElementById('meta-bar').style.width = Math.min(metaPct,100)+'%';
+
+  // Accum row (6 meses)
+  let accumTPV = 0;
+  document.getElementById('accum-row').innerHTML = evolution.slice(0,6).map(m => {
+    if (m.status==='realizado') accumTPV += m.tpv;
+    return `<div class="accum-item ${m.status==='realizado'?'real':'proj'}">
+      <div class="am-month">${m.label}</div>
+      <div class="am-val ${m.status==='realizado'?'tc':'ty'}">${m.tpv>0?fB(m.tpv):'—'}</div>
+      <div class="am-acum">${m.status==='realizado'?'Acum: '+fB(accumTPV):'proj.'}</div>
+      <div class="am-dot ${m.status==='realizado'?'':'proj'}"></div>
+    </div>`;
+  }).join('');
+
+  // Top clients
+  const byClient = _Engine.calcByClient(activePeriod);
+  const sortedClients = Object.values(byClient)
+    .filter(c => c.markup > 0)
+    .sort((a,b)=>b.markup-a.markup)
+    .slice(0,10);
+
+  document.getElementById('cli-period-tag').textContent = _Engine._periodLabel(activePeriod);
+  document.getElementById('cli-body').innerHTML = sortedClients.map((c,i)=>`
+    <tr>
+      <td class="mono" style="color:var(--mist)">${i+1}</td>
+      <td class="tw">${c.clientName||c.clientId}</td>
+      <td><span class="badge ${c.vendorId==='joao'?'bg-t':c.vendorId==='arthur'?'bg-y':c.vendorId==='rafael'?'bg-g':'bg-o'}">${_DB.vendors[c.vendorId]?.name.split(' ')[0]||'—'}</span></td>
+      <td class="mono">${fF(c.tpv)}</td>
+      <td class="mono tc">${fF(c.markup)}</td>
+      <td class="mono ${c.markupRate>0.012?'tg':c.markupRate<0.007?'tr':''}">${(c.markupRate*100).toFixed(3)}%</td>
+      <td><span class="badge bg-g">ATIVO</span></td>
+    </tr>`).join('');
+
+  buildCharts(evolution);
+}
+
+// ── CHARTS ────────────────────────────────────────────────────────
+Chart.defaults.color='#6B8FA8';
+Chart.defaults.font.family="'Poppins',sans-serif";
+Chart.defaults.font.size=10;
+
+function destroyChart(id) {
+  if (UI.charts[id]) { UI.charts[id].destroy(); delete UI.charts[id]; }
+}
+
+function buildCharts(evolution) {
+  destroyChart('accum'); destroyChart('proj'); destroyChart('tpv-team');
+
+  const labels = evolution.map(m=>m.label);
+  const isReal = evolution.map(m=>m.status==='realizado');
+
+  // Gráfico acumulado (real sólido, projeção tracejado)
+  const tpvReal = evolution.map((m,i)=>isReal[i]?m.tpv:null);
+  const tpvProj = evolution.map((m,i)=>!isReal[i]?m.tpv:null);
+  let run=0; const accum=evolution.map(m=>{ if(m.status==='realizado')run+=m.tpv; return run>0?run:null;});
+
+  UI.charts['accum'] = new Chart(document.getElementById('chart-accum'),{
+    type:'bar',data:{labels,datasets:[
+      {label:'TPV Real',data:tpvReal,backgroundColor:'rgba(0,180,166,.55)',borderColor:'#00B4A6',borderWidth:1,borderRadius:4,order:2},
+      {label:'TPV Projetado',data:tpvProj,backgroundColor:'rgba(255,209,102,.15)',borderColor:'rgba(255,209,102,.4)',borderWidth:1,borderRadius:4,order:2},
+      {label:'Acumulado (real)',data:accum,type:'line',borderColor:'#FFD166',backgroundColor:'rgba(255,209,102,.07)',borderWidth:2.5,pointBackgroundColor:'#FFD166',pointRadius:4,fill:true,tension:.4,order:1,yAxisID:'y1'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{color:'#6B8FA8',boxWidth:10}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8'}},
+        y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8',callback:v=>'R$'+(v/1e6).toFixed(1)+'M'}},
+        y1:{grid:{display:false},ticks:{color:'#FFD166',callback:v=>'R$'+(v/1e6).toFixed(1)+'M'},position:'right'},
+      }}
+  });
+
+  // Gráfico projeção anual (barras real, tracejado projetado)
+  UI.charts['proj'] = new Chart(document.getElementById('chart-proj'),{
+    type:'bar',data:{labels,datasets:[
+      {label:'Receita Real',data:evolution.map((m,i)=>isReal[i]?m.receitaBruta:null),backgroundColor:'rgba(0,180,166,.5)',borderColor:'#00B4A6',borderWidth:1,borderRadius:4},
+      {label:'Receita Projetada',data:evolution.map((m,i)=>!isReal[i]?m.receitaBruta:null),backgroundColor:'rgba(0,180,166,.15)',borderColor:'rgba(0,180,166,.35)',borderWidth:1,borderRadius:4},
+      {label:'Custos',data:evolution.map(m=>m.custos),backgroundColor:'rgba(255,77,106,.3)',borderColor:'#FF4D6A',borderWidth:1,borderRadius:4},
+      {label:'Resultado',data:evolution.map(m=>m.resultadoLiquido),type:'line',borderColor:ctx=>{const i=ctx.dataIndex;return isReal[i]?'#1DC98A':'rgba(29,201,138,.4)'},borderDash:ctx=>{const i=ctx.dataIndex;return isReal[i]?[]:[5,4]},backgroundColor:'rgba(29,201,138,.07)',borderWidth:2.5,pointBackgroundColor:'#1DC98A',pointRadius:4,fill:true,tension:.4},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{color:'#6B8FA8',boxWidth:10}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8'}},
+        y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8',callback:v=>'R$'+Math.round(v/1e3)+'K'}},
+      }}
+  });
+
+  // TPV team
+  UI.charts['tpv-team'] = new Chart(document.getElementById('chart-tpv-team'),{
+    type:'line',data:{labels,datasets:[
+      {label:'TPV Real',data:tpvReal,borderColor:'#00B4A6',backgroundColor:'rgba(0,180,166,.09)',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#00B4A6',fill:true,tension:.4},
+      {label:'Projeção',data:tpvProj,borderColor:'rgba(255,209,102,.5)',borderDash:[5,4],borderWidth:1.5,pointRadius:3,fill:false,tension:.4},
+      {label:'Meta R$2M/mês',data:Array(12).fill(2000000),borderColor:'rgba(255,107,43,.35)',borderDash:[6,4],borderWidth:1,pointRadius:0,fill:false},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{color:'#6B8FA8',boxWidth:10}}},
+      scales:{
+        x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8'}},
+        y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8',callback:v=>'R$'+(v/1e6).toFixed(1)+'M'}},
+      }}
+  });
+}
+
+// ── DRE MENSAL ───────────────────────────────────────────────────
+function buildDREPanel() {
+  // Gera botões para todos os meses do ano
+  const months = _Engine.calcYearEvolution(2026);
+  const btnContainer = document.getElementById('dre-month-btns');
+  const cmpSel = document.getElementById('dre-cmp-sel');
+
+  btnContainer.innerHTML = months.map(m=>`
+    <button class="dmb ${m.status} ${UI.currentDREMonth===m.period?'active':''}"
+      onclick="selectDREMonth('${m.period}')">${m.label}
+    </button>`).join('');
+
+  // Popula comparador
+  cmpSel.innerHTML = '<option value="">Nenhum</option>' +
+    months.map(m=>`<option value="${m.period}">${m.label}/26</option>`).join('');
+
+  if (UI.currentDREMonth) renderDRE();
+}
+
+function selectDREMonth(period) {
+  UI.currentDREMonth = period;
+  document.querySelectorAll('.dmb').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  renderDRE();
+}
+
+function renderDRE() {
+  if (!UI.currentDREMonth) return;
+  const period = UI.currentDREMonth;
+  const dre    = _Engine.calcPeriod(period);
+  const cmpPeriod = document.getElementById('dre-cmp-sel').value;
+  const dreC   = cmpPeriod ? _Engine.calcPeriod(cmpPeriod) : null;
+
+  document.getElementById('dre-title').textContent =
+    `— ${_Engine._periodLabel(period)}` + (dreC ? ` vs ${_Engine._periodLabel(cmpPeriod)}` : '');
+
+  document.getElementById('dre-period-status').innerHTML =
+    `<span class="status-flag ${dre.status==='realizado'?'flag-lock':'flag-proj'}">${dre.fromClosing?'🔒 Lacrado':dre.status==='realizado'?'● Realizado':'◌ Projeção'}</span>`;
+
+  // Linhas do DRE
+  const rows = [
+    { label: '(+) Markup / Transações',     val: dre.markup,         cls: '' },
+    { label: '(+) Repasse mensalidades',     val: dre.mensalidade,    cls: '' },
+    { label: '(+) Repasse conta digital',    val: dre.contaDigital,   cls: '' },
+    { label: 'RECEITA BRUTA',                val: dre.receitaBruta,   cls: 'dre-row-sec' },
+    { label: '(-) Custos operacionais',      val: -dre.custos,        cls: 'dre-row-cost' },
+    { label: 'RECEITA LÍQUIDA',              val: dre.receitaLiquida, cls: 'dre-row-sec' },
+    // Comissões por vendedor
+    ...Object.values(dre.commissions||{})
+      .filter(c=>c.amount>0)
+      .map(c=>({ label: `(-) Comissão ${c.name}`, val: -c.amount, cls: 'dre-row-com dre-row-sub' })),
+    { label: 'TOTAL COMISSÕES',              val: -dre.totalComissoes,cls: 'dre-row-com' },
+    { label: 'RESULTADO LÍQUIDO',            val: dre.resultadoLiquido, cls: 'dre-row-res' },
+  ];
+
+  const dreTable = (d, title, flag) => `
+    <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden">
+      <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+        <span style="font-size:13px;font-weight:700">${title}</span>
+        <span class="status-flag ${flag}">${flag==='flag-lock'?'🔒 Lacrado':flag==='flag-real'?'● Realizado':'◌ Projeção'}</span>
+      </div>
+      <table class="dre-tbl">
+        <thead><tr><th>LINHA</th><th style="text-align:right">VALOR</th><th style="text-align:right">% REC</th></tr></thead>
+        <tbody>
+          ${rows.map(r=>`<tr class="${r.cls}">
+            <td>${r.label}</td>
+            <td style="text-align:right;font-family:monospace;font-size:11px">${fF(r.val)}</td>
+            <td style="text-align:right;font-family:monospace;font-size:10px;color:var(--mist)">${d.receitaBruta?fPct(Math.abs(r.val),d.receitaBruta):'—'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+
+  let html = `<div style="display:${dreC?'grid':'flex'};grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">`;
+  if (dreC) {
+    const flagC = dreC.fromClosing?'flag-lock':dreC.status==='realizado'?'flag-real':'flag-proj';
+    html += dreTable(dreC, _Engine._periodLabel(cmpPeriod)+'/26', flagC);
+  }
+  const flagD = dre.fromClosing?'flag-lock':dre.status==='realizado'?'flag-real':'flag-proj';
+  html += dreTable(dre, _Engine._periodLabel(period)+'/26', flagD);
+  html += '</div>';
+
+  // Delta
+  if (dreC) {
+    const deltaLines = [
+      ['Markup/Transações', dreC.markup, dre.markup],
+      ['Receita Bruta',     dreC.receitaBruta, dre.receitaBruta],
+      ['Custos',            dreC.custos, dre.custos],
+      ['Comissões',         dreC.totalComissoes, dre.totalComissoes],
+      ['RESULTADO',         dreC.resultadoLiquido, dre.resultadoLiquido],
+    ];
+    html += `
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin-bottom:18px">
+        <div class="sh-name" style="margin-bottom:14px">Variação <span style="color:var(--teal)">${_Engine._periodLabel(cmpPeriod)} → ${_Engine._periodLabel(period)}</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding-bottom:10px;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--mist)">
+          <span>LINHA</span><span style="text-align:right">ANTERIOR</span><span style="text-align:right">ATUAL</span><span style="text-align:right">VARIAÇÃO</span>
+        </div>
+        ${deltaLines.map(([lbl,prev,curr])=>{
+          const diff = curr-prev;
+          const dp   = prev!==0?((diff/Math.abs(prev))*100).toFixed(1):'—';
+          const pos  = diff>=0;
+          const isResult = lbl==='RESULTADO';
+          return `<div class="delta-row">
+            <span class="delta-label" style="${isResult?'font-weight:700;color:var(--white)':''}">${lbl}</span>
+            <span class="delta-prev">${fF(prev)}</span>
+            <span class="delta-curr" style="color:${isResult?'var(--green)':'var(--white)'}">${fF(curr)}</span>
+            <span class="delta-diff" style="color:${pos?'var(--green)':'var(--red)'}">${pos?'+':''}${fF(diff)}</span>
+            <span class="delta-pct-badge" style="${pos?'background:rgba(29,201,138,.1);color:var(--green)':'background:rgba(255,77,106,.1);color:var(--red)'}">${pos?'↑':'↓'} ${Math.abs(dp)}%</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+
+  // Chart evolução DRE
+  html += `<div class="card"><div class="sh"><div class="sh-name">Evolução <span>DRE (meses reais)</span></div></div><div class="ch260"><canvas id="chart-dre-evo"></canvas></div></div>`;
+  document.getElementById('dre-content').innerHTML = html;
+
+  // Constrói chart evolução
+  destroyChart('dre-evo');
+  const realMonths = _Engine.calcYearEvolution(2026).filter(m=>m.status==='realizado');
+  if (realMonths.length > 0) {
+    UI.charts['dre-evo'] = new Chart(document.getElementById('chart-dre-evo'),{
+      type:'bar',data:{labels:realMonths.map(m=>m.label),datasets:[
+        {label:'Receita Bruta',data:realMonths.map(m=>m.receitaBruta),backgroundColor:'rgba(0,180,166,.45)',borderColor:'#00B4A6',borderWidth:1,borderRadius:4},
+        {label:'Custos',data:realMonths.map(m=>m.custos),backgroundColor:'rgba(255,77,106,.35)',borderColor:'#FF4D6A',borderWidth:1,borderRadius:4},
+        {label:'Resultado',data:realMonths.map(m=>m.resultadoLiquido),type:'line',borderColor:'#1DC98A',backgroundColor:'rgba(29,201,138,.07)',borderWidth:2.5,pointBackgroundColor:'#1DC98A',pointRadius:5,fill:true,tension:.3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{position:'top',labels:{color:'#6B8FA8',boxWidth:10}}},
+        scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8'}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8',callback:v=>'R$'+Math.round(v/1e3)+'K'}}}}
+    });
+  }
+}
+
+// ── UPLOAD ────────────────────────────────────────────────────────
+function handleDrop(ev){
+  ev.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const f = ev.dataTransfer.files[0];
+  if(f) loadFile(f);
+}
+
+function loadFile(file) {
+  if(!file) return;
+  const st = document.getElementById('up-status');
+  st.style.color = 'var(--mist)'; st.textContent = '⏳ Processando '+file.name+'...';
+  const period = document.getElementById('upload-period').value;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'array'});
+      const result = _Repo.importFromXLSX(wb, period);
+      st.style.color = 'var(--green)';
+      const skipMsg = result.skipped > 0 ? ` · ⚠️ ${result.skipped} linha(s) sem TPV ignoradas` : '';
+      st.textContent = `✅ ${result.imported} clientes importados · ${result.clients.size} únicos${skipMsg}`;
+      // Preview
+      const dre = _Engine.calcDRE(period);
+      document.getElementById('upload-preview').innerHTML = `
+        <div class="c-label">PREVIEW — ${_Engine._periodLabel(period)}</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+          <div><div style="font-size:10px;color:var(--mist)">TPV Total</div><div style="font-size:16px;font-weight:800;color:var(--teal)">${fB(dre.tpv)}</div></div>
+          <div><div style="font-size:10px;color:var(--mist)">Markup Total</div><div style="font-size:16px;font-weight:800;color:var(--teal)">${fF(dre.markup)}</div></div>
+          <div><div style="font-size:10px;color:var(--mist)">Receita Bruta</div><div style="font-size:16px;font-weight:800">${fF(dre.receitaBruta)}</div></div>
+          <div><div style="font-size:10px;color:var(--mist)">Resultado (est.)</div><div style="font-size:16px;font-weight:800;color:var(--green)">${fF(dre.resultadoLiquido)}</div></div>
+        </div>`;
+      renderClosings();
+      renderDashboard();
+      toast('Fechamento importado! Confira e lacare se correto.');
+    } catch(err) {
+      st.style.color='var(--red)'; st.textContent='❌ '+err.message;
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function lockPeriod() {
+  const period = document.getElementById('lock-period').value;
+  const existing = _Repo.getClosing(period);
+  if (existing?.status === 'fechado') {
+    toast('⚠️ Este período já está lacrado.');
+    return;
+  }
+  _Repo.lockClosing(period);
+  renderClosings();
+  renderDashboard();
+  toast(`🔒 ${_Engine._periodLabel(period)} lacrado com sucesso!`);
+}
+
+function renderClosings() {
+  const closings = Object.values(_DB.closings).sort((a,b)=>b.period.localeCompare(a.period));
+  document.getElementById('closings-list').innerHTML = closings.length
+    ? closings.map(c=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <div>
+            <div style="font-size:12px;font-weight:600">${_Engine._periodLabel(c.period)}</div>
+            <div style="font-size:10px;color:var(--mist)">${new Date(c.lockedAt).toLocaleDateString('pt-BR')}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:11px;font-family:monospace;color:var(--green)">${fF(c.resultadoLiquido||0)}</div>
+            <span class="badge bg-t">🔒 LACRADO</span>
+          </div>
+        </div>`).join('')
+    : '<div style="color:var(--mist);font-size:11px">Nenhum período lacrado ainda.</div>';
+}
+
+// ── CLIENTES ─────────────────────────────────────────────────────
+function renderClients() {
+  const period = document.getElementById('client-period-filter').value;
+  const byClient = _Engine.calcByClient(period);
+  const sorted   = Object.values(byClient).sort((a,b)=>b.markup-a.markup);
+
+  document.getElementById('clients-full-body').innerHTML = sorted.map((c,i)=>`
+    <tr>
+      <td class="mono" style="color:var(--mist)">${i+1}</td>
+      <td class="tw">${c.clientName||c.clientId}</td>
+      <td class="mono" style="font-size:10px;color:var(--mist)">${c.clientId}</td>
+      <td class="vendor-select-cell">
+        <select onchange="_Repo.assignClientToVendor('${c.clientId}',this.value);renderClients();toast('Vínculo atualizado')">
+          ${Object.entries(_DB.vendors).map(([id,v])=>`<option value="${id}" ${c.vendorId===id?'selected':''}>${v.name.split(' ')[0]}</option>`).join('')}
+        </select>
+      </td>
+      <td class="mono">${fF(c.tpv)}</td>
+      <td class="mono tc">${fF(c.markup)}</td>
+      <td class="mono ${c.markupRate>0.012?'tg':c.markupRate<0.007?'tr':''}">${(c.markupRate*100).toFixed(3)}%</td>
+      <td><span class="badge bg-t">Cappta</span></td>
+    </tr>`).join('');
+}
+
+// ── CUSTOS ───────────────────────────────────────────────────────
+function addCost() {
+  const desc   = document.getElementById('cost-desc').value.trim();
+  const amount = parseFloat(document.getElementById('cost-amount').value);
+  if (!desc || isNaN(amount) || amount <= 0) { toast('⚠️ Preencha descrição e valor!'); return; }
+  _Repo.addCost({
+    description: desc,
+    category:    document.getElementById('cost-cat').value,
+    amount,
+    frequency:   document.getElementById('cost-freq').value,
+    period:      document.getElementById('cost-period').value,
+    notes:       document.getElementById('cost-notes').value.trim(),
+  });
+  document.getElementById('cost-desc').value='';
+  document.getElementById('cost-amount').value='';
+  document.getElementById('cost-notes').value='';
+  renderCosts();
+  renderDashboard();
+  toast('Custo registrado!');
+}
+
+function renderCosts() {
+  const filter = document.getElementById('cost-filter-period').value;
+  const costs  = filter==='todos' ? _Repo.getCosts() : _Repo.getCosts({period:filter});
+  const empty  = document.getElementById('costs-empty');
+
+  if (costs.length===0) { document.getElementById('costs-list').innerHTML=''; empty.style.display='block'; }
+  else { empty.style.display='none'; }
+
+  const byCat = {};
+  costs.forEach(c=>{ if(!byCat[c.category])byCat[c.category]=[]; byCat[c.category].push(c);});
+
+  document.getElementById('costs-list').innerHTML = Object.entries(byCat).map(([cat,items])=>{
+    const total = items.reduce((a,b)=>a+b.amount,0);
+    return `<div class="cost-category">
+      <div class="cost-cat-header"><span class="cost-cat-name">📁 ${cat}</span><span class="cost-cat-total">${fF(total)}</span></div>
+      ${items.map(c=>`<div class="cost-item-row">
+        <span class="cost-item-desc">${c.description}${c.notes?` <span style="color:var(--mist);font-size:10px">— ${c.notes}</span>`:''}</span>
+        <span class="badge ${c.status==='realizado'?'bg-g':'bg-y'}">${c.status}</span>
+        <span class="badge bg-t">${c.frequency}</span>
+        <span class="cost-item-val">${fF(c.amount)}</span>
+        <button class="cost-item-del" onclick="_Repo.deleteCost('${c.id}');renderCosts();renderDashboard()">✕</button>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  const total   = costs.reduce((a,b)=>a+b.amount,0);
+  const fixed   = costs.filter(c=>c.frequency==='mensal').reduce((a,b)=>a+b.amount,0);
+  const varCost = costs.filter(c=>c.frequency!=='mensal').reduce((a,b)=>a+b.amount,0);
+  document.getElementById('cost-total-month').textContent = fF(total);
+  document.getElementById('cost-total-fixed').textContent = fF(fixed);
+  document.getElementById('cost-total-var').textContent   = fF(varCost);
+
+  // Chart
+  destroyChart('costs');
+  const cats = Object.keys(byCat);
+  if (cats.length>0) {
+    UI.charts['costs'] = new Chart(document.getElementById('chart-costs'),{
+      type:'doughnut',
+      data:{labels:cats,datasets:[{data:cats.map(k=>byCat[k].reduce((a,b)=>a+b.amount,0)),backgroundColor:['#FF4D6A','#FF6B2B','#FFD166','#1DC98A','#00B4A6','#7C5CFC','#A8C2D4'],borderWidth:0}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#6B8FA8',font:{size:10},boxWidth:10}}}}
+    });
+  }
+}
+
+function clearCostsPeriod() {
+  const p = document.getElementById('cost-filter-period').value;
+  if (p==='todos') { toast('⚠️ Selecione um período específico para limpar.'); return; }
+  _DB.costs = _DB.costs.filter(c=>c.period!==p);
+  _Storage.save();
+  renderCosts();
+  renderDashboard();
+  toast('Custos do período removidos.');
+}
+
+// ── DADOS / CONFIG ────────────────────────────────────────────────
+function updateConfig() {
+  const growth = parseFloat(document.getElementById('cfg-growth').value)/100;
+  const annual = parseFloat(document.getElementById('cfg-annual').value);
+  const caixa  = parseFloat(document.getElementById('cfg-caixa').value);
+  if (!isNaN(growth)) _DB.projectionConfig.tpvGrowthRate = growth;
+  if (!isNaN(annual)) _DB.projectionConfig.annualTarget  = annual;
+  if (!isNaN(caixa))  _DB.projectionConfig.caixaInicial  = caixa;
+  _Storage.save();
+  renderDashboard();
+}
+
+function renderDBStats() {
+  const txns    = _DB.transactions.length;
+  const costs   = _DB.costs.length;
+  const clients = Object.keys(_DB.clients).length;
+  const closings= Object.keys(_DB.closings).length;
+  const realTxns= _DB.transactions.filter(t=>t.status==='realizado').length;
+  document.getElementById('db-stats').innerHTML = `
+    📦 Transações: <strong>${txns}</strong> (${realTxns} realizadas)<br>
+    👥 Clientes cadastrados: <strong>${clients}</strong><br>
+    💸 Custos lançados: <strong>${costs}</strong><br>
+    🔒 Fechamentos lacrados: <strong>${closings}</strong><br>
+    💾 Último backup: <strong>${_DB.lastSaved ? new Date(_DB.lastSaved).toLocaleString('pt-BR') : 'nunca'}</strong>`;
+
+  // Sync config inputs
+  document.getElementById('cfg-growth').value = (_DB.projectionConfig.tpvGrowthRate*100).toFixed(1);
+  document.getElementById('cfg-annual').value = _DB.projectionConfig.annualTarget;
+  document.getElementById('cfg-caixa').value  = _DB.projectionConfig.caixaInicial;
+}
+
+async function importData(file) {
+  if(!file) return;
+  try {
+    await VF._Storage.importJSON(file);
+    renderDashboard();
+    toast('✅ Dados importados com sucesso!');
+  } catch(e) { toast('❌ Erro ao importar: '+e.message); }
+}
+
+function resetData() {
+  if (!confirm('⚠️ Isso apagará TODOS os dados. Confirma?')) return;
+  VF._Storage.clear();
+  location.reload();
+}
+
+// ── TEAM VIEW ─────────────────────────────────────────────────────
+function setTeamFilter(f, btn) {
+  UI.teamFilter = f;
+  document.querySelectorAll('[id^="ft-"]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  updateTeamView();
+}
+
+function showCom(com, btn) {
+  UI.currentCom = com;
+  document.querySelectorAll('[id^="btn-"]').forEach(b=>b.classList.remove('active'));
+  document.getElementById('btn-'+com).classList.add('active');
+  renderComPanels();
+}
+
+function updateTeamView() {
+  const sel = document.getElementById('team-period-sel').value;
+  UI.teamMode   = sel === 'ano' ? 'year' : 'month';
+  UI.teamPeriod = sel === 'ano' ? '2026-02' : sel;
+
+  if (UI.teamMode === 'year') {
+    document.getElementById('year-section').style.display = 'block';
+    document.getElementById('monthly-section').style.display = 'none';
+    document.getElementById('team-period-badge').textContent = 'ACUMULADO 2026';
+    renderYearView();
+    return;
+  }
+
+  document.getElementById('year-section').style.display = 'none';
+  document.getElementById('monthly-section').style.display = 'block';
+
+  const moLabel = _Engine._periodLabel(UI.teamPeriod);
+  document.getElementById('team-period-badge').textContent = moLabel.toUpperCase().replace('/',' · 20');
+
+  const dre    = _Engine.calcPeriod(UI.teamPeriod);
+  const filt   = UI.teamFilter==='mensal'?1:UI.teamFilter==='quinzenal'?.5:.25;
+  const isProj = dre.status === 'projetado';
+
+  document.getElementById('team-status-badge').innerHTML =
+    `<span class="status-flag ${isProj?'flag-proj':'flag-real'}">${isProj?'◌ Projeção':'● Realizado'}</span>`;
+
+  document.getElementById('team-kpis').innerHTML = `
+    <div class="card a-t"><div class="c-label">CLIENTES ATIVOS</div><div class="c-val tc">${dre.numClients||59}</div><div class="c-sub">Base ${moLabel}</div></div>
+    <div class="card a-g"><div class="c-label">TPV DO PERÍODO</div><div class="c-val tg" style="font-size:22px">${fB(dre.tpv*filt)}</div><div class="c-sub">${UI.teamFilter==='mensal'?'Mês completo':UI.teamFilter==='quinzenal'?'Est. 15 dias':'Est. 1 semana'}</div></div>
+    <div class="card a-o"><div class="c-label">MARKUP GERADO</div><div class="c-val to" style="font-size:22px">${fB(dre.markup*filt)}</div><div class="c-sub">Margem ${dre.tpv>0?(dre.markup/dre.tpv*100).toFixed(3):'—'}%</div></div>
+    <div class="card"><div class="c-label">META TPV ANUAL</div><div class="c-val" style="font-size:22px">${fB(_DB.projectionConfig.annualTarget)}</div><div class="prog" style="margin-top:10px"><div class="prog-row"><span id="team-meta-pct">—</span><span>acumulado</span></div><div class="prog-track"><div class="prog-fill" id="team-meta-bar" style="width:0%"></div></div></div></div>`;
+
+  // Atualiza meta bar
+  const realTPV = _Engine.calcYearEvolution(2026).filter(m=>m.status==='realizado').reduce((a,m)=>a+m.tpv,0);
+  const mp = (realTPV/_DB.projectionConfig.annualTarget*100).toFixed(1);
+  setTimeout(()=>{ document.getElementById('team-meta-pct').textContent=mp+'%'; document.getElementById('team-meta-bar').style.width=Math.min(mp,100)+'%'; },10);
+
+  renderRanking();
+  renderComPanels();
+  destroyChart('com');
+  buildChartCom();
+
+  // Accum team
+  let run=0;
+  const evo = _Engine.calcYearEvolution(2026);
+  document.getElementById('accum-team').innerHTML = evo.slice(0,6).map(m=>{
+    if(m.status==='realizado')run+=m.tpv;
+    return `<div class="accum-item ${m.status==='realizado'?'real':'proj'}">
+      <div class="am-month">${m.label}</div>
+      <div class="am-val ${m.status==='realizado'?'tc':'ty'}">${m.tpv>0?fB(m.tpv):'—'}</div>
+      <div class="am-acum">${m.status==='realizado'?'Acum: '+fB(run):'proj.'}</div>
+      <div class="am-dot ${m.status==='realizado'?'':'proj'}"></div>
+    </div>`;
+  }).join('');
+}
+
+function renderYearView() {
+  const evolution = _Engine.calcYearEvolution(2026);
+  const realMonths = evolution.filter(m=>m.status==='realizado');
+  const lastReal = realMonths[realMonths.length-1];
+
+  const totTPV = realMonths.reduce((a,m)=>a+m.tpv,0);
+  const totMKP = realMonths.reduce((a,m)=>a+m.markup,0);
+  const totRES = realMonths.reduce((a,m)=>a+m.resultadoLiquido,0);
+  const totCOM = realMonths.reduce((a,m)=>a+(m.receitaBruta - m.custos - m.resultadoLiquido),0); // FIX: comissões = recLiq - resultado
+
+  if (lastReal) document.getElementById('year-cutoff-badge').textContent = 'ATÉ '+lastReal.label.toUpperCase()+'/2026';
+
+  // Strip de meses
+  document.getElementById('year-months-strip').innerHTML = evolution.map(m=>`
+    <div style="display:flex;align-items:center;gap:5px;padding:5px 11px;border-radius:20px;font-size:11px;font-weight:600;background:${m.status==='realizado'?'rgba(0,180,166,.1)':'rgba(255,255,255,.03)'};border:1px solid ${m.status==='realizado'?'rgba(0,180,166,.25)':'var(--border)'};color:${m.status==='realizado'?'var(--teal)':'var(--mist)'}">
+      <div style="width:6px;height:6px;border-radius:50%;background:${m.status==='realizado'?'var(--teal)':'rgba(255,255,255,.15)'}"></div>
+      ${m.label}
+    </div>`).join('');
+
+  document.getElementById('team-kpis').innerHTML = `
+    <div class="card a-t"><div class="c-label">TPV ACUMULADO</div><div class="c-val tc" style="font-size:22px">${fB(totTPV)}</div><div class="c-sub">${realMonths.length} meses reais</div></div>
+    <div class="card a-g"><div class="c-label">MARKUP ACUMULADO</div><div class="c-val tg" style="font-size:22px">${fB(totMKP)}</div><div class="c-sub">Total gerado</div></div>
+    <div class="card a-o"><div class="c-label">RESULTADO ACUMUL.</div><div class="c-val to" style="font-size:22px">${fB(totRES)}</div><div class="c-sub">Resultado líquido</div></div>
+    <div class="card card-hero"><div class="c-label">PROGRESSO META</div><div class="c-val" style="font-size:28px">${(totTPV/_DB.projectionConfig.annualTarget*100).toFixed(1)}%</div><div class="c-sub">do TPV anual de R$ 24M</div></div>`;
+
+  document.getElementById('year-kpis').innerHTML='';
+
+  // Chart anual
+  destroyChart('year');
+  if (realMonths.length>0) {
+    UI.charts['year'] = new Chart(document.getElementById('chart-year'),{
+      type:'bar',data:{labels:realMonths.map(m=>m.label),datasets:[
+        {label:'Receita Bruta',data:realMonths.map(m=>m.receitaBruta),backgroundColor:'rgba(0,180,166,.45)',borderColor:'#00B4A6',borderWidth:1,borderRadius:4},
+        {label:'Custos',data:realMonths.map(m=>m.custos),backgroundColor:'rgba(255,77,106,.35)',borderColor:'#FF4D6A',borderWidth:1,borderRadius:4},
+        {label:'Resultado',data:realMonths.map(m=>m.resultadoLiquido),type:'line',borderColor:'#1DC98A',backgroundColor:'rgba(29,201,138,.08)',borderWidth:2.5,pointBackgroundColor:'#1DC98A',pointRadius:5,fill:true,tension:.3},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:'#6B8FA8',boxWidth:10}}},scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8'}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8',callback:v=>'R$'+Math.round(v/1e3)+'K'}}}}
+    });
+  }
+
+  // Cards por comercial (acumulado)
+  const comCards = Object.entries(_DB.vendors).filter(([id])=>id!=='empresa').map(([vid,v])=>{
+    const totalMkp = realMonths.reduce((a,m)=>{
+      const byV = _Engine.calcByVendor(m.period);
+      return a + (byV[vid]?.markup||0);
+    },0);
+    const totalCom = realMonths.reduce((a,m)=>{
+      const byV = _Engine.calcByVendor(m.period);
+      return a + (byV[vid]?.commission||0);
+    },0);
+    const colors = {joao:'#C0C0C0',arthur:'#FFD700',rafael:'#CD7F32'};
+    const yrMeta = ((_DB.vendors[vid]._metaIndividual) || 5000) * realMonths.length;
+    const pct = yrMeta > 0 ? Math.min(totalMkp / yrMeta * 100, 100) : 0;
+    return `<div class="com-card" style="border-color:${colors[vid]}33;border-radius:12px;padding:16px;border:1px solid var(--border);background:var(--card)">
+      <div style="font-size:14px;font-weight:800;color:${colors[vid]};margin-bottom:10px">${v.name}</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px"><span style="color:var(--mist)">Markup acum.</span><span style="font-family:monospace;color:var(--orange)">${fF(totalMkp)}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:12px"><span style="color:var(--mist)">Comissão recebida</span><span style="font-family:monospace;color:var(--orange)">${fF(totalCom)}</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px;font-size:12px"><span style="color:var(--mist)">Meses reais</span><span style="font-weight:700">${realMonths.length}</span></div>
+      <div style="font-size:9px;color:var(--mist);margin-bottom:5px">Meta acum. ${fB(yrMeta)} — ${pct.toFixed(0)}%</div>
+      <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:linear-gradient(90deg,${colors[vid]},var(--green))"></div></div>
+    </div>`;
+  });
+  document.getElementById('year-com-cards').innerHTML = comCards.join('');
+}
+
+function renderRanking() {
+  const byVendor = _Engine.calcByVendor(UI.teamPeriod);
+  const filt = UI.teamFilter==='mensal'?1:UI.teamFilter==='quinzenal'?.5:.25;
+  const ranks = Object.entries(byVendor)
+    .filter(([id])=>id!=='empresa')
+    .map(([id,v])=>({...v,markup:v.markup*filt}))
+    .sort((a,b)=>b.markup-a.markup);
+
+  const icons = ['gold','silver','bronze'];
+  document.getElementById('ranking-tag').textContent = _Engine._periodLabel(UI.teamPeriod)+' · MARKUP';
+  document.getElementById('ranking-list').innerHTML = ranks.map((r,i)=>`
+    <div class="rank-row">
+      <div class="rn ${icons[i]||''}">${i+1}</div>
+      <div style="flex:1"><div class="rname">${r.name}</div><div class="rclients">${r.clients} clientes</div></div>
+      <div class="rval"><div class="rval-main tc">${fB(r.markup)}</div><div class="rval-sub">markup</div></div>
+    </div>`).join('');
+}
+
+function renderComPanels() {
+  const filt   = UI.teamFilter==='mensal'?1:UI.teamFilter==='quinzenal'?.5:.25;
+  const byVendor = _Engine.calcByVendor(UI.teamPeriod);
+  const dre      = _Engine.calcPeriod(UI.teamPeriod);
+  const isProj   = dre.status === 'projetado';
+
+  const vendors = UI.currentCom === 'all'
+    ? Object.keys(_DB.vendors).filter(id=>id!=='empresa')
+    : [UI.currentCom];
+
+  const comColors = {joao:'rgba(192,192,192,.2)',arthur:'rgba(255,215,0,.2)',rafael:'rgba(205,127,50,.2)'};
+  const nameColors= {joao:'#C0C0C0',arthur:'#FFD700',rafael:'#CD7F32'};
+
+  document.getElementById('team-com-panels').innerHTML = vendors.map(vid=>{
+    const v   = byVendor[vid] || {markup:0,tpv:0,clients:0,commission:0};
+    const mkp = v.markup * filt;
+    const tpv = v.tpv    * filt;
+    const com = v.commission * filt;
+    const vendMeta = (_DB.vendors[vid]._metaIndividual) || 5000;
+    const meta5k = Math.min(mkp / vendMeta * 100, 100);
+    const moLabel = _Engine._periodLabel(UI.teamPeriod);
+
+    // Clientes deste vendedor neste período
+    const vTxns = _Repo.getTransactions({period:UI.teamPeriod,vendorId:vid});
+    const clientRows = [...new Map(vTxns.filter(t=>t.tpv>0).map(t=>[t.clientId,t])).values()]
+      .sort((a,b)=>b.markup-a.markup)
+      .slice(0,8);
+
+    return `<div class="com-detail-panel" style="border-color:${comColors[vid]}">
+      <div class="cdp-header" style="background:${comColors[vid]}">
+        <div>
+          <div class="cdp-name" style="color:${nameColors[vid]}">${_DB.vendors[vid].name}
+            <span class="status-flag ${isProj?'flag-proj':'flag-real'}" style="margin-left:8px">${isProj?'◌ Projeção':'● Realizado'}</span>
+          </div>
+          <div style="font-size:10px;color:var(--mist);margin-top:2px">${v.clients} clientes · ${moLabel}</div>
+        </div>
+        <div style="font-size:10px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:1.5px">${UI.teamFilter==='mensal'?'Mês completo':UI.teamFilter==='quinzenal'?'1ª Quinzena':'1ª Semana'}</div>
+      </div>
+      <div class="cdp-body">
+        <div class="cdp-kpis">
+          <div class="cdp-kpi"><div class="label">TPV</div><div class="val tc" style="font-size:15px">${fB(tpv)}</div></div>
+          <div class="cdp-kpi"><div class="label">MARKUP</div><div class="val to" style="font-size:15px">${fB(mkp)}</div></div>
+          <div class="cdp-kpi"><div class="label">COMISSÃO</div><div class="val to" style="font-size:15px">${fB(com)}</div></div>
+          <div class="cdp-kpi"><div class="label">META INDIV.</div><div class="val ${meta5k>=100?'tg':'to'}" style="font-size:15px">${meta5k.toFixed(0)}%</div></div>
+        </div>
+        <div style="margin-bottom:12px">
+          <div class="prog-row"><span style="font-size:10px;color:var(--mist)">Progresso meta individual ${fB(vendMeta)}</span><span style="font-size:10px;color:var(--mist)">${fB(mkp)} / ${fB(vendMeta)}</span></div>
+          <div class="prog-track"><div class="prog-fill ${meta5k>=100?'':'prog-fill-o'}" style="width:${Math.min(meta5k,100)}%"></div></div>
+        </div>
+        <div class="cdp-clients-grid">
+          ${clientRows.map(t=>`<div class="cli-item">
+            <div><div class="cli-item-name">${t.clientName||t.clientId}</div><div class="cli-item-val">${fF(t.markup*filt)}</div></div>
+            <span class="badge bg-g">ATIVO</span>
+          </div>`).join('')}
+          ${clientRows.length===0?`<div style="color:var(--mist);font-size:11px;padding:10px;grid-column:1/-1">Nenhuma transação neste período.</div>`:''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function buildChartCom() {
+  const periods = _Engine.calcYearEvolution(2026).filter(m=>m.status==='realizado').slice(-2);
+  if (periods.length < 1) return;
+
+  const vendors = ['joao','arthur','rafael'];
+  const vNames  = vendors.map(id=>_DB.vendors[id].name.split(' ')[0]);
+  document.getElementById('chart-com-tag').textContent = periods.map(m=>m.label).join(' × ');
+
+  const colors = ['rgba(0,180,166,.4)','rgba(29,201,138,.5)'];
+  const borderColors = ['#00B4A6','#1DC98A'];
+
+  UI.charts['com'] = new Chart(document.getElementById('chart-com'),{
+    type:'bar',
+    data:{labels:vNames, datasets: periods.map((m,i)=>({
+      label: m.label+'/26',
+      data: vendors.map(vid=>{
+        const bv = _Engine.calcByVendor(m.period);
+        return bv[vid]?.markup||0;
+      }),
+      backgroundColor: colors[i]||'rgba(255,255,255,.2)',
+      borderColor: borderColors[i]||'#fff',
+      borderWidth:1,borderRadius:4,
+    }))},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{position:'top',labels:{color:'#6B8FA8',boxWidth:10}}},
+      scales:{x:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8'}},y:{grid:{color:'rgba(255,255,255,.03)'},ticks:{color:'#6B8FA8',callback:v=>'R$'+Math.round(v/1e3)+'K'}}}}
+  });
+}
+
+// ── GESTÃO DE LANÇAMENTOS ─────────────────────────────────────────
+let _selectedTxns = new Set();
+
+function renderGestao() {
+  const period = document.getElementById('gestao-period').value;
+  const vendor = document.getElementById('gestao-vendor').value;
+  _selectedTxns.clear();
+  updateSelBar();
+
+  // Filtra transações
+  let txns = _Repo.getTransactions(
+    Object.assign(
+      {},
+      period !== 'todos' ? { period } : {},
+      vendor !== 'todos' ? { vendorId: vendor } : {}
+    )
+  ).filter(t => !t.clientId.startsWith('_rep_')); // esconde repasses internos
+
+  document.getElementById('gestao-txn-count').textContent =
+    `${txns.length} transação(ões)`;
+
+  const tbody = document.getElementById('gestao-txn-body');
+  if (txns.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--mist)">Nenhuma transação encontrada.</td></tr>`;
+  } else {
+    tbody.innerHTML = txns
+      .sort((a, b) => b.markup - a.markup)
+      .map((t, i) => {
+        const isClosed = _Repo.getClosing(t.period)?.status === 'fechado';
+        return `<tr id="txn-row-${t.id}" style="transition:background .15s">
+          <td style="text-align:center">
+            <input type="checkbox" class="txn-chk" data-id="${t.id}"
+              ${isClosed ? 'disabled title="Período lacrado"' : ''}
+              onchange="toggleTxn('${t.id}', this.checked)"
+              style="width:14px;height:14px;margin:0;cursor:${isClosed?'not-allowed':'pointer'}">
+          </td>
+          <td class="mono" style="font-size:10px">${t.period}</td>
+          <td class="tw" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.clientName}">${t.clientName || t.clientId}</td>
+          <td><span class="badge ${t.vendorId==='joao'?'bg-t':t.vendorId==='arthur'?'bg-y':t.vendorId==='rafael'?'bg-g':'bg-o'}">${_DB.vendors[t.vendorId]?.name.split(' ')[0]||'—'}</span></td>
+          <td><span class="badge bg-t">${t.product}</span></td>
+          <td class="mono tc">${fF(t.tpv)}</td>
+          <td class="mono to">${fF(t.markup)}</td>
+          <td><span class="status-flag ${t.status==='realizado'?'flag-real':'flag-proj'}">${t.status==='realizado'?'● Real':'◌ Proj'}</span></td>
+          <td>
+            ${isClosed
+              ? `<span style="font-size:10px;color:var(--mist)">🔒</span>`
+              : `<button onclick="deleteTxn('${t.id}')"
+                  style="padding:3px 8px;border-radius:6px;border:1px solid rgba(255,77,106,.3);background:rgba(255,77,106,.08);color:var(--red);font-size:10px;font-weight:700;cursor:pointer">✕</button>`
+            }
+          </td>
+        </tr>`;
+      }).join('');
+  }
+
+  // Custos
+  const costs = period !== 'todos'
+    ? _Repo.getCosts({ period })
+    : _Repo.getCosts();
+
+  document.getElementById('gestao-cost-count').textContent =
+    `${costs.length} custo(s)`;
+
+  const costBody = document.getElementById('gestao-cost-body');
+  if (costs.length === 0) {
+    costBody.innerHTML = `<div style="color:var(--mist);font-size:12px;text-align:center;padding:16px">Nenhum custo neste período.</div>`;
+  } else {
+    costBody.innerHTML = costs.map(c => {
+      const isClosed = _Repo.getClosing(c.period)?.status === 'fechado';
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:600;color:var(--white)">${c.description}</div>
+          <div style="font-size:10px;color:var(--mist)">${c.category} · ${c.frequency} · ${c.period}</div>
+        </div>
+        <span class="status-flag ${c.status==='realizado'?'flag-real':'flag-proj'}">${c.status==='realizado'?'● Real':'◌ Proj'}</span>
+        <span style="font-family:monospace;font-size:12px;color:var(--red);font-weight:700">${fF(c.amount)}</span>
+        ${isClosed
+          ? `<span style="font-size:10px;color:var(--mist)">🔒</span>`
+          : `<button onclick="deleteCostById('${c.id}')"
+              style="padding:3px 8px;border-radius:6px;border:1px solid rgba(255,77,106,.3);background:rgba(255,77,106,.08);color:var(--red);font-size:10px;font-weight:700;cursor:pointer">✕</button>`
+        }
+      </div>`;
+    }).join('');
+  }
+
+  // Resumo
+  const sumTpv  = txns.reduce((a,t)=>a+t.tpv,0);
+  const sumMkp  = txns.reduce((a,t)=>a+t.markup,0);
+  const sumCost = costs.reduce((a,c)=>a+c.amount,0);
+  document.getElementById('gestao-summary').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mist)">Transações</span><span class="tw">${txns.length}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mist)">TPV Total</span><span class="mono tc">${fF(sumTpv)}</span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mist)">Markup Total</span><span class="mono to">${fF(sumMkp)}</span></div>
+      <div style="height:1px;background:var(--border);margin:4px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--mist)">Custos Lançados</span><span class="mono tr">${fF(sumCost)}</span></div>
+    </div>`;
+
+  // Fechamentos
+  renderGestaoClosings();
+}
+
+function renderGestaoClosings() {
+  const closings = Object.values(_DB.closings).sort((a,b)=>b.period.localeCompare(a.period));
+  document.getElementById('gestao-closings').innerHTML = closings.length
+    ? closings.map(c => `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <div>
+            <div style="font-size:12px;font-weight:700">${_Engine._periodLabel(c.period)}/26</div>
+            <div style="font-size:10px;color:var(--mist)">Lacrado em ${new Date(c.lockedAt).toLocaleDateString('pt-BR')}</div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span style="font-family:monospace;font-size:11px;color:var(--green)">${fF(c.resultadoLiquido||0)}</span>
+            <span class="badge bg-t">🔒</span>
+          </div>
+        </div>`).join('')
+    : `<div style="color:var(--mist);font-size:11px;text-align:center;padding:12px">Nenhum período lacrado.</div>`;
+}
+
+function toggleTxn(id, checked) {
+  if (checked) _selectedTxns.add(id);
+  else _selectedTxns.delete(id);
+  updateSelBar();
+}
+
+function selectAllTxns(checked) {
+  const chks = document.querySelectorAll('.txn-chk:not(:disabled)');
+  chks.forEach(c => {
+    c.checked = checked;
+    const id = c.getAttribute('data-id');
+    if (checked) _selectedTxns.add(id);
+    else _selectedTxns.delete(id);
+  });
+  const chkAll = document.getElementById('chk-all');
+  if (chkAll) chkAll.checked = checked;
+  updateSelBar();
+}
+
+function updateSelBar() {
+  const bar = document.getElementById('gestao-sel-bar');
+  const btn = document.getElementById('btn-delete-sel');
+  const n   = _selectedTxns.size;
+
+  if (n > 0) {
+    bar.style.display = 'flex';
+    if (btn) btn.style.display = 'inline-flex';
+    // Calcula totais selecionados
+    const selTxns = VF.DB.transactions.filter(t => _selectedTxns.has(t.id));
+    const sTpv = selTxns.reduce((a,t)=>a+t.tpv,0);
+    const sMkp = selTxns.reduce((a,t)=>a+t.markup,0);
+    document.getElementById('sel-count').textContent = n;
+    document.getElementById('sel-tpv').textContent   = fF(sTpv);
+    document.getElementById('sel-mkp').textContent   = fF(sMkp);
+  } else {
+    bar.style.display = 'none';
+    if (btn) btn.style.display = 'none';
+  }
+}
+
+function deleteTxn(id) {
+  const txn = VF.DB.transactions.find(t => t.id === id);
+  if (!txn) return;
+  if (_Repo.getClosing(txn.period)?.status === 'fechado') {
+    toast('⚠️ Período lacrado. Desbloqueie antes de excluir.'); return;
+  }
+  if (!confirm(`Excluir transação de "${txn.clientName}"?\nTPV: ${fF(txn.tpv)} · Markup: ${fF(txn.markup)}`)) return;
+  VF.DB.transactions = VF.DB.transactions.filter(t => t.id !== id);
+  try { VF.Storage.save(); } catch(e) {}
+  renderGestao();
+  renderDashboard();
+  toast('✅ Transação excluída.');
+}
+
+function deleteSelected() {
+  if (_selectedTxns.size === 0) return;
+  // Verifica se alguma está em período lacrado
+  const locked = VF.DB.transactions
+    .filter(t => _selectedTxns.has(t.id))
+    .filter(t => _Repo.getClosing(t.period)?.status === 'fechado');
+  if (locked.length > 0) {
+    toast(`⚠️ ${locked.length} transação(ões) em período lacrado — desbloqueie o mês primeiro.`);
+    return;
+  }
+  const selTxns = VF.DB.transactions.filter(t => _selectedTxns.has(t.id));
+  const sTpv = selTxns.reduce((a,t)=>a+t.tpv,0);
+  if (!confirm(`Excluir ${_selectedTxns.size} transação(ões)?\nTPV total: ${fF(sTpv)}\n\nEsta ação não pode ser desfeita.`)) return;
+  VF.DB.transactions = VF.DB.transactions.filter(t => !_selectedTxns.has(t.id));
+  _selectedTxns.clear();
+  try { VF.Storage.save(); } catch(e) {}
+  renderGestao();
+  renderDashboard();
+  toast(`✅ ${_selectedTxns.size || 'Transações'} excluídas.`);
+}
+
+function deleteCostById(id) {
+  const cost = VF.DB.costs.find(c => c.id === id);
+  if (!cost) return;
+  if (_Repo.getClosing(cost.period)?.status === 'fechado') {
+    toast('⚠️ Período lacrado. Desbloqueie antes de excluir.'); return;
+  }
+  if (!confirm(`Excluir custo "${cost.description}" — ${fF(cost.amount)}?`)) return;
+  _Repo.deleteCost(id);
+  renderGestao();
+  renderDashboard();
+  toast('✅ Custo excluído.');
+}
+
+function deleteAllTxnsPeriod() {
+  const period = document.getElementById('gestao-action-period').value;
+  if (_Repo.getClosing(period)?.status === 'fechado') {
+    toast('⚠️ Período lacrado. Desbloqueie primeiro.'); return;
+  }
+  const count = VF.DB.transactions.filter(t => t.period === period).length;
+  if (!confirm(`Apagar TODAS as ${count} transações de ${_Engine._periodLabel(period)}/26?\n\nEsta ação não pode ser desfeita.`)) return;
+  VF.DB.transactions = VF.DB.transactions.filter(t => t.period !== period);
+  try { VF.Storage.save(); } catch(e) {}
+  renderGestao();
+  renderDashboard();
+  toast(`✅ Transações de ${_Engine._periodLabel(period)} removidas.`);
+}
+
+function deleteAllCostsPeriod() {
+  const period = document.getElementById('gestao-action-period').value;
+  if (_Repo.getClosing(period)?.status === 'fechado') {
+    toast('⚠️ Período lacrado. Desbloqueie primeiro.'); return;
+  }
+  const count = VF.DB.costs.filter(c => c.period === period).length;
+  if (!confirm(`Apagar TODOS os ${count} custos de ${_Engine._periodLabel(period)}/26?`)) return;
+  VF.DB.costs = VF.DB.costs.filter(c => c.period !== period);
+  try { VF.Storage.save(); } catch(e) {}
+  renderGestao();
+  renderDashboard();
+  toast(`✅ Custos de ${_Engine._periodLabel(period)} removidos.`);
+}
+
+function unlockPeriod() {
+  const period = document.getElementById('gestao-action-period').value;
+  const closing = _Repo.getClosing(period);
+  if (!closing || closing.status !== 'fechado') {
+    toast('ℹ️ Este período não está lacrado.'); return;
+  }
+  if (!confirm(`Desbloquear ${_Engine._periodLabel(period)}/26?\n\nO fechamento lacrado será removido. Os dados de transações permanecem — você pode corrigir e relacar.`)) return;
+  delete VF.DB.closings[period];
+  try { VF.Storage.save(); } catch(e) {}
+  renderGestao();
+  renderClosings();
+  renderDashboard();
+  toast(`🔓 ${_Engine._periodLabel(period)} desbloqueado. Corrija e relace.`);
+}
+
+// ── PARAMETRIZAÇÃO: RENDERING & INTERACTION ──────────────────────
+
+function swParam(section, btn) {
+  document.querySelectorAll('.param-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.param-section').forEach(s => s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('param-' + section).classList.add('active');
+}
+
+function renderParametrizacao() {
+  renderParamVendedores();
+  renderParamComissao();
+  renderParamMetas();
+}
+
+// ── SVG Icons (Lucide-style) ──
+const ICON_EDIT = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+const ICON_TRASH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+
+// ── VENDEDORES ──
+function renderParamVendedores() {
+  const tbody = document.getElementById('param-vendedores-body');
+  if (!tbody) return;
+  const vends = _Config.vendedores;
+  if (vends.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--mist);padding:28px">Nenhum vendedor cadastrado</td></tr>';
+    return;
+  }
+  tbody.innerHTML = vends.map(v => `
+    <tr>
+      <td class="tw">${v.nome}</td>
+      <td>${v.regiao}</td>
+      <td class="mono tc">${fF(v.metaIndividual)}</td>
+      <td class="mono to">${v.comissaoBase.toFixed(1)}%</td>
+      <td>
+        <button class="param-icon-btn edit" onclick="openVendorModal('${v.id}')" title="Editar">${ICON_EDIT}</button>
+        <button class="param-icon-btn delete" onclick="deleteVendedor('${v.id}')" title="Excluir">${ICON_TRASH}</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openVendorModal(editId) {
+  const existing = editId ? _Config.vendedores.find(v => v.id === editId) : null;
+  const title = existing ? 'Editar Vendedor' : 'Adicionar Vendedor';
+  const container = document.getElementById('param-modal-container');
+  container.innerHTML = `
+    <div class="param-modal-overlay" onclick="if(event.target===this)closeParamModal()">
+      <div class="param-modal">
+        <h3>${title}</h3>
+        <label>Nome</label>
+        <input type="text" id="pm-nome" value="${existing ? existing.nome : ''}" placeholder="Nome do vendedor">
+        <label>Região</label>
+        <select id="pm-regiao">
+          <option value="Minas Gerais" ${existing?.regiao==='Minas Gerais'?'selected':''}>Minas Gerais</option>
+          <option value="São Paulo" ${existing?.regiao==='São Paulo'?'selected':''}>São Paulo</option>
+          <option value="Rio de Janeiro" ${existing?.regiao==='Rio de Janeiro'?'selected':''}>Rio de Janeiro</option>
+          <option value="Sul" ${existing?.regiao==='Sul'?'selected':''}>Sul</option>
+          <option value="Nordeste" ${existing?.regiao==='Nordeste'?'selected':''}>Nordeste</option>
+          <option value="Centro-Oeste" ${existing?.regiao==='Centro-Oeste'?'selected':''}>Centro-Oeste</option>
+          <option value="Norte" ${existing?.regiao==='Norte'?'selected':''}>Norte</option>
+        </select>
+        <label>Meta Individual (R$)</label>
+        <input type="number" id="pm-meta" value="${existing ? existing.metaIndividual : ''}" placeholder="0.00" step="100">
+        <label>Comissão Base (%)</label>
+        <input type="number" id="pm-comissao" value="${existing ? existing.comissaoBase : ''}" placeholder="0" step="0.5" min="0" max="100">
+        <div class="param-modal-actions">
+          <button class="btn-cancel" onclick="closeParamModal()">Cancelar</button>
+          <button class="btn-save" onclick="saveVendedor('${editId || ''}')">Salvar</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function saveVendedor(editId) {
+  const nome = document.getElementById('pm-nome').value.trim();
+  const regiao = document.getElementById('pm-regiao').value;
+  const metaIndividual = parseFloat(document.getElementById('pm-meta').value) || 0;
+  const comissaoBase = parseFloat(document.getElementById('pm-comissao').value) || 0;
+  if (!nome) { toast('⚠️ Informe o nome do vendedor'); return; }
+  if (editId) {
+    _Config.updateVendedor(editId, { nome, regiao, metaIndividual, comissaoBase });
+  } else {
+    _Config.addVendedor({ nome, regiao, metaIndividual, comissaoBase });
+  }
+  closeParamModal();
+  renderParamVendedores();
+  syncConfigToDB();
+  toast('✅ Vendedor salvo!');
+}
+
+function deleteVendedor(id) {
+  if (!confirm('Excluir este vendedor?')) return;
+  _Config.deleteVendedor(id);
+  renderParamVendedores();
+  syncConfigToDB();
+  toast('🗑 Vendedor removido');
+}
+
+// ── COMISSIONAMENTO ──
+function renderParamComissao() {
+  const tbody = document.getElementById('param-comissao-body');
+  const warnDiv = document.getElementById('param-comissao-warnings');
+  if (!tbody) return;
+  const regras = _Config.regrasComissao;
+
+  // Detectar duplicatas de %
+  const pctMap = {};
+  regras.forEach(r => {
+    const key = r.comissao.toFixed(2);
+    if (!pctMap[key]) pctMap[key] = [];
+    pctMap[key].push(r.produto);
+  });
+  const dupes = Object.entries(pctMap).filter(([, arr]) => arr.length > 1);
+
+  if (warnDiv) {
+    warnDiv.innerHTML = dupes.map(([pct, prods]) =>
+      `<span class="badge-amber">⚠ ${prods.join(' e ')} têm a mesma comissão de ${pct}%</span>`
+    ).join(' ');
+  }
+
+  if (regras.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--mist);padding:28px">Nenhuma regra cadastrada</td></tr>';
+    return;
+  }
+  tbody.innerHTML = regras.map(r => {
+    const isDupe = dupes.some(([, prods]) => prods.includes(r.produto));
+    return `
+    <tr>
+      <td class="tw">${r.produto} ${isDupe ? '<span class="badge-amber">⚠</span>' : ''}</td>
+      <td class="mono to">${r.comissao.toFixed(2)}%</td>
+      <td class="mono tc">${r.metaMinima > 0 ? fF(r.metaMinima) : '—'}</td>
+      <td>
+        <button class="param-icon-btn edit" onclick="openComissaoModal('${r.id}')" title="Editar">${ICON_EDIT}</button>
+        <button class="param-icon-btn delete" onclick="deleteRegraComissao('${r.id}')" title="Excluir">${ICON_TRASH}</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openComissaoModal(editId) {
+  const existing = editId ? _Config.regrasComissao.find(r => r.id === editId) : null;
+  const title = existing ? 'Editar Regra' : 'Adicionar Regra de Comissão';
+  const container = document.getElementById('param-modal-container');
+  container.innerHTML = `
+    <div class="param-modal-overlay" onclick="if(event.target===this)closeParamModal()">
+      <div class="param-modal">
+        <h3>${title}</h3>
+        <label>Produto</label>
+        <input type="text" id="pm-produto" value="${existing ? existing.produto : ''}" placeholder="Nome do produto">
+        <label>% Comissão</label>
+        <input type="number" id="pm-pct" value="${existing ? existing.comissao : ''}" placeholder="0" step="0.01" min="0" max="100">
+        <label>Meta Mínima para Ativar (R$)</label>
+        <input type="number" id="pm-metamin" value="${existing ? existing.metaMinima : '0'}" placeholder="0" step="100">
+        <div class="param-modal-actions">
+          <button class="btn-cancel" onclick="closeParamModal()">Cancelar</button>
+          <button class="btn-save" onclick="saveRegraComissao('${editId || ''}')">Salvar</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function saveRegraComissao(editId) {
+  const produto = document.getElementById('pm-produto').value.trim();
+  const comissao = parseFloat(document.getElementById('pm-pct').value) || 0;
+  const metaMinima = parseFloat(document.getElementById('pm-metamin').value) || 0;
+  if (!produto) { toast('⚠️ Informe o nome do produto'); return; }
+  if (editId) {
+    _Config.updateRegraComissao(editId, { produto, comissao, metaMinima });
+  } else {
+    _Config.addRegraComissao({ produto, comissao, metaMinima });
+  }
+  closeParamModal();
+  renderParamComissao();
+  toast('✅ Regra salva!');
+}
+
+function deleteRegraComissao(id) {
+  if (!confirm('Excluir esta regra?')) return;
+  _Config.deleteRegraComissao(id);
+  renderParamComissao();
+  toast('🗑 Regra removida');
+}
+
+// ── METAS ──
+const MESES_LABEL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function renderParamMetas() {
+  // Meta anual input
+  const input = document.getElementById('param-meta-anual');
+  if (input && !input._focused) {
+    input.value = _Config.metaAnual > 0 ? fF(_Config.metaAnual) : '';
+  }
+
+  // Tabela mensal
+  const tbody = document.getElementById('param-metas-body');
+  if (!tbody) return;
+  const anual = _Config.metaAnual || 1;
+  tbody.innerHTML = _Config.metasMensais.map((val, i) => {
+    const pct = anual > 0 ? (val / anual * 100).toFixed(1) : '0.0';
+    return `
+    <tr>
+      <td class="tw">${MESES_LABEL[i]}</td>
+      <td style="text-align:right">
+        <input type="text" class="meta-month-input" value="${fF(val)}" data-mes="${i}"
+          onfocus="this.value=this.value.replace(/[^0-9.,]/g,'').replace(/\./g,'').replace(',','.')"
+          onblur="onMetaMensalBlur(this,${i})"
+          onkeydown="if(event.key==='Enter'){this.blur()}">
+      </td>
+      <td style="text-align:right" class="mono ${parseFloat(pct) > 10 ? 'to' : 'tc'}">${pct}%</td>
+    </tr>`;
+  }).join('');
+}
+
+function onMetaAnualInput(el) {
+  el._focused = true;
+}
+
+function onMetaAnualBlur(el) {
+  el._focused = false;
+  const raw = el.value.replace(/[^0-9.,]/g, '').replace(/\./g, '').replace(',', '.');
+  const val = parseFloat(raw) || 0;
+  _Config.setMetaAnual(val);
+  el.value = val > 0 ? fF(val) : '';
+  // Atualiza projeção
+  DB.projectionConfig.annualTarget = val;
+  DB.projectionConfig.monthlyTarget = Math.round(val / 12);
+  try { _Storage.save(); } catch(e) {}
+  renderParamMetas();
+  toast('✅ Meta anual atualizada');
+}
+
+function onMetaMensalBlur(el, mesIdx) {
+  const raw = el.value.replace(/[^0-9.,]/g, '').replace(/\./g, '').replace(',', '.');
+  const val = parseFloat(raw) || 0;
+  _Config.setMetaMensal(mesIdx, val);
+  renderParamMetas();
+}
+
+function distribuirMetasUniforme() {
+  _Config.distribuirUniforme();
+  renderParamMetas();
+  toast('✅ Metas distribuídas uniformemente');
+}
+
+function closeParamModal() {
+  document.getElementById('param-modal-container').innerHTML = '';
+}
+
+// ── SYNC: ConfigContext → DB (conecta engine) ──
+function syncConfigToDB() {
+  // Sincroniza vendedores do ConfigContext para DB.vendors
+  _Config.vendedores.forEach(v => {
+    const vid = v.id;
+    if (!DB.vendors[vid]) {
+      DB.vendors[vid] = {};
+    }
+    DB.vendors[vid].name = v.nome;
+    DB.vendors[vid].commissionRate = (v.comissaoBase || 0) / 100;
+    DB.vendors[vid]._metaIndividual = v.metaIndividual;
+    DB.vendors[vid]._regiao = v.regiao;
+  });
+  // Sincroniza meta anual
+  DB.projectionConfig.annualTarget = _Config.metaAnual;
+  DB.projectionConfig.monthlyTarget = Math.round(_Config.metaAnual / 12);
+  try { _Storage.save(); } catch(e) {}
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────
+function toast(msg) {
+  const t = document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),3200);
+}
+
+// ── INIT ──────────────────────────────────────────────────────────
+(function init() {
+  // localStorage pode ser bloqueado via file:// — fallback gracioso
+  let loaded = false;
+  try { loaded = _Storage.load(); } catch(e) {
+    console.warn('Storage bloqueado (file://). Dados em memória apenas.', e);
+  }
+  if (!loaded || VF.DB.transactions.length === 0) {
+    VF.seedRealData();
+  }
+  // ConfigContext: carrega ou faz seed a partir do DB
+  try { _Config.load(); } catch(e) {}
+  _Config.seedFromDB();
+  syncConfigToDB();
+
+  renderDashboard();
+  renderClosings();
+  renderCosts();
+  updateTeamView();
+  document.getElementById('pill-period').textContent = 'FEV · 2026';
+})();
+</script>
+</body>
+</html>
