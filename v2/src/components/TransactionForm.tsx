@@ -9,6 +9,7 @@ import { X, Loader2, Save, Plus } from 'lucide-react'
 import type { LancamentoCusto } from '../types'
 import type { LancamentoFormData, ValidationError } from '../services/sheetsCrud'
 import { validateLancamento } from '../services/sheetsCrud'
+import { categoriasParaTipo } from '../constants/categorias'
 
 interface TransactionFormProps {
   isOpen: boolean
@@ -46,10 +47,6 @@ export function TransactionForm({
 }: TransactionFormProps) {
   const [form, setForm] = useState<LancamentoFormData>(EMPTY_FORM)
   const [errors, setErrors] = useState<ValidationError[]>([])
-  const [novaCategoria, setNovaCategoria] = useState('')
-  const [novaConta, setNovaConta] = useState('')
-  const [showNovaCategoria, setShowNovaCategoria] = useState(false)
-  const [showNovaConta, setShowNovaConta] = useState(false)
 
   const isEdit = editItem !== null
 
@@ -68,19 +65,12 @@ export function TransactionForm({
       setForm(EMPTY_FORM)
     }
     setErrors([])
-    setShowNovaCategoria(false)
-    setShowNovaConta(false)
   }, [editItem, isOpen])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Usar nova categoria/conta se informada
-    const formFinal = {
-      ...form,
-      categoria: showNovaCategoria ? novaCategoria : form.categoria,
-      conta: showNovaConta ? novaConta : form.conta,
-    }
+    const formFinal = { ...form }
 
     const validationErrors = validateLancamento(formFinal)
     if (validationErrors.length > 0) {
@@ -225,81 +215,50 @@ export function TransactionForm({
             )}
           </div>
 
-          {/* Categoria */}
+          {/* Categoria — baseada no enum controlado por tipo */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Categoria *
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowNovaCategoria(!showNovaCategoria)}
-                className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
-              >
-                {showNovaCategoria ? 'Selecionar existente' : '+ Nova categoria'}
-              </button>
-            </div>
-            {showNovaCategoria ? (
-              <input
-                type="text"
-                value={novaCategoria}
-                onChange={(e) => setNovaCategoria(e.target.value)}
-                placeholder="Nome da nova categoria"
-                className={`input-field ${getFieldError('categoria') ? 'border-red-400' : ''}`}
-              />
-            ) : (
-              <select
-                value={form.categoria}
-                onChange={(e) => updateField('categoria', e.target.value)}
-                className={`input-field ${getFieldError('categoria') ? 'border-red-400' : ''}`}
-              >
-                <option value="">Selecione...</option>
-                {categorias.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
-            )}
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Categoria *
+            </label>
+            <select
+              value={form.categoria}
+              onChange={(e) => updateField('categoria', e.target.value)}
+              className={`input-field ${getFieldError('categoria') ? 'border-red-400' : ''}`}
+            >
+              <option value="">Selecione...</option>
+              {categoriasParaTipo(form.tipo).map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
             {getFieldError('categoria') && (
               <p className="text-xs text-red-600 mt-1">{getFieldError('categoria')}</p>
             )}
           </div>
 
-          {/* Conta */}
+          {/* Conta — select se houver opcoes, input livre caso contrario */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-sm font-medium text-gray-700">
-                Conta *
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowNovaConta(!showNovaConta)}
-                className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
-              >
-                {showNovaConta ? 'Selecionar existente' : '+ Nova conta'}
-              </button>
-            </div>
-            {showNovaConta ? (
-              <input
-                type="text"
-                value={novaConta}
-                onChange={(e) => setNovaConta(e.target.value)}
-                placeholder="Nome da nova conta"
-                className={`input-field ${getFieldError('conta') ? 'border-red-400' : ''}`}
-              />
-            ) : (
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Conta <span className="text-gray-400 font-normal">(opcional)</span>
+            </label>
+            {contas.length > 0 ? (
               <select
                 value={form.conta}
                 onChange={(e) => updateField('conta', e.target.value)}
-                className={`input-field ${getFieldError('conta') ? 'border-red-400' : ''}`}
+                className="input-field"
               >
-                <option value="">Selecione...</option>
+                <option value="">Selecione ou deixe em branco</option>
                 {contas.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
-            )}
-            {getFieldError('conta') && (
-              <p className="text-xs text-red-600 mt-1">{getFieldError('conta')}</p>
+            ) : (
+              <input
+                type="text"
+                value={form.conta}
+                onChange={(e) => updateField('conta', e.target.value)}
+                placeholder="Ex: Conta Principal, Caixa..."
+                className="input-field"
+              />
             )}
           </div>
 

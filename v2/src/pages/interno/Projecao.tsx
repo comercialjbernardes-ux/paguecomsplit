@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════════════
 // Projecao de Crescimento — Modulo Interno
 // Planejamento e simulador de cenarios de investimento
-// Conforme fluxograma: painel de metas + simulador + cenarios
+// Correcoes: crescimento continuo (sem reset em 36m) + modo manual
 // ═══════════════════════════════════════════════════════════════
 
 import { useState, useMemo, useCallback } from 'react'
@@ -9,10 +9,11 @@ import {
   Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, Area, AreaChart,
 } from 'recharts'
-import { TrendingUp, Sliders, Save, Trash2, Plus } from 'lucide-react'
+import { TrendingUp, Sliders, Save, Trash2, Plus, Database, PenLine } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
 import { LoadingState } from '../../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../../utils/format'
+import { getScalar, setScalar } from '../../services/localStorageService'
 import type { CenarioSalvo } from '../../types'
 
 const STORAGE_KEY = 'vendafeita_cenarios'
@@ -25,6 +26,12 @@ export function InternoProjecao() {
   const [meses, setMeses] = useState(12)
   const [investimento, setInvestimento] = useState(0)
 
+  // Modo: 'sheets' usa ultimo fechamento, 'manual' usa valor digitado
+  const [modo, setModo] = useState<'sheets' | 'manual'>('sheets')
+  const [baseManual, setBaseManual] = useState<number>(
+    () => getScalar<number>('vdf_projecao_base') || 0,
+  )
+
   // Cenarios salvos (localStorage)
   const [cenarios, setCenarios] = useState<CenarioSalvo[]>(() => {
     try {
@@ -35,39 +42,53 @@ export function InternoProjecao() {
     }
   })
 
-  // Base para projecao: Markup POS e o indicador recorrente de performance comercial.
-  // valorLiquido inclui deducoes variaveis (descontos, cobr. digital) que distorcem projecoes.
-  const baseValue = fechamentoAtual?.markupPos || fechamentoAtual?.valorLiquido || 30000
+  // Base para projecao: modo manual usa valor digitado, modo sheets usa markupPos
+  const baseValue = modo === 'manual'
+    ? (baseManual || fechamentoAtual?.markupPos || 30000)
+    : (fechamentoAtual?.markupPos || fechamentoAtual?.valorLiquido || 30000)
 
-  // Projecao calculada
+  const basePeriodo = fechamentoAtual?.periodo || 'ultimo fechamento'
+
+  // Salva base manual no localStorage ao alterar
+  const handleBaseManualChange = (v: number) => {
+    setBaseManual(v)
+    setScalar('vdf_projecao_base', v)
+  }
+
+  // Projecao calculada — crescimento continuo (nao resetar em 36m)
   const dadosProjecao = useMemo(() => {
     const mesesNomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
     const result = []
-    let valorAtual = baseValue
 
     // Dados historicos dos fechamentos
     for (const f of fechamentos) {
       result.push({
         mes: f.periodo,
-        realizado: f.valorLiquido || f.markupPos,
+        realizado: f.markupPos || f.valorLiquido,
         projetado: null as number | null,
         otimista: null as number | null,
         pessimista: null as number | null,
       })
     }
 
-    // Projecao futura
-    const startMonth = result.length
+    // Projecao futura — crescimento composto continuo
     for (let i = 0; i < meses; i++) {
-      const mesIndex = (startMonth + i) % 12
-      valorAtual = valorAtual * (1 + crescimento / 100)
-      const valorComInvest = valorAtual + (investimento / meses)
+      // Math.pow: aplica crescimento composto a partir do mes 1
+      // Cada mes aplica a taxa sobre o mes anterior (sem reset)
+      const fator = Math.pow(1 + crescimento / 100, i + 1)
+      const valorProjetado = baseValue * fator + (investimento / meses)
+
+      // Nome do mes: continua a sequencia do calendario real
+      const mesAbs = result.length + i  // posicao absoluta no tempo
+      const mesIndex = mesAbs % 12
+      const label = mesesNomes[mesIndex] || `M${mesAbs + 1}`
+
       result.push({
-        mes: mesesNomes[mesIndex] || `M${startMonth + i + 1}`,
+        mes: label,
         realizado: null,
-        projetado: valorComInvest,
-        otimista: valorComInvest * 1.15,
-        pessimista: valorComInvest * 0.85,
+        projetado: valorProjetado,
+        otimista: valorProjetado * 1.15,
+        pessimista: valorProjetado * 0.85,
       })
     }
 
@@ -123,12 +144,52 @@ export function InternoProjecao() {
         <p className="text-gray-500 mt-1">Planejamento e simulador de cenarios de investimento</p>
       </div>
 
+      {/* Toggle modo base */}
+      <div className="flex items-center gap-3">
+        <span className="text-sm font-medium text-gray-700">Base da projecao:</span>
+        <div className="flex bg-gray-100 rounded-lg p-1">
+          <button
+            onClick={() => setModo('sheets')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              modo === 'sheets' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Database className="w-3.5 h-3.5" />
+            Planilha
+          </button>
+          <button
+            onClick={() => setModo('manual')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+              modo === 'manual' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <PenLine className="w-3.5 h-3.5" />
+            Manual
+          </button>
+        </div>
+        {modo === 'manual' && (
+          <input
+            type="number"
+            value={baseManual || ''}
+            onChange={(e) => handleBaseManualChange(Number(e.target.value))}
+            placeholder="Faturamento atual (R$)"
+            className="input-field w-56"
+            min={0}
+            step={1000}
+          />
+        )}
+      </div>
+
       {/* KPIs de projecao */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card-hover">
-          <p className="text-sm text-gray-500">Markup POS Base</p>
+          <p className="text-sm text-gray-500">
+            Markup POS Base {modo === 'manual' ? '(manual)' : `— ${basePeriodo}`}
+          </p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(baseValue)}</p>
-          <p className="text-xs text-gray-400 mt-1">Receita principal — {fechamentoAtual?.periodo || 'ultimo fechamento'}</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {modo === 'manual' ? 'Valor inserido manualmente' : 'Receita principal do ultimo fechamento'}
+          </p>
         </div>
         <div className="card-hover">
           <p className="text-sm text-gray-500">Total Projetado ({meses} meses)</p>
@@ -140,7 +201,7 @@ export function InternoProjecao() {
           <p className="text-2xl font-bold text-blue-700 mt-1">
             {formatCurrency(dadosProjecao[dadosProjecao.length - 1]?.projetado || 0)}
           </p>
-          <p className="text-xs text-gray-400 mt-1">Mes {meses}</p>
+          <p className="text-xs text-gray-400 mt-1">Mes {meses} (crescimento composto)</p>
         </div>
       </div>
 

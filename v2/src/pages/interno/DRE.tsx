@@ -10,14 +10,14 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, Legend,
 } from 'recharts'
-import { FileBarChart, TrendingUp, TrendingDown, ArrowRight, CreditCard, Users } from 'lucide-react'
+import { FileBarChart, TrendingUp, TrendingDown, ArrowRight, CreditCard, Users, BookOpen } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
 import { LoadingState } from '../../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../../utils/format'
 import type { DadosFechamento } from '../../types'
 
 export function InternoDRE() {
-  const { fechamentos, fechamentoAtual, isLoading } = useInternoData()
+  const { fechamentos, fechamentoAtual, lancamentos, isLoading } = useInternoData()
 
   // Estrutura correta do DRE:
   // Receitas: Markup POS + Comissao Rede + Repasse
@@ -70,6 +70,22 @@ export function InternoDRE() {
       liquido: f.valorLiquido,
     }))
   }, [fechamentos])
+
+  // Lancamentos locais do periodo atual (fonte: localStorage via DataContext)
+  const lancamentosLocais = useMemo(() => {
+    return lancamentos.filter((l) => l.source === 'local')
+  }, [lancamentos])
+
+  const receitasLocais = useMemo(() =>
+    lancamentosLocais.filter((l) => l.tipo === 'receita'),
+  [lancamentosLocais])
+
+  const despesasLocais = useMemo(() =>
+    lancamentosLocais.filter((l) => l.tipo === 'despesa'),
+  [lancamentosLocais])
+
+  const totalReceitasLocais = receitasLocais.reduce((s, l) => s + l.valor, 0)
+  const totalDespesasLocais = despesasLocais.reduce((s, l) => s + l.valor, 0)
 
   if (isLoading) return <LoadingState message="Carregando DRE..." />
 
@@ -246,6 +262,67 @@ export function InternoDRE() {
             )}
           </div>
         </>
+      )}
+
+      {/* Lancamentos Manuais — separados do DRE base */}
+      {lancamentosLocais.length > 0 && (
+        <div className="card border border-amber-200 bg-amber-50/40">
+          <div className="flex items-center gap-2 mb-4">
+            <BookOpen className="w-5 h-5 text-amber-600" />
+            <h3 className="text-lg font-semibold text-gray-900">Lancamentos Manuais</h3>
+            <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              {lancamentosLocais.length} registro(s) local
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div className="bg-white rounded-xl p-4 border border-emerald-100">
+              <p className="text-xs font-semibold text-emerald-700 uppercase mb-2">Receitas Adicionais</p>
+              {receitasLocais.length === 0 ? (
+                <p className="text-sm text-gray-400">Nenhuma receita manual</p>
+              ) : (
+                <>
+                  {receitasLocais.map((l) => (
+                    <div key={l.id} className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0">
+                      <span className="text-gray-700">{l.descricao}</span>
+                      <span className="text-emerald-700 font-medium">+ {formatCurrency(l.valor)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm font-bold pt-2 mt-1 border-t border-emerald-200">
+                    <span>Total receitas manuais</span>
+                    <span className="text-emerald-700">+ {formatCurrency(totalReceitasLocais)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="bg-white rounded-xl p-4 border border-red-100">
+              <p className="text-xs font-semibold text-red-700 uppercase mb-2">Despesas Adicionais</p>
+              {despesasLocais.length === 0 ? (
+                <p className="text-sm text-gray-400">Nenhuma despesa manual</p>
+              ) : (
+                <>
+                  {despesasLocais.map((l) => (
+                    <div key={l.id} className="flex justify-between text-sm py-1 border-b border-gray-50 last:border-0">
+                      <span className="text-gray-700">{l.descricao}</span>
+                      <span className="text-red-700 font-medium">- {formatCurrency(l.valor)}</span>
+                    </div>
+                  ))}
+                  <div className="flex justify-between text-sm font-bold pt-2 mt-1 border-t border-red-200">
+                    <span>Total despesas manuais</span>
+                    <span className="text-red-700">- {formatCurrency(totalDespesasLocais)}</span>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+          {fechamentoAtual && (
+            <div className="bg-white rounded-xl p-4 border border-blue-100 flex justify-between items-center">
+              <span className="font-semibold text-gray-800">Resultado Ajustado (Sheets + Manual)</span>
+              <span className="text-xl font-bold text-blue-900">
+                {formatCurrency(fechamentoAtual.valorLiquido + totalReceitasLocais - totalDespesasLocais)}
+              </span>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Evolucao por periodo (so aparece com 2+ fechamentos) */}

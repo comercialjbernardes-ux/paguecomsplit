@@ -130,8 +130,8 @@ export function EquipeDashboard() {
         />
         <KPICard
           icon={<TrendingUp className="w-5 h-5" />}
-          label="Valor Liquido"
-          value={formatCurrency(kpis.valorLiquido)}
+          label="Markup POS"
+          value={formatCurrency(kpis.markupPos)}
           color="emerald"
         />
       </div>

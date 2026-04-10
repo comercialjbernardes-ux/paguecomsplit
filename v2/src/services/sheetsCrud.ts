@@ -1,6 +1,8 @@
 // ═══════════════════════════════════════════════════════════════
 // CRUD Service — Operacoes de escrita na planilha Google Sheets
-// Adicionar, editar e excluir lancamentos via Sheets API v4
+// @deprecated Escrita de vendedores e lancamentos migrada para
+// DataContext + localStorageService (Partes 2 e 3 do refactoring).
+// Apenas LancamentoFormData e validateLancamento ainda em uso ativo.
 // ═══════════════════════════════════════════════════════════════
 
 import { appendRows, updateRange, deleteRows, getSpreadsheetMetadata } from './sheetsApi'
@@ -148,9 +150,10 @@ export function validateLancamento(data: LancamentoFormData): ValidationError[] 
     errors.push({ field: 'valor', message: 'Valor deve ser maior que zero' })
   }
 
-  if (!data.conta || data.conta.trim() === '') {
-    errors.push({ field: 'conta', message: 'Conta e obrigatoria' })
-  }
+  // Conta e opcional para lancamentos locais
+  // if (!data.conta || data.conta.trim() === '') {
+  //   errors.push({ field: 'conta', message: 'Conta e obrigatoria' })
+  // }
 
   return errors
 }

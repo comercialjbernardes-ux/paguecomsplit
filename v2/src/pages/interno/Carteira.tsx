@@ -13,13 +13,17 @@ import {
 import { Users, Search, Filter, TrendingUp } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
 import { useEquipeData } from '../../hooks/useEquipeData'
+import { useDataContext } from '../../contexts/DataContext'
 import { LoadingState } from '../../components/LoadingState'
 import {
   formatCurrency, formatNumber, getStatusBadgeClass, getChartColor,
 } from '../../utils/format'
 
+const SEGMENTOS_FIXOS = ['Alimentacao', 'Comercio', 'Saude', 'Servicos', 'Hospedagem & Lazer', 'Outros']
+
 export function InternoCarteira() {
   const { clientes, segmentos, isLoading } = useInternoData()
+  const { saveSegmentOverride } = useDataContext()
   useEquipeData()
   const [filtroSegmento, setFiltroSegmento] = useState('todos')
   const [filtroVendedor, setFiltroVendedor] = useState('todos')
@@ -255,7 +259,21 @@ export function InternoCarteira() {
                   <tr key={c.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-3 px-3 text-gray-400 font-medium">{i + 1}</td>
                     <td className="py-3 px-3 font-medium text-gray-900">{c.nome}</td>
-                    <td className="py-3 px-3 text-gray-500">{c.segmento}</td>
+                    <td className="py-3 px-3">
+                      {/* Select inline para override de segmento */}
+                      <select
+                        value={c.segmento || 'Outros'}
+                        onChange={(e) =>
+                          saveSegmentOverride({ clienteId: c.id, segmento: e.target.value })
+                        }
+                        className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 hover:border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-300 w-full max-w-[160px]"
+                        title="Alterar segmento"
+                      >
+                        {SEGMENTOS_FIXOS.map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </td>
                     <td className="py-3 px-3 text-gray-500">{c.vendedor}</td>
                     <td className="py-3 px-3 text-right font-medium">{formatCurrency(c.volumeTotal)}</td>
                     <td className="py-3 px-3 text-right text-gray-500">{formatCurrency(c.ticketMedio)}</td>

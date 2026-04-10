@@ -11,7 +11,7 @@ import {
 import {
   FileBarChart, Calendar, TrendingUp,
   DollarSign, Users, ArrowUpRight, ArrowDownRight,
-  Printer,
+  Printer, Filter,
 } from 'lucide-react'
 import { useInternoData } from '../hooks/useInternoData'
 import { useEquipeData } from '../hooks/useEquipeData'
@@ -24,6 +24,7 @@ import {
 } from '../utils/format'
 import type { DadosFechamento } from '../types'
 import type { ReportData } from '../services/exportService'
+import { TODAS_CATEGORIAS } from '../constants/categorias'
 
 type PeriodoRelatorio = 'mensal' | 'trimestral' | 'anual'
 
@@ -32,6 +33,8 @@ export function RelatoriosPage() {
   const { vendedores } = useEquipeData()
   const [periodoTipo, setPeriodoTipo] = useState<PeriodoRelatorio>('mensal')
   const [periodoSelecionado, setPeriodoSelecionado] = useState<string>('todos')
+  const [filtroTipo, setFiltroTipo] = useState<'todos' | 'receita' | 'despesa'>('todos')
+  const [filtroCategoria, setFiltroCategoria] = useState<string>('todas')
   const reportRef = useRef<HTMLDivElement>(null)
 
   // Periodos disponiveis
@@ -45,16 +48,14 @@ export function RelatoriosPage() {
     return fechamentos.filter((f: DadosFechamento) => f.periodo === periodoSelecionado)
   }, [fechamentos, periodoSelecionado])
 
-  // Lancamentos filtrados
+  // Lancamentos filtrados por tipo, categoria e periodo
   const lancamentosFiltrados = useMemo(() => {
-    if (periodoSelecionado === 'todos') return lancamentos
-    // Filtrar por periodo baseado na data
     return lancamentos.filter((l) => {
-      // Tenta casar o mes/ano do lancamento com o periodo
-      if (!l.data) return false
-      return true // Sem filtro de periodo especifico nos lancamentos
+      if (filtroTipo !== 'todos' && l.tipo !== filtroTipo) return false
+      if (filtroCategoria !== 'todas' && l.categoria !== filtroCategoria) return false
+      return true
     })
-  }, [lancamentos, periodoSelecionado])
+  }, [lancamentos, filtroTipo, filtroCategoria])
 
   // KPIs consolidados
   const kpis = useMemo(() => {
@@ -186,6 +187,34 @@ export function RelatoriosPage() {
 
           <span className="text-xs text-gray-400">
             {kpis.numPeriodos} periodo(s) selecionado(s)
+          </span>
+        </div>
+
+        {/* Filtros de lancamentos */}
+        <div className="flex flex-wrap items-center gap-3 pt-3 border-t border-gray-100 mt-3">
+          <Filter className="w-4 h-4 text-gray-400" />
+          <span className="text-xs font-medium text-gray-500">Lancamentos:</span>
+          <select
+            value={filtroTipo}
+            onChange={(e) => setFiltroTipo(e.target.value as 'todos' | 'receita' | 'despesa')}
+            className="input-field w-auto text-sm py-1.5"
+          >
+            <option value="todos">Receitas + Despesas</option>
+            <option value="receita">Apenas Receitas</option>
+            <option value="despesa">Apenas Despesas</option>
+          </select>
+          <select
+            value={filtroCategoria}
+            onChange={(e) => setFiltroCategoria(e.target.value)}
+            className="input-field w-auto text-sm py-1.5"
+          >
+            <option value="todas">Todas categorias</option>
+            {TODAS_CATEGORIAS.map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+          <span className="text-xs text-gray-400">
+            {lancamentosFiltrados.length} lancamento(s)
           </span>
         </div>
       </div>
