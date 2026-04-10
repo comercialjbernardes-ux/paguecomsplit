@@ -1,48 +1,44 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LogWindow from './components/LogWindow/LogWindow'
+import ImportScreen from './components/ImportScreen'
 import Layout from './components/Layout'
 import Placeholder from './components/Placeholder'
-import Welcome from './pages/Welcome'
+import useDataStore from './context/DataContext'
 
-// Equipe
-import { EquipeDashboard }       from './pages/equipe/Dashboard'
-import { EquipeRanking }         from './pages/equipe/Ranking'
-import { EquipeComissionamento } from './pages/equipe/Comissionamento'
+function DashboardRoutes() {
+  return (
+    <Layout>
+      <Routes>
+        <Route index element={<Navigate to="/equipe/dashboard" replace />} />
+        <Route path="equipe/dashboard"       element={<Placeholder titulo="Dashboard de Resultados" />} />
+        <Route path="equipe/ranking"         element={<Placeholder titulo="Ranking" />} />
+        <Route path="equipe/comissionamento" element={<Placeholder titulo="Comissionamento" />} />
+        <Route path="interno/dre"            element={<Placeholder titulo="DRE Gerencial" />} />
+        <Route path="interno/projecao"       element={<Placeholder titulo="Projeção" />} />
+        <Route path="interno/custos"         element={<Placeholder titulo="Custos e Receitas" />} />
+        <Route path="interno/carteira"       element={<Placeholder titulo="Análise de Carteira" />} />
+        <Route path="parametrizacao"         element={<Placeholder titulo="Parametrização" />} />
+        <Route path="*"                      element={<Navigate to="/equipe/dashboard" replace />} />
+      </Routes>
+    </Layout>
+  )
+}
 
-// Interno
-import { InternoDRE }      from './pages/interno/DRE'
-import { InternoProjecao } from './pages/interno/Projecao'
-import { InternoCustos }   from './pages/interno/Custos'
-import { InternoCarteira } from './pages/interno/Carteira'
+function AppContent() {
+  const dados = useDataStore(state => state.dados)
 
-// Config
-import { Parametrizacao } from './pages/Parametrizacao'
-import { ConfigProvider }  from './context/ConfigContext'
+  if (!dados.length) {
+    return <ImportScreen onEntrar={() => {}} />
+  }
+
+  return <DashboardRoutes />
+}
 
 export default function App() {
   return (
-    <ConfigProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Tela de boas-vindas / importação */}
-          <Route path="/welcome" element={<Welcome />} />
-          <Route path="/" element={<Navigate to="/welcome" replace />} />
-
-          {/* Dashboard principal */}
-          <Route path="/" element={<Layout />}>
-            <Route path="equipe/dashboard"       element={<EquipeDashboard />} />
-            <Route path="equipe/ranking"         element={<EquipeRanking />} />
-            <Route path="equipe/comissionamento" element={<EquipeComissionamento />} />
-            <Route path="interno/dre"            element={<InternoDRE />} />
-            <Route path="interno/projecao"       element={<InternoProjecao />} />
-            <Route path="interno/custos"         element={<InternoCustos />} />
-            <Route path="interno/carteira"       element={<InternoCarteira />} />
-            <Route path="parametrizacao"         element={<Parametrizacao />} />
-            <Route path="*"                      element={<Navigate to="/equipe/dashboard" replace />} />
-          </Route>
-        </Routes>
-        <LogWindow />
-      </BrowserRouter>
-    </ConfigProvider>
+    <BrowserRouter>
+      <AppContent />
+      <LogWindow />
+    </BrowserRouter>
   )
 }

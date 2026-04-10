@@ -147,5 +147,18 @@ export const dadosMensais = [
 
 export const regioes = ['Todas', 'Sul', 'Sudeste', 'Centro-Oeste', 'Norte', 'Nordeste']
 
-// Re-exporta da fonte centralizada para compatibilidade com imports existentes
-export { calcularAtingimento, formatCurrency, formatCurrencyShort } from '../utils/formatters'
+export function calcularAtingimento(faturamento, meta) {
+  return Math.round((faturamento / meta) * 100)
+}
+
+export function formatCurrency(value) {
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency', currency: 'BRL', minimumFractionDigits: 0, maximumFractionDigits: 0,
+  }).format(value)
+}
+
+export function formatCurrencyShort(value) {
+  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(2)}M`
+  if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(0)}K`
+  return formatCurrency(value)
+}
