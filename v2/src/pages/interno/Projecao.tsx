@@ -19,15 +19,16 @@ import type { CenarioSalvo } from '../../types'
 const STORAGE_KEY = 'vendafeita_cenarios'
 
 export function InternoProjecao() {
-  const { fechamentos, fechamentoAtual, isLoading } = useInternoData()
+  const { fechamentos, fechamentoAtual, clientes, isLoading } = useInternoData()
 
   // Simulador
   const [crescimento, setCrescimento] = useState(10) // % crescimento mensal
   const [meses, setMeses] = useState(12)
   const [investimento, setInvestimento] = useState(0)
 
-  // Modo: 'sheets' usa ultimo fechamento, 'manual' usa valor digitado
-  const [modo, setModo] = useState<'sheets' | 'manual'>('sheets')
+  // Modo: 'sheets' usa ultimo fechamento, 'manual' usa valor digitado, 'ec' usa EC especifico
+  const [modo, setModo] = useState<'sheets' | 'manual' | 'ec'>('sheets')
+  const [ecSelecionado, setEcSelecionado] = useState<string>('')
   const [baseManual, setBaseManual] = useState<number>(
     () => getScalar<number>('vdf_projecao_base') || 0,
   )
@@ -42,10 +43,18 @@ export function InternoProjecao() {
     }
   })
 
-  // Base para projecao: modo manual usa valor digitado, modo sheets usa markupPos
+  // EC selecionado para modo 'ec'
+  const ecAtual = useMemo(() =>
+    clientes.find((c) => c.nome === ecSelecionado) || null,
+  [clientes, ecSelecionado])
+
+  // Base para projecao
   const baseValue = modo === 'manual'
     ? (baseManual || fechamentoAtual?.markupPos || 30000)
+    : modo === 'ec' && ecAtual
+    ? ecAtual.ticketMedio  // markup deste EC especifico
     : (fechamentoAtual?.markupPos || fechamentoAtual?.valorLiquido || 30000)
+
 
   const basePeriodo = fechamentoAtual?.periodo || 'ultimo fechamento'
 
@@ -79,9 +88,9 @@ export function InternoProjecao() {
       const valorProjetado = baseValue * fator + (investimento / meses)
 
       // Nome do mes: continua a sequencia do calendario real
-      const mesAbs = result.length + i  // posicao absoluta no tempo
-      const mesIndex = mesAbs % 12
-      const label = mesesNomes[mesIndex] || `M${mesAbs + 1}`
+      const mesAbs: number = result.length + i  // posicao absoluta no tempo
+      const mesIndex: number = mesAbs % 12
+      const label: string = mesesNomes[mesIndex] || `M${mesAbs + 1}`
 
       result.push({
         mes: label,
@@ -166,6 +175,17 @@ export function InternoProjecao() {
             <PenLine className="w-3.5 h-3.5" />
             Manual
           </button>
+          {clientes.length > 0 && (
+            <button
+              onClick={() => setModo('ec')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                modo === 'ec' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <TrendingUp className="w-3.5 h-3.5" />
+              Por EC
+            </button>
+          )}
         </div>
         {modo === 'manual' && (
           <input
@@ -178,17 +198,36 @@ export function InternoProjecao() {
             step={1000}
           />
         )}
+        {modo === 'ec' && (
+          <select
+            value={ecSelecionado}
+            onChange={(e) => setEcSelecionado(e.target.value)}
+            className="input-field w-64"
+          >
+            <option value="">Selecione um EC...</option>
+            {clientes
+              .slice()
+              .sort((a, b) => b.volumeTotal - a.volumeTotal)
+              .map((c) => (
+                <option key={c.id} value={c.nome}>{c.nome}</option>
+              ))}
+          </select>
+        )}
       </div>
 
       {/* KPIs de projecao */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card-hover">
           <p className="text-sm text-gray-500">
-            Markup POS Base {modo === 'manual' ? '(manual)' : `— ${basePeriodo}`}
+            {modo === 'ec' && ecAtual
+              ? `Markup EC — ${ecAtual.nome.slice(0, 20)}`
+              : `Markup POS Base ${modo === 'manual' ? '(manual)' : `— ${basePeriodo}`}`}
           </p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(baseValue)}</p>
           <p className="text-xs text-gray-400 mt-1">
-            {modo === 'manual' ? 'Valor inserido manualmente' : 'Receita principal do ultimo fechamento'}
+            {modo === 'manual' ? 'Valor inserido manualmente'
+              : modo === 'ec' ? 'Markup deste EC no periodo'
+              : 'Receita principal do ultimo fechamento'}
           </p>
         </div>
         <div className="card-hover">

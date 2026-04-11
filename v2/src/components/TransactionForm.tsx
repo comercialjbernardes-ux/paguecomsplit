@@ -15,8 +15,6 @@ interface TransactionFormProps {
   isOpen: boolean
   /** Lancamento para editar (null = criar novo) */
   editItem: LancamentoCusto | null
-  /** Categorias disponiveis (lidas da planilha) */
-  categorias: string[]
   /** Contas disponiveis (lidas da planilha) */
   contas: string[]
   /** Salvando na planilha */
@@ -39,7 +37,6 @@ const EMPTY_FORM: LancamentoFormData = {
 export function TransactionForm({
   isOpen,
   editItem,
-  categorias,
   contas,
   isSaving,
   onSave,

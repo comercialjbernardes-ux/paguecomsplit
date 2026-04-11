@@ -105,7 +105,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
 
       for (const tab of fechamentoTabs) {
         try {
-          const rows = await readRange(`'${tab.title}'!A:H`, id)
+          const rows = await readRange(`'${tab.title}'!A:J`, id)
           const rowsTyped = rows as (string | number)[][]
           // Passa rows para extractPeriodoFromTab para suportar aba "Resumo"
           const periodo = extractPeriodoFromTab(tab.title, rowsTyped)
@@ -144,7 +144,8 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
       } else if (mkpPosTab) {
         try {
           const rows = await readRange(`'${SHEET_TABS.MKP_POS}'!A:F`, id)
-          setClientes(mapRowsMKPdePOS(rows as (string | number)[][]))
+          const periodo = fechamentoData[0]?.periodo || 'atual'
+          setClientes(mapRowsMKPdePOS(rows as (string | number)[][], periodo))
           console.info(`[Sheets] Clientes carregados da aba "${SHEET_TABS.MKP_POS}"`)
         } catch {
           console.warn('[Sheets] Erro ao ler aba MKP de POS')
@@ -182,7 +183,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
         if (descontosTab) {
           try {
             const rows = await readRange(`'${SHEET_TABS.DESCONTOS}'!A:E`, id)
-            const descontos = mapRowsDescontos(rows as (string | number)[][])
+            const descontos = mapRowsDescontos(rows as (string | number)[][], fechamentoData[0]?.periodo || 'atual')
             combined.push(...descontos)
             console.info(`[Sheets] ${descontos.length} descontos carregados`)
           } catch {
@@ -194,7 +195,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
         if (cobrTab) {
           try {
             const rows = await readRange(`'${SHEET_TABS.COBR_DIGITAL}'!A:C`, id)
-            const cobr = mapRowsCobrDigital(rows as (string | number)[][])
+            const cobr = mapRowsCobrDigital(rows as (string | number)[][], fechamentoData[0]?.periodo || 'atual')
             combined.push(...cobr)
             console.info(`[Sheets] ${cobr.length} cobranças digitais carregadas`)
           } catch {

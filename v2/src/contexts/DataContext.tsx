@@ -17,9 +17,8 @@ import {
   getAll,
   upsert,
   remove,
+  clear,
   hasData,
-  getScalar,
-  setScalar,
 } from '../services/localStorageService'
 import {
   mergeVendedores,
@@ -50,6 +49,9 @@ interface DataContextType {
   lancamentos: LancamentoCusto[]
   clientes: ClienteCarteira[]
   allTabs: SheetTab[]
+
+  // ─ Periodo detectado da planilha ────────────────────────────
+  periodo: string // ex: "Mar2026", "" se nao conectado
 
   // ─ Operacoes do SheetsContext (passthrough) ─────────────────
   connect: (sheetId?: string) => Promise<void>
@@ -135,10 +137,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // ─ Metas ────────────────────────────────────────────────────
   const saveMeta = useCallback((periodo: string, meta: number) => {
-    const item: MetaPeriodo = { periodo, meta, editedAt: new Date().toISOString() }
-    upsert<MetaPeriodo>('vdf_metas', { ...item, id: periodo } as MetaPeriodo & { id: string })
+    const item = { periodo, meta, editedAt: new Date().toISOString(), id: periodo }
+    upsert<typeof item>('vdf_metas', item)
     setMetas(getAll<MetaPeriodo>('vdf_metas'))
   }, [])
+
+  // ─ Connect com clean-slate ──────────────────────────────────
+  // Limpa dados transacionais do periodo anterior antes de semear novos dados.
+  // Preserva: vdf_metas, vdf_regras_comissao, vdf_projecao_base, vdf_segment_overrides
+  const connect = useCallback(async (sheetId?: string) => {
+    clear('vdf_vendedores')
+    clear('vdf_lancamentos')
+    setLocalVendedores([])
+    setLocalLancamentos([])
+    await sheets.connect(sheetId)
+  }, [sheets])
 
   // ─ Segment Overrides ────────────────────────────────────────
   const saveSegmentOverride = useCallback((override: SegmentOverride) => {
@@ -156,12 +169,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
         isLoading: sheets.isLoading,
         error: sheets.error,
         isOffline,
+        periodo: sheets.fechamentos[0]?.periodo || '',
         fechamentos: sheets.fechamentos,
         vendedores,
         lancamentos,
         clientes,
         allTabs: sheets.allTabs,
-        connect: sheets.connect,
+        connect,
         refetch: sheets.refetch,
         setSheetId: sheets.setSheetId,
         currentSheetId: sheets.currentSheetId,

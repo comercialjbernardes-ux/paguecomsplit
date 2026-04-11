@@ -102,6 +102,30 @@ export function RelatoriosPage() {
       .slice(0, 8)
   }, [lancamentosFiltrados])
 
+  // Curva de Pareto — concentracao de TPV por EC
+  const paretoData = useMemo(() => {
+    if (clientes.length === 0) return { dados: [], top5Pct: 0, alertaConcentracao: false }
+    const ordenados = [...clientes].sort((a, b) => b.volumeTotal - a.volumeTotal)
+    const totalTpv = ordenados.reduce((s, c) => s + c.volumeTotal, 0)
+    if (totalTpv === 0) return { dados: [], top5Pct: 0, alertaConcentracao: false }
+    let acumulado = 0
+    const dados = ordenados.slice(0, 20).map((c) => {
+      acumulado += c.volumeTotal
+      return {
+        nome: c.nome.slice(0, 18),
+        tpv: c.volumeTotal,
+        pctAcumulado: Math.round((acumulado / totalTpv) * 100),
+      }
+    })
+    const top5Pct = Math.round(
+      (ordenados.slice(0, 5).reduce((s, c) => s + c.volumeTotal, 0) / totalTpv) * 100
+    )
+    const alertaConcentracao = ordenados[0]
+      ? (ordenados[0].volumeTotal / totalTpv) > 0.3
+      : false
+    return { dados, top5Pct, alertaConcentracao }
+  }, [clientes])
+
   // Dados para exportacao
   const exportData: ReportData = useMemo(() => ({
     fechamentos: fechamentosFiltrados,
@@ -384,6 +408,39 @@ export function RelatoriosPage() {
           </div>
         )}
       </div>
+
+      {/* Analise de Concentracao (Pareto) */}
+      {paretoData.dados.length > 0 && (
+        <div className="card">
+          <div className="flex items-start justify-between mb-4 flex-wrap gap-2">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Concentracao de TPV por EC</h3>
+              <p className="text-sm text-gray-400">Top 5 ECs = {paretoData.top5Pct}% do faturamento total</p>
+            </div>
+            {paretoData.alertaConcentracao && (
+              <span className="bg-amber-100 text-amber-700 text-xs font-medium px-3 py-1 rounded-full">
+                ⚠ Concentracao elevada (1 EC &gt; 30%)
+              </span>
+            )}
+          </div>
+          <ResponsiveContainer width="100%" height={260}>
+            <BarChart data={paretoData.dados} margin={{ bottom: 40 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="nome" tick={{ fontSize: 10 }} angle={-30} textAnchor="end" interval={0} />
+              <YAxis yAxisId="left" tickFormatter={(v: number) => formatCurrencyShort(v)} tick={{ fontSize: 11 }} />
+              <YAxis yAxisId="right" orientation="right" tickFormatter={(v: number) => `${v}%`} tick={{ fontSize: 11 }} domain={[0, 100]} />
+              <Tooltip
+                formatter={(value, name) =>
+                  name === 'tpv' ? [formatCurrency(Number(value)), 'TPV']
+                  : [`${value}%`, '% Acumulado']}
+              />
+              <Legend />
+              <Bar yAxisId="left" dataKey="tpv" name="TPV" fill="#00C896" radius={[4, 4, 0, 0]} />
+              <Bar yAxisId="right" dataKey="pctAcumulado" name="% Acumulado" fill="#3B82F6" opacity={0.6} radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Estado vazio */}
       {fechamentos.length === 0 && lancamentos.length === 0 && (

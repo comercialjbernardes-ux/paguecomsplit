@@ -384,7 +384,6 @@ export function InternoTransacoes() {
       <TransactionForm
         isOpen={isFormOpen}
         editItem={editItem}
-        categorias={categorias}
         contas={contas}
         isSaving={isSaving}
         onSave={handleSave}

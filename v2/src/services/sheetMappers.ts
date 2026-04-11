@@ -2,6 +2,15 @@
 // Mapeadores: transformam dados brutos da planilha em tipos TS
 // Suporta o formato classico (Col A=label, Col B=valor) E o
 // formato real da planilha Comercial Bernardes (Col B=label, Col C=valor)
+//
+// DEPLOY MENSAL:
+// 1. Converter .xlsx para Google Sheets nativo no Drive
+// 2. Copiar novo Sheet ID para .env → VITE_SHEET_ID
+// 3. App → Configuracoes → Conectar (limpa dados anteriores automaticamente)
+// 4. Verificar periodo no banner (ex: "Abr/2026")
+// 5. Verificar DRE: TPV, Markup POS, Valor Liquido
+// 6. Exportar PDF → conferir deducoes como valores negativos
+// PROIBIDO: datas hardcoded — todas as datas vem de extractPeriodoFromTab()
 // ═══════════════════════════════════════════════════════════════
 
 import {
@@ -189,7 +198,7 @@ export function mapRowsToVendedores(rows: (string | number)[][]): Vendedor[] {
  *   Row 2: headers (CNPJ EC | Nome | TPV Total | Markup | Margem)
  *   Row 3+: dados
  */
-export function mapRowsMKPdePOS(rows: (string | number)[][]): ClienteCarteira[] {
+export function mapRowsMKPdePOS(rows: (string | number)[][], periodo = 'atual'): ClienteCarteira[] {
   // Pula 2 linhas iniciais (titulo + header)
   if (rows.length <= 2) return []
 
@@ -203,12 +212,15 @@ export function mapRowsMKPdePOS(rows: (string | number)[][]): ClienteCarteira[] 
 
       return {
         id: index + 1,
+        cnpj: String(row[COL_MKP_POS.CNPJ] || ''),
         nome: String(row[COL_MKP_POS.NOME] || ''),
         segmento: inferirSegmento(String(row[COL_MKP_POS.NOME] || '')),
         vendedor: 'Comercial Bernardes',
         volumeTotal: tpv,
+        /** ticketMedio = markup do EC (faturamento CB por EC), nao ticket por transacao */
         ticketMedio: markup,
-        ultimaCompra: 'Mar/2026',
+        margem,
+        ultimaCompra: periodo,
         status: 'ativo' as const,
         frequencia: margem > 1.2 ? 3 : margem > 0.8 ? 2 : 1,
         _sheetRow: index + 3,
@@ -241,10 +253,12 @@ export function mapRowsRepasses(rows: (string | number)[][]): LancamentoCusto[] 
       id: `REP-${String(row[COL_REPASSES.CNPJ] || index + 1).replace(/\D/g, '').slice(-6)}-${index}`,
       data: String(row[COL_REPASSES.DATA] || ''),
       descricao: `${String(row[COL_REPASSES.TIPO] || '')} — ${String(row[COL_REPASSES.NOME] || '')}`,
-      categoria: String(row[COL_REPASSES.TIPO] || 'Repasse'),
+      // categoria sempre 'Repasse' para distinguir da receita agregada do DRE (fechamento.repasse)
+      categoria: 'Repasse',
       tipo: 'receita' as const,
       valor: Math.abs(parseNumericValue(row[COL_REPASSES.VALOR])),
       conta: 'Repasses',
+      source: 'sheets' as const,
       _sheetRow: index + 2,
     }))
 }
@@ -259,7 +273,7 @@ export function mapRowsRepasses(rows: (string | number)[][]): LancamentoCusto[] 
  *   Rows 6+: dados (blank | CNPJ | Parceiro | Descricao | Valor)
  *   Ultima linha: total (Col A contém "TOTAL")
  */
-export function mapRowsDescontos(rows: (string | number)[][]): LancamentoCusto[] {
+export function mapRowsDescontos(rows: (string | number)[][], periodo = 'atual'): LancamentoCusto[] {
   if (rows.length <= 5) return []
 
   return rows
@@ -270,16 +284,24 @@ export function mapRowsDescontos(rows: (string | number)[][]): LancamentoCusto[]
       const isTotal = colA.includes('TOTAL')
       return hasValue && !isTotal
     })
-    .map((row, index) => ({
-      id: `DESC-${index + 1}`,
-      data: 'Mar/2026',
-      descricao: String(row[COL_DESCONTOS.DESCRICAO] || 'Desconto'),
-      categoria: 'Descontos',
-      tipo: 'despesa' as const,
-      valor: Math.abs(parseNumericValue(row[COL_DESCONTOS.VALOR])),
-      conta: 'Descontos',
-      _sheetRow: index + 6,
-    }))
+    .map((row, index) => {
+      const descricao = String(row[COL_DESCONTOS.DESCRICAO] || 'Desconto')
+      const desc = descricao.toLowerCase()
+      const categoria = desc.includes('aluguel') ? 'Aluguel'
+        : desc.includes('tarifa') ? 'Infraestrutura'
+        : 'Fornecedores'
+      return {
+        id: `DESC-${index + 1}`,
+        data: periodo,
+        descricao,
+        categoria,
+        tipo: 'despesa' as const,
+        valor: Math.abs(parseNumericValue(row[COL_DESCONTOS.VALOR])),
+        conta: 'Descontos',
+        source: 'sheets' as const,
+        _sheetRow: index + 6,
+      }
+    })
 }
 
 // ─── Cobr. Conta Digital → Lancamentos (despesas) ────────────
@@ -291,7 +313,7 @@ export function mapRowsDescontos(rows: (string | number)[][]): LancamentoCusto[]
  *   Nome do Estabelecimento | Conta Ativa? | Valor
  * Identifica linhas de dados: Col A nao vazio e Col C tem valor numerico
  */
-export function mapRowsCobrDigital(rows: (string | number)[][]): LancamentoCusto[] {
+export function mapRowsCobrDigital(rows: (string | number)[][], periodo = 'atual'): LancamentoCusto[] {
   return rows
     .map((row, index) => ({ row, index }))
     .filter(({ row }) => {
@@ -307,12 +329,13 @@ export function mapRowsCobrDigital(rows: (string | number)[][]): LancamentoCusto
     })
     .map(({ row, index }) => ({
       id: `COBR-${index + 1}`,
-      data: 'Mar/2026',
+      data: periodo,
       descricao: `Conta Digital — ${String(row[COL_COBR_DIGITAL.NOME] || '')}`,
       categoria: 'Conta Digital',
       tipo: 'despesa' as const,
       valor: Math.abs(parseNumericValue(row[COL_COBR_DIGITAL.VALOR])),
       conta: 'Cobr. Conta Digital',
+      source: 'sheets' as const,
       _sheetRow: index + 1,
     }))
 }

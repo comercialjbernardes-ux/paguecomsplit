@@ -432,8 +432,8 @@ function addFechamentoSheet(wb: XLSX.WorkBook, data: DadosFechamento[]): void {
     'Taxa Margem (%)': f.taxaMargem,
     'Comissao Rede': f.comissaoRede,
     'Repasse': f.repasse,
-    'Fatura Digital': f.faturaDigital,
-    'Descontos': f.descontos,
+    'Fatura Digital': -Math.abs(f.faturaDigital || 0),
+    'Descontos': -Math.abs(f.descontos || 0),
     'Valor Liquido': f.valorLiquido,
   }))
   const ws = XLSX.utils.json_to_sheet(rows)
@@ -566,7 +566,7 @@ function escapeCSV(value: string | number): string {
 function fechamentoToCSV(data: DadosFechamento[]): string {
   const header = 'Periodo,ECs Ativos,TPV Total,TPV Medio,Markup POS,Taxa Margem,Comissao Rede,Repasse,Fatura Digital,Descontos,Valor Liquido'
   const rows = data.map((f) =>
-    [f.periodo, f.ecsAtivos, f.tpvTotal, f.tpvMedio, f.markupPos, f.taxaMargem, f.comissaoRede, f.repasse, f.faturaDigital, f.descontos, f.valorLiquido]
+    [f.periodo, f.ecsAtivos, f.tpvTotal, f.tpvMedio, f.markupPos, f.taxaMargem, f.comissaoRede, f.repasse, -Math.abs(f.faturaDigital || 0), -Math.abs(f.descontos || 0), f.valorLiquido]
       .map(escapeCSV).join(',')
   )
   return [header, ...rows].join('\n')

@@ -10,7 +10,7 @@ import {
   ResponsiveContainer, PieChart, Pie, Cell, Legend,
   BarChart, Bar,
 } from 'recharts'
-import { Users, Search, Filter, TrendingUp } from 'lucide-react'
+import { Users, Search, Filter, TrendingUp, Heart, Wifi } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
 import { useEquipeData } from '../../hooks/useEquipeData'
 import { useDataContext } from '../../contexts/DataContext'
@@ -18,17 +18,19 @@ import { LoadingState } from '../../components/LoadingState'
 import {
   formatCurrency, formatNumber, getStatusBadgeClass, getChartColor,
 } from '../../utils/format'
+import { calcHealthScore, getHealthStatus } from '../../services/ecAnalysis'
 
 const SEGMENTOS_FIXOS = ['Alimentacao', 'Comercio', 'Saude', 'Servicos', 'Hospedagem & Lazer', 'Outros']
 
 export function InternoCarteira() {
-  const { clientes, segmentos, isLoading } = useInternoData()
+  const { clientes, segmentos, isLoading, lancamentos } = useInternoData()
   const { saveSegmentOverride } = useDataContext()
   useEquipeData()
   const [filtroSegmento, setFiltroSegmento] = useState('todos')
   const [filtroVendedor, setFiltroVendedor] = useState('todos')
   const [filtroStatus, setFiltroStatus] = useState('todos')
   const [busca, setBusca] = useState('')
+  const [aba, setAba] = useState<'carteira' | 'saude'>('carteira')
 
   // Clientes filtrados
   const filtrados = useMemo(() => {
@@ -67,13 +69,15 @@ export function InternoCarteira() {
     return Array.from(map.entries()).map(([name, value]) => ({ name, value }))
   }, [filtrados])
 
-  // Scatter data (volume x ticket medio)
+  // Scatter data (volume x markup)
   const scatterData = useMemo(() => {
     return filtrados.map((c) => ({
       x: c.volumeTotal,
       y: c.ticketMedio,
       nome: c.nome,
+      cnpj: c.cnpj || '',
       segmento: c.segmento,
+      margem: c.margem || 0,
     }))
   }, [filtrados])
 
@@ -93,17 +97,52 @@ export function InternoCarteira() {
     return { totalClientes: filtrados.length, totalVolume, markupMedio, ativos }
   }, [filtrados])
 
+  // Score de saude por EC
+  const healthScores = useMemo(() => {
+    const mediaTpv = filtrados.length > 0
+      ? filtrados.reduce((s, c) => s + c.volumeTotal, 0) / filtrados.length : 0
+    const cnpjsComDesconto = new Set(
+      lancamentos
+        .filter((l) => l.tipo === 'despesa' && l.source === 'sheets')
+        .map((l) => l.descricao.toLowerCase())
+    )
+    return filtrados.map((c) => {
+      const temDesconto = Array.from(cnpjsComDesconto).some((d) =>
+        d.includes(c.nome.toLowerCase().slice(0, 8))
+      )
+      const score = calcHealthScore(c, mediaTpv, temDesconto)
+      return { ...c, score, status: getHealthStatus(score) }
+    }).sort((a, b) => b.score - a.score)
+  }, [filtrados, lancamentos])
+
   if (isLoading) return <LoadingState message="Carregando carteira..." />
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <Users className="w-7 h-7 text-blue-500" />
-          Analise de Carteira
-        </h1>
-        <p className="text-gray-500 mt-1">Perfil, segmento e top clientes</p>
+      <div className="flex items-start justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <Users className="w-7 h-7 text-blue-500" />
+            Analise de Carteira
+          </h1>
+          <p className="text-gray-500 mt-1">Perfil, segmento e top clientes</p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setAba('carteira')}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === 'carteira' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            Carteira
+          </button>
+          <button
+            onClick={() => setAba('saude')}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === 'saude' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+          >
+            <Heart className="w-4 h-4" />
+            Saude
+          </button>
+        </div>
       </div>
 
       {/* KPIs */}
@@ -161,8 +200,8 @@ export function InternoCarteira() {
         </div>
       </div>
 
-      {/* Graficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Graficos — aba Carteira */}
+      {aba === 'carteira' && <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Scatter: Volume x Ticket */}
         {scatterData.length > 0 && (
           <div className="card lg:col-span-2">
@@ -177,13 +216,15 @@ export function InternoCarteira() {
                   labelFormatter={() => ''}
                   content={({ active, payload }) => {
                     if (!active || !payload?.length) return null
-                    const data = payload[0]?.payload as { nome: string; segmento: string; x: number; y: number }
+                    const data = payload[0]?.payload as { nome: string; cnpj: string; segmento: string; x: number; y: number; margem: number }
                     return (
                       <div className="bg-white shadow-lg rounded-lg p-3 border text-sm">
                         <p className="font-semibold">{data.nome}</p>
+                        {data.cnpj && <p className="text-gray-400 text-xs">{data.cnpj}</p>}
                         <p className="text-gray-500">{data.segmento}</p>
                         <p>TPV: {formatCurrency(data.x)}</p>
                         <p>Markup: {formatCurrency(data.y)}</p>
+                        {data.margem > 0 && <p className="text-blue-600">Margem: {data.margem.toFixed(2)}%</p>}
                       </div>
                     )
                   }}
@@ -209,10 +250,10 @@ export function InternoCarteira() {
             </ResponsiveContainer>
           </div>
         )}
-      </div>
+      </div>}
 
       {/* Status breakdown */}
-      {porStatus.length > 0 && (
+      {aba === 'carteira' && porStatus.length > 0 && (
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Distribuicao por Status</h3>
           <ResponsiveContainer width="100%" height={200}>
@@ -235,7 +276,7 @@ export function InternoCarteira() {
       )}
 
       {/* Top 10 clientes */}
-      {top10.length > 0 && (
+      {aba === 'carteira' && top10.length > 0 && (
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-gray-400" />
@@ -294,6 +335,69 @@ export function InternoCarteira() {
           <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-500">Sem clientes na carteira</h3>
           <p className="text-sm text-gray-400 mt-1">Conecte a planilha com a aba "Clientes".</p>
+        </div>
+      )}
+
+      {/* Aba Saude da Carteira */}
+      {aba === 'saude' && filtrados.length > 0 && (
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 flex items-center gap-2">
+            <Heart className="w-5 h-5 text-emerald-500" />
+            Score de Saude da Carteira
+          </h3>
+          <p className="text-sm text-gray-400 mb-4">
+            Score 0-100 baseado em TPV (40%), Margem (30%), Conta Digital (20%), sem desconto (10%)
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-3 px-3 font-medium text-gray-500">EC</th>
+                  {filtrados.some((c) => c.cnpj) && (
+                    <th className="text-left py-3 px-3 font-medium text-gray-500">CNPJ</th>
+                  )}
+                  <th className="text-right py-3 px-3 font-medium text-gray-500">Score</th>
+                  <th className="text-right py-3 px-3 font-medium text-gray-500">TPV</th>
+                  <th className="text-right py-3 px-3 font-medium text-gray-500">Margem</th>
+                  <th className="text-center py-3 px-3 font-medium text-gray-500">Conta Digital</th>
+                  <th className="text-left py-3 px-3 font-medium text-gray-500">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {healthScores.slice(0, 20).map((ec) => (
+                  <tr key={ec.id} className="border-b border-gray-50 hover:bg-gray-50">
+                    <td className="py-3 px-3 font-medium text-gray-900">{ec.nome}</td>
+                    {filtrados.some((c) => c.cnpj) && (
+                      <td className="py-3 px-3 text-gray-400 text-xs font-mono">{ec.cnpj}</td>
+                    )}
+                    <td className="py-3 px-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="w-16 h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full ${ec.score >= 70 ? 'bg-emerald-400' : ec.score >= 40 ? 'bg-amber-400' : 'bg-red-400'}`}
+                            style={{ width: `${ec.score}%` }}
+                          />
+                        </div>
+                        <span className="font-semibold text-gray-700 w-8">{ec.score}</span>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 text-right">{formatCurrency(ec.volumeTotal)}</td>
+                    <td className="py-3 px-3 text-right text-gray-500">{(ec.margem || 0).toFixed(2)}%</td>
+                    <td className="py-3 px-3 text-center">
+                      {ec.contaDigitalAtiva
+                        ? <Wifi className="w-4 h-4 text-blue-500 mx-auto" />
+                        : <span className="text-gray-300">—</span>}
+                    </td>
+                    <td className="py-3 px-3">
+                      <span className={`badge ${ec.status === 'saudavel' ? 'bg-emerald-100 text-emerald-700' : ec.status === 'atencao' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                        {ec.status === 'saudavel' ? 'Saudavel' : ec.status === 'atencao' ? 'Atencao' : 'Critico'}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

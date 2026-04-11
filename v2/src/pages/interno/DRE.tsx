@@ -16,8 +16,10 @@ import { LoadingState } from '../../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../../utils/format'
 import type { DadosFechamento } from '../../types'
 
+const COBR_DIGITAL_VALOR = 29.90 // valor fixo por EC com conta digital ativa
+
 export function InternoDRE() {
-  const { fechamentos, fechamentoAtual, lancamentos, isLoading } = useInternoData()
+  const { fechamentos, fechamentoAtual, lancamentos, clientes, isLoading } = useInternoData()
 
   // Estrutura correta do DRE:
   // Receitas: Markup POS + Comissao Rede + Repasse
@@ -86,6 +88,11 @@ export function InternoDRE() {
 
   const totalReceitasLocais = receitasLocais.reduce((s, l) => s + l.valor, 0)
   const totalDespesasLocais = despesasLocais.reduce((s, l) => s + l.valor, 0)
+
+  // Receita recorrente = ECs com conta digital ativa × R$29,90/mes
+  const ecsComContaDigital = useMemo(() =>
+    clientes.filter((c) => c.contaDigitalAtiva), [clientes])
+  const receitaRecorrente = ecsComContaDigital.length * COBR_DIGITAL_VALOR
 
   if (isLoading) return <LoadingState message="Carregando DRE..." />
 
@@ -161,6 +168,20 @@ export function InternoDRE() {
               color="navy"
             />
           </div>
+
+          {/* Receita Recorrente Garantida */}
+          {receitaRecorrente > 0 && (
+            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold text-blue-600 uppercase tracking-wide">Receita Fixa Conta Digital</p>
+                <p className="text-2xl font-bold text-blue-700 mt-1">{formatCurrency(receitaRecorrente)}</p>
+                <p className="text-sm text-blue-500 mt-1">
+                  {ecsComContaDigital.length} ECs × R$29,90 — garantido independente do TPV
+                </p>
+              </div>
+              <CreditCard className="w-10 h-10 text-blue-300 flex-shrink-0" />
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Tabela DRE estruturada */}

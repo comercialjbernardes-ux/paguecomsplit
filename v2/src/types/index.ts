@@ -84,11 +84,15 @@ export interface LancamentoCusto {
 
 export interface ClienteCarteira {
   id: number
+  cnpj?: string           // CNPJ do estabelecimento (COL_MKP_POS.CNPJ)
   nome: string
   segmento: string
   vendedor: string
   volumeTotal: number
+  /** markup do EC = faturamento CB por este EC (nao ticket por transacao) */
   ticketMedio: number
+  margem?: number         // margem percentual do EC (COL_MKP_POS.MARGEM)
+  contaDigitalAtiva?: boolean  // EC tem conta digital ativa (Cobr. Conta Digital)
   ultimaCompra: string
   status: 'ativo' | 'inativo' | 'em risco'
   frequencia: number // compras por mes
