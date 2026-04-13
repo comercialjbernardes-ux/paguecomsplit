@@ -80,17 +80,41 @@ export function InternoProjecao() {
       })
     }
 
+    // Detecta o ano base a partir do ultimo fechamento (ou ano atual)
+    const anoBase = (() => {
+      if (fechamentos.length > 0) {
+        const m = fechamentos[fechamentos.length - 1].periodo.match(/(\d{4})/)
+        if (m) return parseInt(m[1])
+      }
+      return new Date().getFullYear()
+    })()
+
+    // Determina o indice real do mes do ultimo fechamento (0=Jan, 11=Dez)
+    // Sem isso, result.length usaria contagem de fechamentos como indice de mes (errado)
+    const lastMesIdx = (() => {
+      if (fechamentos.length === 0) return new Date().getMonth()
+      const mesMap: Record<string, number> = {
+        jan:0, fev:1, mar:2, abr:3, mai:4, jun:5,
+        jul:6, ago:7, set:8, out:9, nov:10, dez:11,
+      }
+      const m = fechamentos[fechamentos.length - 1].periodo.toLowerCase().match(/^([a-z]{3})/)
+      return m ? (mesMap[m[1]] ?? new Date().getMonth()) : new Date().getMonth()
+    })()
+
     // Projecao futura — crescimento composto continuo
     for (let i = 0; i < meses; i++) {
       // Math.pow: aplica crescimento composto a partir do mes 1
-      // Cada mes aplica a taxa sobre o mes anterior (sem reset)
       const fator = Math.pow(1 + crescimento / 100, i + 1)
       const valorProjetado = baseValue * fator + (investimento / meses)
 
-      // Nome do mes: continua a sequencia do calendario real
-      const mesAbs: number = result.length + i  // posicao absoluta no tempo
-      const mesIndex: number = mesAbs % 12
-      const label: string = mesesNomes[mesIndex] || `M${mesAbs + 1}`
+      // Calcula posicao absoluta no calendario real a partir do ultimo fechamento
+      // Ex: ultimo = Marco (idx 2), i=0 → Abril (idx 3), i=9 → Janeiro proximo ano
+      const mesAbs = lastMesIdx + 1 + i
+      const mesIndex = mesAbs % 12
+      const anoOffset = Math.floor(mesAbs / 12)
+      const mesNome = mesesNomes[mesIndex] || `M${mesAbs + 1}`
+      // Sempre inclui ano/2 digitos para clareza nos labels
+      const label = `${mesNome}/${String(anoBase + anoOffset).slice(-2)}`
 
       result.push({
         mes: label,

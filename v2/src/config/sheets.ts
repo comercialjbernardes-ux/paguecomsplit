@@ -106,13 +106,13 @@ export const COL_MKP_POS = {
 /**
  * Colunas da aba "Repasses" (Comercial Bernardes)
  * Linha 1: título, Linha 2: header, Linhas 3+: dados
- * Estrutura real: Col A=Data, B=EC, C=CNPJ, D=Tipo, E=intermediária, F=Valor
+ * Estrutura real confirmada: Col A=seq/vazio, B=Data, C=CNPJ, D=Estabelecimento, E=Tipo de Ajuste, F=Valor
  */
 export const COL_REPASSES = {
-  DATA: 0,
+  DATA: 1,
   CNPJ: 2,
-  NOME: 1,
-  TIPO: 3,
+  NOME: 3,
+  TIPO: 4,
   VALOR: 5,
 } as const
 

@@ -12,7 +12,7 @@ import {
 import { Wallet, Search, Filter, ArrowUpRight, ArrowDownRight } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
 import { LoadingState } from '../../components/LoadingState'
-import { formatCurrency, getChartColor } from '../../utils/format'
+import { formatCurrency, getChartColor, parseDateBR } from '../../utils/format'
 
 export function InternoCustos() {
   const { lancamentos, categorias, contas, isLoading } = useInternoData()
@@ -21,22 +21,28 @@ export function InternoCustos() {
   const [filtroTipo, setFiltroTipo] = useState<'todos' | 'receita' | 'despesa'>('todos')
   const [busca, setBusca] = useState('')
 
-  // Lancamentos filtrados
+  // Lancamentos filtrados — ordenados por data (mais antigo primeiro)
   const filtrados = useMemo(() => {
-    return lancamentos.filter((l) => {
-      if (filtroCategoria !== 'todas' && l.categoria !== filtroCategoria) return false
-      if (filtroConta !== 'todas' && l.conta !== filtroConta) return false
-      if (filtroTipo !== 'todos' && l.tipo !== filtroTipo) return false
-      if (busca && !l.descricao.toLowerCase().includes(busca.toLowerCase())) return false
-      return true
-    })
+    return lancamentos
+      .filter((l) => {
+        if (filtroCategoria !== 'todas' && l.categoria !== filtroCategoria) return false
+        if (filtroConta !== 'todas' && l.conta !== filtroConta) return false
+        if (filtroTipo !== 'todos' && l.tipo !== filtroTipo) return false
+        if (busca && !l.descricao.toLowerCase().includes(busca.toLowerCase())) return false
+        return true
+      })
+      .sort((a, b) => parseDateBR(a.data).getTime() - parseDateBR(b.data).getTime())
   }, [lancamentos, filtroCategoria, filtroConta, filtroTipo, busca])
 
-  // Totais
+  // Totais — ERRO 01: separar receita bruta, custo conta digital e receita liquida
   const totais = useMemo(() => {
-    const receitas = filtrados.filter((l) => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0)
+    const receitaBruta = filtrados.filter((l) => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0)
+    const custoContaDigital = filtrados
+      .filter((l) => l.categoria === 'Conta Digital')
+      .reduce((s, l) => s + l.valor, 0)
+    const receitaLiquida = receitaBruta - custoContaDigital
     const despesas = filtrados.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + l.valor, 0)
-    return { receitas, despesas, saldo: receitas - despesas }
+    return { receitaBruta, custoContaDigital, receitaLiquida, despesas, saldo: receitaBruta - despesas }
   }, [filtrados])
 
   // Dados por categoria (pizza)
@@ -79,30 +85,43 @@ export function InternoCustos() {
         <p className="text-gray-500 mt-1">Caixa projetado, extratos e categorias</p>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* KPIs — ERRO 01: receita bruta / custo conta digital / receita liquida / saldo */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card-hover">
           <div className="flex items-center gap-2 mb-2">
             <ArrowUpRight className="w-5 h-5 text-emerald-500" />
-            <span className="text-sm text-gray-500">Receitas</span>
+            <span className="text-sm text-gray-500">Receita Bruta</span>
           </div>
-          <p className="text-2xl font-bold text-emerald-700">{formatCurrency(totais.receitas)}</p>
+          <p className="text-2xl font-bold text-emerald-700">{formatCurrency(totais.receitaBruta)}</p>
+          <p className="text-xs text-gray-400 mt-1">Total de receitas do periodo</p>
+        </div>
+        <div className="card-hover border border-orange-100">
+          <div className="flex items-center gap-2 mb-2">
+            <ArrowDownRight className="w-5 h-5 text-orange-500" />
+            <span className="text-sm text-gray-500">Custo Conta Digital</span>
+          </div>
+          <p className="text-2xl font-bold text-orange-600">- {formatCurrency(totais.custoContaDigital)}</p>
+          <p className="text-xs text-gray-400 mt-1">Cobr. de contas digitais ativas</p>
+        </div>
+        <div className="card-hover border border-blue-100">
+          <div className="flex items-center gap-2 mb-2">
+            <Wallet className="w-5 h-5 text-blue-500" />
+            <span className="text-sm text-gray-500">Receita Liquida</span>
+          </div>
+          <p className={`text-2xl font-bold ${totais.receitaLiquida >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
+            {formatCurrency(totais.receitaLiquida)}
+          </p>
+          <p className="text-xs text-gray-400 mt-1">Bruta - Custo Conta Digital</p>
         </div>
         <div className="card-hover">
           <div className="flex items-center gap-2 mb-2">
             <ArrowDownRight className="w-5 h-5 text-red-500" />
-            <span className="text-sm text-gray-500">Despesas</span>
-          </div>
-          <p className="text-2xl font-bold text-red-700">- {formatCurrency(totais.despesas)}</p>
-        </div>
-        <div className="card-hover">
-          <div className="flex items-center gap-2 mb-2">
-            <Wallet className="w-5 h-5 text-blue-500" />
-            <span className="text-sm text-gray-500">Saldo</span>
+            <span className="text-sm text-gray-500">Saldo Total</span>
           </div>
           <p className={`text-2xl font-bold ${totais.saldo >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
             {formatCurrency(totais.saldo)}
           </p>
+          <p className="text-xs text-gray-400 mt-1">Receita - Todas despesas</p>
         </div>
       </div>
 
@@ -189,9 +208,9 @@ export function InternoCustos() {
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Data</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-500">Descricao</th>
+                <th className="text-left py-3 px-3 font-medium text-gray-500">CNPJ</th>
+                <th className="text-left py-3 px-3 font-medium text-gray-500">Nome Fantasia / Descricao</th>
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Categoria</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-500">Conta</th>
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Tipo</th>
                 <th className="text-right py-3 px-3 font-medium text-gray-500">Valor</th>
               </tr>
@@ -199,7 +218,7 @@ export function InternoCustos() {
             <tbody>
               {filtrados.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="text-center py-8 text-gray-400">
+                  <td colSpan={7} className="text-center py-8 text-gray-400">
                     Nenhum lancamento encontrado
                   </td>
                 </tr>
@@ -207,9 +226,9 @@ export function InternoCustos() {
                 filtrados.map((l) => (
                   <tr key={l.id} className="border-b border-gray-50 hover:bg-gray-50">
                     <td className="py-3 px-3 text-gray-500">{l.data}</td>
-                    <td className="py-3 px-3 font-medium">{l.descricao}</td>
+                    <td className="py-3 px-3 text-gray-500 text-xs font-mono">{l.cnpjCliente || '—'}</td>
+                    <td className="py-3 px-3 font-medium">{l.nomeCliente || l.descricao}</td>
                     <td className="py-3 px-3 text-gray-500">{l.categoria}</td>
-                    <td className="py-3 px-3 text-gray-500">{l.conta}</td>
                     <td className="py-3 px-3">
                       <span className={l.tipo === 'receita' ? 'badge-success' : 'badge-error'}>
                         {l.tipo}

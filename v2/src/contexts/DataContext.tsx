@@ -10,6 +10,7 @@ import {
   useState,
   useEffect,
   useCallback,
+  useMemo,
   type ReactNode,
 } from 'react'
 import { useSheetsData } from './SheetsContext'
@@ -25,6 +26,12 @@ import {
   mergeLancamentos,
   mergeSegmentOverrides,
 } from '../services/mergeStrategies'
+import { getSpreadsheetMetadata, readRange } from '../services/sheetsApi'
+import {
+  filterFechamentoTabs,
+  extractPeriodoFromTab,
+  mapRowsToFechamento,
+} from '../services/sheetMappers'
 import type {
   DadosFechamento,
   Vendedor,
@@ -34,7 +41,25 @@ import type {
   SheetConnectionStatus,
   MetaPeriodo,
   SegmentOverride,
+  CustoOperacional,
+  Equipamento,
 } from '../types'
+
+// Ordena fechamentos por período cronológico (Jan2025 < Fev2025 < ... < Dez2026)
+function sortFechamentos(arr: DadosFechamento[]): DadosFechamento[] {
+  const mesMap: Record<string, number> = {
+    jan:0, fev:1, mar:2, abr:3, mai:4, jun:5,
+    jul:6, ago:7, set:8, out:9, nov:10, dez:11,
+  }
+  return [...arr].sort((a, b) => {
+    const parse = (p: string) => {
+      const m = p.toLowerCase().match(/^([a-z]{3})(\d{4})/)
+      if (!m) return 0
+      return parseInt(m[2]) * 12 + (mesMap[m[1]] ?? 0)
+    }
+    return parse(a.periodo) - parse(b.periodo)
+  })
+}
 
 interface DataContextType {
   // ─ Estado de conexao ────────────────────────────────────────
@@ -59,6 +84,12 @@ interface DataContextType {
   setSheetId: (id: string) => void
   currentSheetId: string
 
+  // ─ Planilhas históricas (comparativo mensal) ─────────────────
+  historicalSheets: { id: string; label: string }[]
+  isLoadingHistorical: boolean
+  addHistoricalSheet: (id: string) => Promise<{ success: boolean; label?: string; error?: string }>
+  removeHistoricalSheet: (id: string) => void
+
   // ─ CRUD de Vendedores (localStorage) ────────────────────────
   saveVendedor: (vendedor: Vendedor) => void
   deleteVendedor: (id: number) => void
@@ -73,6 +104,16 @@ interface DataContextType {
 
   // ─ Overrides de segmento de clientes ────────────────────────
   saveSegmentOverride: (override: SegmentOverride) => void
+
+  // ─ CRUD de Custos Operacionais ───────────────────────────────
+  custos: CustoOperacional[]
+  saveCusto: (custo: CustoOperacional) => void
+  deleteCusto: (id: string) => void
+
+  // ─ CRUD de Equipamentos ──────────────────────────────────────
+  equipamentos: Equipamento[]
+  saveEquipamento: (eq: Equipamento) => void
+  deleteEquipamento: (id: string) => void
 }
 
 const DataContext = createContext<DataContextType | null>(null)
@@ -93,6 +134,117 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [segmentOverrides, setSegmentOverrides] = useState<SegmentOverride[]>(() =>
     getAll<SegmentOverride>('vdf_segment_overrides'),
   )
+  const [custos, setCustos] = useState<CustoOperacional[]>(() =>
+    getAll<CustoOperacional>('vdf_custos_fixos'),
+  )
+  const [equipamentos, setEquipamentos] = useState<Equipamento[]>(() =>
+    getAll<Equipamento>('vdf_equipamentos'),
+  )
+
+  // ─ Planilhas históricas para comparativo ─────────────────────
+  const [historicalSheets, setHistoricalSheets] = useState<{ id: string; label: string }[]>(() => {
+    try {
+      const saved = localStorage.getItem('vdf_historical_sheets')
+      return saved ? JSON.parse(saved) : []
+    } catch { return [] }
+  })
+  // Mapa sheetId → fechamentos carregados daquela planilha
+  const [historicalFechamentosMap, setHistoricalFechamentosMap] = useState<Record<string, DadosFechamento[]>>({})
+  const [isLoadingHistorical, setIsLoadingHistorical] = useState(false)
+
+  // Carrega planilhas históricas salvas ao inicializar
+  useEffect(() => {
+    const stored = (() => {
+      try {
+        const s = localStorage.getItem('vdf_historical_sheets')
+        return s ? (JSON.parse(s) as { id: string; label: string }[]) : []
+      } catch { return [] }
+    })()
+    if (stored.length === 0) return
+    setIsLoadingHistorical(true)
+    Promise.all(
+      stored.map(async (hs) => {
+        try {
+          const meta = await getSpreadsheetMetadata(hs.id)
+          const fTabs = filterFechamentoTabs(meta.sheets)
+          const loaded: DadosFechamento[] = []
+          for (const tab of fTabs) {
+            const rows = await readRange(`'${tab.title}'!A:J`, hs.id)
+            const rowsTyped = rows as (string | number)[][]
+            const periodo = extractPeriodoFromTab(tab.title, rowsTyped)
+            loaded.push(mapRowsToFechamento(rowsTyped, periodo))
+          }
+          return { id: hs.id, fechamentos: loaded }
+        } catch {
+          return { id: hs.id, fechamentos: [] }
+        }
+      })
+    ).then((results) => {
+      const map: Record<string, DadosFechamento[]> = {}
+      results.forEach(r => { map[r.id] = r.fechamentos })
+      setHistoricalFechamentosMap(map)
+      setIsLoadingHistorical(false)
+    })
+  }, []) // eslint-disable-line
+
+  const addHistoricalSheet = useCallback(async (id: string) => {
+    if (!id.trim()) return { success: false, error: 'ID vazio' }
+    setIsLoadingHistorical(true)
+    try {
+      const meta = await getSpreadsheetMetadata(id)
+      const fTabs = filterFechamentoTabs(meta.sheets)
+      if (fTabs.length === 0) {
+        setIsLoadingHistorical(false)
+        return { success: false, error: 'Nenhuma aba de fechamento encontrada nesta planilha' }
+      }
+      const loaded: DadosFechamento[] = []
+      for (const tab of fTabs) {
+        const rows = await readRange(`'${tab.title}'!A:J`, id)
+        const rowsTyped = rows as (string | number)[][]
+        const periodo = extractPeriodoFromTab(tab.title, rowsTyped)
+        loaded.push(mapRowsToFechamento(rowsTyped, periodo))
+      }
+      const label = loaded.map(f => f.periodo).join(', ') || meta.title
+      setHistoricalSheets(prev => {
+        const filtered = prev.filter(s => s.id !== id)
+        const next = [...filtered, { id, label }]
+        localStorage.setItem('vdf_historical_sheets', JSON.stringify(next))
+        return next
+      })
+      setHistoricalFechamentosMap(prev => ({ ...prev, [id]: loaded }))
+      setIsLoadingHistorical(false)
+      return { success: true, label }
+    } catch (err) {
+      setIsLoadingHistorical(false)
+      const msg = err instanceof Error ? err.message : 'Erro ao carregar planilha'
+      return { success: false, error: msg }
+    }
+  }, [])
+
+  const removeHistoricalSheet = useCallback((id: string) => {
+    setHistoricalSheets(prev => {
+      const next = prev.filter(s => s.id !== id)
+      localStorage.setItem('vdf_historical_sheets', JSON.stringify(next))
+      return next
+    })
+    setHistoricalFechamentosMap(prev => {
+      const next = { ...prev }
+      delete next[id]
+      return next
+    })
+  }, [])
+
+  // Merge primary + historical fechamentos, sem duplicatas, ordem cronológica
+  const allFechamentos = useMemo(() => {
+    const historical = Object.values(historicalFechamentosMap).flat()
+    const all = [...sheets.fechamentos, ...historical]
+    const seen = new Set<string>()
+    return sortFechamentos(all.filter(f => {
+      if (seen.has(f.periodo)) return false
+      seen.add(f.periodo)
+      return true
+    }))
+  }, [sheets.fechamentos, historicalFechamentosMap])
 
   // ─ Seed de vendedores do Sheets no first-run ─────────────────
   useEffect(() => {
@@ -153,6 +305,28 @@ export function DataProvider({ children }: { children: ReactNode }) {
     await sheets.connect(sheetId)
   }, [sheets])
 
+  // ─ CRUD Custos Operacionais ──────────────────────────────────
+  const saveCusto = useCallback((custo: CustoOperacional) => {
+    upsert<CustoOperacional>('vdf_custos_fixos', custo)
+    setCustos(getAll<CustoOperacional>('vdf_custos_fixos'))
+  }, [])
+
+  const deleteCusto = useCallback((id: string) => {
+    remove('vdf_custos_fixos', id)
+    setCustos(getAll<CustoOperacional>('vdf_custos_fixos'))
+  }, [])
+
+  // ─ CRUD Equipamentos ─────────────────────────────────────────
+  const saveEquipamento = useCallback((eq: Equipamento) => {
+    upsert<Equipamento>('vdf_equipamentos', eq)
+    setEquipamentos(getAll<Equipamento>('vdf_equipamentos'))
+  }, [])
+
+  const deleteEquipamento = useCallback((id: string) => {
+    remove('vdf_equipamentos', id)
+    setEquipamentos(getAll<Equipamento>('vdf_equipamentos'))
+  }, [])
+
   // ─ Segment Overrides ────────────────────────────────────────
   const saveSegmentOverride = useCallback((override: SegmentOverride) => {
     upsert<SegmentOverride & { id: number }>(
@@ -169,8 +343,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         isLoading: sheets.isLoading,
         error: sheets.error,
         isOffline,
-        periodo: sheets.fechamentos[0]?.periodo || '',
-        fechamentos: sheets.fechamentos,
+        periodo: allFechamentos[allFechamentos.length - 1]?.periodo || sheets.fechamentos[0]?.periodo || '',
+        fechamentos: allFechamentos,
+        historicalSheets,
+        isLoadingHistorical,
+        addHistoricalSheet,
+        removeHistoricalSheet,
         vendedores,
         lancamentos,
         clientes,
@@ -186,6 +364,12 @@ export function DataProvider({ children }: { children: ReactNode }) {
         metas,
         saveMeta,
         saveSegmentOverride,
+        custos,
+        saveCusto,
+        deleteCusto,
+        equipamentos,
+        saveEquipamento,
+        deleteEquipamento,
       }}
     >
       {children}

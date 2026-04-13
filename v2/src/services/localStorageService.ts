@@ -11,6 +11,8 @@ export type LocalKey =
   | 'vdf_segment_overrides'
   | 'vdf_regras_comissao'
   | 'vdf_projecao_base'
+  | 'vdf_custos_fixos'
+  | 'vdf_equipamentos'
 
 /** Retorna todos os registros de uma chave. Retorna [] em caso de erro. */
 export function getAll<T>(key: LocalKey): T[] {

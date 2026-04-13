@@ -23,6 +23,7 @@ import {
   COL_DESCONTOS,
   COL_COBR_DIGITAL,
 } from '../config/sheets'
+import { periodoToDate } from '../utils/format'
 import type {
   DadosFechamento,
   Vendedor,
@@ -199,22 +200,59 @@ export function mapRowsToVendedores(rows: (string | number)[][]): Vendedor[] {
  *   Row 3+: dados
  */
 export function mapRowsMKPdePOS(rows: (string | number)[][], periodo = 'atual'): ClienteCarteira[] {
-  // Pula 2 linhas iniciais (titulo + header)
   if (rows.length <= 2) return []
 
+  // Detecta a linha de cabeçalho escaneando as primeiras 5 linhas
+  // A aba real pode ter: Row1=título, Row2=vazio ou sublabel, Row3=headers
+  let headerRowIdx = -1
+  for (let i = 0; i < Math.min(5, rows.length); i++) {
+    const cells = (rows[i] || []).map((h) => String(h || '').toLowerCase())
+    // Considera linha de header se contiver ao menos 2 das palavras-chave
+    const hits = cells.filter((c) => /cnpj|nome|estabelec|tpv|markup|margem/.test(c)).length
+    if (hits >= 2) { headerRowIdx = i; break }
+  }
+
+  // Se não encontrou header, assume que os dados começam em rows[2] (skip título+header)
+  const dataStart = headerRowIdx >= 0 ? headerRowIdx + 1 : 2
+
+  // Mapeamento de colunas a partir do header encontrado (ou fallback fixo)
+  // Fallback correto para planilha real: Col A=seq, B=CNPJ(número), C=Nome/Estabelecimento
+  const headers = headerRowIdx >= 0
+    ? (rows[headerRowIdx] || []).map((h) => String(h || '').toLowerCase())
+    : []
+  const nomeIdx = headers.findIndex((h) => /nome|estabelec/i.test(h))
+  const cnpjIdx = headers.findIndex((h) => /cnpj/i.test(h))
+  const tpvIdx  = headers.findIndex((h) => /tpv/i.test(h))
+  const mkpIdx  = headers.findIndex((h) => /markup/i.test(h))
+  const mrgIdx  = headers.findIndex((h) => /margem/i.test(h))
+
+  // Fallback: índice 1 = CNPJ (número), índice 2 = Nome/Estabelecimento
+  const CNPJi   = cnpjIdx >= 0 ? cnpjIdx : 1
+  const NOMEi   = nomeIdx >= 0 ? nomeIdx : 2
+  const TPVi    = tpvIdx  >= 0 ? tpvIdx  : COL_MKP_POS.TPV
+  const MARKUPi = mkpIdx  >= 0 ? mkpIdx  : COL_MKP_POS.MARKUP
+  const MARGEMi = mrgIdx  >= 0 ? mrgIdx  : COL_MKP_POS.MARGEM
+
   return rows
-    .slice(2)
-    .filter((row) => row.length >= 3 && row[COL_MKP_POS.NOME])
+    .slice(dataStart)
+    // Filtra linhas de header que possam ter escapado (texto "cnpj", "nome", "estabelec")
+    .filter((row) => {
+      if (row.length < 3) return false
+      const cell = String(row[NOMEi] || '').toLowerCase()
+      if (/^(cnpj|nome|estabelec|header|detalhamento)/.test(cell)) return false
+      // Precisa ter ao menos nome ou CNPJ preenchido
+      return Boolean(row[NOMEi] || row[CNPJi])
+    })
     .map((row, index) => {
-      const tpv = parseNumericValue(row[COL_MKP_POS.TPV])
-      const markup = parseNumericValue(row[COL_MKP_POS.MARKUP])
-      const margem = parseNumericValue(row[COL_MKP_POS.MARGEM])
+      const tpv    = parseNumericValue(row[TPVi])
+      const markup = parseNumericValue(row[MARKUPi])
+      const margem = parseNumericValue(row[MARGEMi])
 
       return {
         id: index + 1,
-        cnpj: String(row[COL_MKP_POS.CNPJ] || ''),
-        nome: String(row[COL_MKP_POS.NOME] || ''),
-        segmento: inferirSegmento(String(row[COL_MKP_POS.NOME] || '')),
+        cnpj: String(row[CNPJi] || ''),
+        nome: String(row[NOMEi] || ''),
+        segmento: inferirSegmento(String(row[NOMEi] || '')),
         vendedor: 'Comercial Bernardes',
         volumeTotal: tpv,
         /** ticketMedio = markup do EC (faturamento CB por EC), nao ticket por transacao */
@@ -249,18 +287,26 @@ export function mapRowsRepasses(rows: (string | number)[][]): LancamentoCusto[] 
       // Rejeita se o valor for falsy (0, vazio, undefined)
       return Boolean(row[COL_REPASSES.VALOR])
     })
-    .map((row, index) => ({
-      id: `REP-${String(row[COL_REPASSES.CNPJ] || index + 1).replace(/\D/g, '').slice(-6)}-${index}`,
-      data: String(row[COL_REPASSES.DATA] || ''),
-      descricao: `${String(row[COL_REPASSES.TIPO] || '')} — ${String(row[COL_REPASSES.NOME] || '')}`,
-      // categoria sempre 'Repasse' para distinguir da receita agregada do DRE (fechamento.repasse)
-      categoria: 'Repasse',
-      tipo: 'receita' as const,
-      valor: Math.abs(parseNumericValue(row[COL_REPASSES.VALOR])),
-      conta: 'Repasses',
-      source: 'sheets' as const,
-      _sheetRow: index + 2,
-    }))
+    .map((row, index) => {
+      const cnpj      = String(row[COL_REPASSES.CNPJ] || '')
+      const nome      = String(row[COL_REPASSES.NOME] || '')
+      const tipoAj    = String(row[COL_REPASSES.TIPO] || '')
+      const dataRow   = String(row[COL_REPASSES.DATA] || '')
+      return {
+        id: `REP-${cnpj.replace(/\D/g, '').slice(-6) || index + 1}-${index}`,
+        data: dataRow,
+        descricao: nome,                          // Estabelecimento como descrição principal
+        categoria: 'Repasse',
+        tipo: 'receita' as const,
+        valor: Math.abs(parseNumericValue(row[COL_REPASSES.VALOR])),
+        conta: 'Repasses',
+        cnpjCliente: cnpj  || undefined,
+        nomeCliente: nome  || undefined,
+        tipoAjuste:  tipoAj || undefined,
+        source: 'sheets' as const,
+        _sheetRow: index + 2,
+      }
+    })
 }
 
 // ─── Descontos → Lancamentos (despesas) ──────────────────────
@@ -292,7 +338,7 @@ export function mapRowsDescontos(rows: (string | number)[][], periodo = 'atual')
         : 'Fornecedores'
       return {
         id: `DESC-${index + 1}`,
-        data: periodo,
+        data: periodoToDate(periodo),
         descricao,
         categoria,
         tipo: 'despesa' as const,
@@ -314,30 +360,55 @@ export function mapRowsDescontos(rows: (string | number)[][], periodo = 'atual')
  * Identifica linhas de dados: Col A nao vazio e Col C tem valor numerico
  */
 export function mapRowsCobrDigital(rows: (string | number)[][], periodo = 'atual'): LancamentoCusto[] {
+  // Detecta colunas dinamicamente escaneando as primeiras 8 linhas.
+  // Exige que Nome E Valor estejam na MESMA linha para confirmar o cabeçalho,
+  // evitando falso-positivo em linhas de título como "Parceiro: Comercial Bernardes".
+  // Planilha real: Col A=vazio, Col B=Nome, Col C=Conta Ativa?, Col D=Valor
+  let NOMEi  = 1 // fallback correto para planilha real (Col B)
+  let VALORi = 3 // fallback correto para planilha real (Col D)
+
+  for (let i = 0; i < Math.min(8, rows.length); i++) {
+    const cells = (rows[i] || []).map((c) => String(c || '').toLowerCase())
+    // Exige AMBOS presentes na mesma linha: nome e valor
+    const nomeH  = cells.findIndex((c) => /estabelec|nome do/i.test(c))
+    const valorH = cells.findIndex((c) => /valor/i.test(c))
+    if (nomeH >= 0 && valorH >= 0) {
+      NOMEi  = nomeH
+      VALORi = valorH
+      break
+    }
+  }
+
   return rows
     .map((row, index) => ({ row, index }))
     .filter(({ row }) => {
-      const nome = String(row[COL_COBR_DIGITAL.NOME] || '').trim()
-      const valor = parseNumericValue(row[COL_COBR_DIGITAL.VALOR])
+      const nome = String(row[NOMEi] || '').trim()
+      const valor = parseNumericValue(row[VALORi])
+      const upper = nome.toUpperCase()
       const isHeader =
-        nome.toUpperCase().includes('COBRAN') ||
-        nome.toUpperCase().includes('ESTABELECIMENTO') ||
-        nome.toUpperCase().includes('TOTAL') ||
-        nome.toUpperCase().includes('PARCEIRO') ||
+        upper.includes('COBRAN') ||
+        upper.includes('ESTABELECIMENTO') ||
+        upper.includes('TOTAL') ||
+        upper.includes('PARCEIRO') ||
+        upper.includes('NOME') ||
         nome === ''
       return nome !== '' && valor !== 0 && !isHeader
     })
-    .map(({ row, index }) => ({
-      id: `COBR-${index + 1}`,
-      data: periodo,
-      descricao: `Conta Digital — ${String(row[COL_COBR_DIGITAL.NOME] || '')}`,
-      categoria: 'Conta Digital',
-      tipo: 'despesa' as const,
-      valor: Math.abs(parseNumericValue(row[COL_COBR_DIGITAL.VALOR])),
-      conta: 'Cobr. Conta Digital',
-      source: 'sheets' as const,
-      _sheetRow: index + 1,
-    }))
+    .map(({ row, index }) => {
+      const nome = String(row[NOMEi] || '')
+      return {
+        id: `COBR-${index + 1}`,
+        data: periodoToDate(periodo),
+        descricao: `Conta Digital — ${nome}`,
+        categoria: 'Conta Digital',
+        tipo: 'despesa' as const,
+        valor: Math.abs(parseNumericValue(row[VALORi])),
+        conta: 'Cobr. Conta Digital',
+        nomeCliente: nome || undefined,
+        source: 'sheets' as const,
+        _sheetRow: index + 1,
+      }
+    })
 }
 
 // ─── Lancamentos (formato classico) ──────────────────────────

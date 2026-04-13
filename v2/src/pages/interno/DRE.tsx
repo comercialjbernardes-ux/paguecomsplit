@@ -12,6 +12,7 @@ import {
 } from 'recharts'
 import { FileBarChart, TrendingUp, TrendingDown, ArrowRight, CreditCard, Users, BookOpen } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
+import { useDataContext } from '../../contexts/DataContext'
 import { LoadingState } from '../../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../../utils/format'
 import type { DadosFechamento } from '../../types'
@@ -20,17 +21,47 @@ const COBR_DIGITAL_VALOR = 29.90 // valor fixo por EC com conta digital ativa
 
 export function InternoDRE() {
   const { fechamentos, fechamentoAtual, lancamentos, clientes, isLoading } = useInternoData()
+  const { equipamentos } = useDataContext()
 
   // Estrutura correta do DRE:
   // Receitas: Markup POS + Comissao Rede + Repasse
-  // Deducoes: Fatura Conta Digital + Descontos
-  // Resultado: Valor Liquido (= Receitas - Deducoes)
+  // Deducoes: Fatura Conta Digital + Descontos + Deducoes Lancadas (local)
+  // Resultado: Valor Liquido Ajustado (= Receitas - Todas Deducoes)
   const dreData = useMemo(() => {
     if (!fechamentoAtual) return null
     const f = fechamentoAtual
 
     const totalReceitas = f.markupPos + f.comissaoRede + f.repasse
-    const totalDeducoes = f.faturaDigital + f.descontos
+
+    // Margem real = Markup POS / TPV Total (quanto a empresa ganha sobre o volume processado)
+    // Ex: R$28.759 markup / R$2.728.746 TPV = 1,054% — NAO dividir por receitas internas
+    const margemCalculada = f.tpvTotal > 0
+      ? (f.markupPos / f.tpvTotal) * 100
+      : f.taxaMargem
+
+    // ERRO 05: deducoes locais (lancamentos manuais de despesa)
+    const totalDeducoesLocais = lancamentos
+      .filter((l) => l.tipo === 'despesa' && l.source === 'local')
+      .reduce((s, l) => s + l.valor, 0)
+
+    // ERRO 02: deducoes de equipamentos com parcelas ativas
+    const totalEquipMensal = equipamentos.reduce((s, eq) => {
+      const restantes = eq.numeroParcelas - eq.parcelasPagas
+      return s + (restantes > 0 ? eq.valorParcela : 0)
+    }, 0)
+
+    const deducoes: { id: string; descricao: string; valor: number; isLocal?: boolean; isEquip?: boolean }[] = [
+      { id: 'fatura', descricao: 'Cobranca Conta Digital', valor: f.faturaDigital },
+      { id: 'descontos', descricao: 'Descontos do Periodo', valor: f.descontos },
+    ]
+    if (totalEquipMensal > 0) {
+      deducoes.push({ id: 'equip', descricao: 'Ded. Equipamentos/Maquinas', valor: totalEquipMensal, isEquip: true })
+    }
+    if (totalDeducoesLocais > 0) {
+      deducoes.push({ id: 'local', descricao: 'Deducoes Lancadas', valor: totalDeducoesLocais, isLocal: true })
+    }
+
+    const totalDeducoes = f.faturaDigital + f.descontos + totalEquipMensal + totalDeducoesLocais
 
     return {
       receitas: [
@@ -38,31 +69,40 @@ export function InternoDRE() {
         { id: 'comissao', descricao: 'Comissao de Rede', valor: f.comissaoRede },
         { id: 'repasse', descricao: 'Repasse', valor: f.repasse },
       ],
-      deducoes: [
-        { id: 'fatura', descricao: 'Cobranca Conta Digital', valor: f.faturaDigital },
-        { id: 'descontos', descricao: 'Descontos do Periodo', valor: f.descontos },
-      ],
+      deducoes,
       totalReceitas,
       totalDeducoes,
       valorLiquido: f.valorLiquido,
-      // Verificacao: totalReceitas - totalDeducoes deve bater com valorLiquido
+      valorLiquidoAjustado: f.valorLiquido - totalDeducoesLocais - totalEquipMensal,
       calculado: totalReceitas - totalDeducoes,
+      margemCalculada,
+      temDeducoesLocais: totalDeducoesLocais > 0,
+      temEquip: totalEquipMensal > 0,
+      totalEquipMensal,
     }
-  }, [fechamentoAtual])
+  }, [fechamentoAtual, lancamentos, equipamentos])
 
   // Waterfall chart: composicao do resultado (sem TPV — TPV e volume dos ECs, nao receita)
   const waterfallData = useMemo(() => {
-    if (!fechamentoAtual) return []
-    const f = fechamentoAtual
-    return [
+    if (!dreData) return []
+    const f = fechamentoAtual!
+    const entries: { name: string; valor: number; tipo: string }[] = [
       { name: 'Markup POS', valor: f.markupPos, tipo: 'positivo' },
       { name: 'Comissao', valor: f.comissaoRede, tipo: 'positivo' },
       { name: 'Repasse', valor: f.repasse, tipo: 'positivo' },
       { name: 'Conta Digital', valor: -f.faturaDigital, tipo: 'negativo' },
       { name: 'Descontos', valor: -f.descontos, tipo: 'negativo' },
-      { name: 'Liquido', valor: f.valorLiquido, tipo: 'destaque' },
     ]
-  }, [fechamentoAtual])
+    if (dreData.temEquip) {
+      entries.push({ name: 'Equipamentos', valor: -dreData.totalEquipMensal, tipo: 'negativo' })
+    }
+    if (dreData.temDeducoesLocais) {
+      const localTotal = dreData.totalDeducoes - f.faturaDigital - f.descontos - dreData.totalEquipMensal
+      entries.push({ name: 'Ded. Manuais', valor: -localTotal, tipo: 'negativo' })
+    }
+    entries.push({ name: 'Liquido', valor: dreData.valorLiquidoAjustado, tipo: 'destaque' })
+    return entries
+  }, [dreData, fechamentoAtual])
 
   // Evolucao por periodo
   const evolucaoPeriodo = useMemo(() => {
@@ -140,7 +180,7 @@ export function InternoDRE() {
           </div>
 
           {/* KPIs do resultado */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <DRECard
               label="Markup POS"
               value={formatCurrency(fechamentoAtual.markupPos)}
@@ -149,11 +189,21 @@ export function InternoDRE() {
               color="emerald"
             />
             <DRECard
+              label="Repasse"
+              value={formatCurrency(fechamentoAtual.repasse)}
+              icon={<ArrowRight className="w-5 h-5" />}
+              color="blue"
+            />
+            <DRECard
               label="Taxa de Margem"
-              value={formatPercent(fechamentoAtual.taxaMargem, 2)}
+              value={formatPercent(dreData?.margemCalculada ?? fechamentoAtual.taxaMargem, 2)}
               variacao={fechamentoAtual.variacaoMargem}
               icon={<TrendingUp className="w-5 h-5" />}
-              color="blue"
+              color={
+                (dreData?.margemCalculada ?? fechamentoAtual.taxaMargem) >= 2 ? 'emerald'
+                : (dreData?.margemCalculada ?? fechamentoAtual.taxaMargem) >= 1 ? 'blue'
+                : 'red'
+              }
             />
             <DRECard
               label="Total Deducoes"
@@ -227,7 +277,15 @@ export function InternoDRE() {
                     </tr>
                     {dreData.deducoes.map((linha) => (
                       <tr key={linha.id} className="border-b border-gray-50">
-                        <td className="py-2 px-3 pl-6 text-gray-700">{linha.descricao}</td>
+                        <td className={`py-2 px-3 pl-6 ${linha.isLocal ? 'text-amber-700 font-medium' : linha.isEquip ? 'text-orange-700 font-medium' : 'text-gray-700'}`}>
+                          {linha.descricao}
+                          {linha.isLocal && (
+                            <span className="ml-2 text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">manual</span>
+                          )}
+                          {linha.isEquip && (
+                            <span className="ml-2 text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">equipamento</span>
+                          )}
+                        </td>
                         <td className="py-2 px-3 text-right font-medium text-red-600">
                           - {formatCurrency(linha.valor)}
                         </td>
@@ -245,9 +303,12 @@ export function InternoDRE() {
                       <td className="py-3 px-3 font-bold text-blue-900 flex items-center gap-2">
                         <ArrowRight className="w-4 h-4 inline" />
                         Valor Liquido a Receber
+                        {dreData.temDeducoesLocais && (
+                          <span className="text-xs font-normal text-amber-600 ml-1">(ajustado)</span>
+                        )}
                       </td>
                       <td className="py-3 px-3 text-right font-bold text-blue-900 text-base">
-                        {formatCurrency(dreData.valorLiquido)}
+                        {formatCurrency(dreData.valorLiquidoAjustado)}
                       </td>
                     </tr>
                   </tbody>

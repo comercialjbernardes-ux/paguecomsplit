@@ -16,7 +16,7 @@ import { DeleteConfirmDialog } from '../../components/DeleteConfirmDialog'
 import { LoadingState } from '../../components/LoadingState'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import type { LancamentoFormData } from '../../services/sheetsCrud'
-import { formatCurrency } from '../../utils/format'
+import { formatCurrency, parseDateBR } from '../../utils/format'
 import type { LancamentoCusto } from '../../types'
 
 const PAGE_SIZE = 15
@@ -41,16 +41,24 @@ export function InternoTransacoes() {
   const [filtroConta, setFiltroConta] = useState('todas')
   const [pagina, setPagina] = useState(1)
 
-  // Lancamentos filtrados
+  // Lancamentos filtrados — ordenados do mais recente para o mais antigo (ERRO 04)
   const filtrados = useMemo(() => {
-    return lancamentos.filter((l) => {
-      if (filtroCategoria !== 'todas' && l.categoria !== filtroCategoria) return false
-      if (filtroConta !== 'todas' && l.conta !== filtroConta) return false
-      if (filtroTipo !== 'todos' && l.tipo !== filtroTipo) return false
-      if (busca && !l.descricao.toLowerCase().includes(busca.toLowerCase())
-          && !l.categoria.toLowerCase().includes(busca.toLowerCase())) return false
-      return true
-    })
+    return lancamentos
+      .filter((l) => {
+        if (filtroCategoria !== 'todas' && l.categoria !== filtroCategoria) return false
+        if (filtroConta !== 'todas' && l.conta !== filtroConta) return false
+        if (filtroTipo !== 'todos' && l.tipo !== filtroTipo) return false
+        if (busca) {
+          const q = busca.toLowerCase()
+          const matchDesc = l.descricao.toLowerCase().includes(q)
+          const matchNome = (l.nomeCliente || '').toLowerCase().includes(q)
+          const matchCnpj = (l.cnpjCliente || '').includes(q)
+          const matchCat  = l.categoria.toLowerCase().includes(q)
+          if (!matchDesc && !matchNome && !matchCnpj && !matchCat) return false
+        }
+        return true
+      })
+      .sort((a, b) => parseDateBR(b.data).getTime() - parseDateBR(a.data).getTime())
   }, [lancamentos, filtroCategoria, filtroConta, filtroTipo, busca])
 
   // Paginacao
@@ -90,18 +98,29 @@ export function InternoTransacoes() {
     setIsDeleteOpen(true)
   }
 
+  // Converte data ISO (AAAA-MM-DD) para formato brasileiro (DD/MM/AAAA)
+  const normalizarData = (dataStr: string): string => {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dataStr)) {
+      const [y, m, d] = dataStr.split('-')
+      return `${d}/${m}/${y}`
+    }
+    return dataStr
+  }
+
   const handleSave = (data: LancamentoFormData) => {
     setIsSaving(true)
+    const dataNormalizada = normalizarData(data.data)
     try {
       if (editItem) {
         // Atualiza lancamento local preservando id e source originais
-        saveLancamento({ ...editItem, ...data, source: 'local' })
+        saveLancamento({ ...editItem, ...data, data: dataNormalizada, source: 'local' })
         showFeedback('success', `Lancamento "${data.descricao}" atualizado`)
       } else {
         // Novo lancamento local com ID unico
         const novo: LancamentoCusto = {
           id: `L${Date.now().toString(36).toUpperCase()}`,
           ...data,
+          data: dataNormalizada,
           conta: data.conta || 'Geral',
           source: 'local',
         }
@@ -265,9 +284,10 @@ export function InternoTransacoes() {
             <thead>
               <tr className="border-b border-gray-200">
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Data</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-500">Descricao</th>
+                <th className="text-left py-3 px-3 font-medium text-gray-500">CNPJ</th>
+                <th className="text-left py-3 px-3 font-medium text-gray-500">Estabelecimento</th>
+                <th className="text-left py-3 px-3 font-medium text-gray-500">Tipo de Ajuste</th>
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Categoria</th>
-                <th className="text-left py-3 px-3 font-medium text-gray-500">Conta</th>
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Tipo</th>
                 <th className="text-right py-3 px-3 font-medium text-gray-500">Valor</th>
                 <th className="text-center py-3 px-3 font-medium text-gray-500">Acoes</th>
@@ -276,7 +296,7 @@ export function InternoTransacoes() {
             <tbody>
               {paginados.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12 text-gray-400">
+                  <td colSpan={8} className="text-center py-12 text-gray-400">
                     <Receipt className="w-10 h-10 mx-auto mb-2 opacity-50" />
                     <p>Nenhum lancamento encontrado</p>
                     <button onClick={handleOpenNew} className="text-emerald-600 hover:text-emerald-700 font-medium mt-2 text-sm">
@@ -288,12 +308,14 @@ export function InternoTransacoes() {
                 paginados.map((l) => (
                   <tr key={l.id} className="border-b border-gray-50 hover:bg-gray-50 group">
                     <td className="py-3 px-3 text-gray-500 whitespace-nowrap">{l.data}</td>
-                    <td className="py-3 px-3 font-medium text-gray-900 max-w-[250px] truncate">
-                      <span>{l.descricao}</span>
+                    <td className="py-3 px-3 text-gray-500 text-xs font-mono whitespace-nowrap">{l.cnpjCliente || '—'}</td>
+                    <td className="py-3 px-3 font-medium text-gray-900 max-w-[220px] truncate">
+                      <span>{l.nomeCliente || l.descricao}</span>
                       {l.source === 'sheets' && (
                         <span className="ml-2 text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">Sheets</span>
                       )}
                     </td>
+                    <td className="py-3 px-3 text-gray-500 whitespace-nowrap">{l.tipoAjuste || '—'}</td>
                     <td className="py-3 px-3 text-gray-500">{l.categoria}</td>
                     <td className="py-3 px-3 text-gray-500">{l.conta}</td>
                     <td className="py-3 px-3">

@@ -194,7 +194,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
         const cobrTab = findTab(metadata.sheets, SHEET_TABS.COBR_DIGITAL)
         if (cobrTab) {
           try {
-            const rows = await readRange(`'${SHEET_TABS.COBR_DIGITAL}'!A:C`, id)
+            const rows = await readRange(`'${SHEET_TABS.COBR_DIGITAL}'!A:E`, id)
             const cobr = mapRowsCobrDigital(rows as (string | number)[][], fechamentoData[0]?.periodo || 'atual')
             combined.push(...cobr)
             console.info(`[Sheets] ${cobr.length} cobranças digitais carregadas`)

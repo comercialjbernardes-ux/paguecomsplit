@@ -61,6 +61,23 @@ export function EquipeDashboard() {
       .sort((a, b) => b.realizado - a.realizado)
   }, [vendedores, periodo])
 
+  // Evolucao historica: comparativo mes a mes (MELHORIA 04)
+  const evolucaoHistorica = useMemo(() => {
+    return fechamentos.map((f, i) => {
+      const anterior = fechamentos[i - 1]
+      const varMarkup = anterior && anterior.markupPos > 0
+        ? ((f.markupPos - anterior.markupPos) / anterior.markupPos) * 100
+        : null
+      const varLiquido = anterior && anterior.valorLiquido > 0
+        ? ((f.valorLiquido - anterior.valorLiquido) / anterior.valorLiquido) * 100
+        : null
+      const varEcs = anterior && anterior.ecsAtivos > 0
+        ? ((f.ecsAtivos - anterior.ecsAtivos) / anterior.ecsAtivos) * 100
+        : null
+      return { ...f, varMarkup, varLiquido, varEcs }
+    }).reverse()
+  }, [fechamentos])
+
   // Tabela vendedores ordenada
   const tabelaVendedores = useMemo(() => {
     return [...vendedores].sort((a, b) => {
@@ -260,6 +277,65 @@ export function EquipeDashboard() {
                     </tr>
                   )
                 })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* MELHORIA 04: Evolucao Historica — comparativo mes a mes */}
+      {evolucaoHistorica.length > 1 && (
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-blue-500" />
+            Evolucao Historica por Periodo
+          </h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-200">
+                  <th className="text-left py-2 px-3 font-medium text-gray-500">Periodo</th>
+                  <th className="text-right py-2 px-3 font-medium text-gray-500">Markup POS</th>
+                  <th className="text-right py-2 px-3 font-medium text-gray-500">Var. Markup</th>
+                  <th className="text-right py-2 px-3 font-medium text-gray-500">Valor Liquido</th>
+                  <th className="text-right py-2 px-3 font-medium text-gray-500">Var. Liquido</th>
+                  <th className="text-right py-2 px-3 font-medium text-gray-500">ECs Ativos</th>
+                  <th className="text-right py-2 px-3 font-medium text-gray-500">Var. ECs</th>
+                </tr>
+              </thead>
+              <tbody>
+                {evolucaoHistorica.map((f) => (
+                  <tr key={f.periodo} className="border-b border-gray-50 hover:bg-gray-50">
+                    <td className="py-2 px-3 font-medium text-gray-900">{f.periodo}</td>
+                    <td className="py-2 px-3 text-right">{formatCurrency(f.markupPos)}</td>
+                    <td className="py-2 px-3 text-right">
+                      {f.varMarkup !== null ? (
+                        <span className={`flex items-center justify-end gap-1 text-xs font-semibold ${f.varMarkup >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {f.varMarkup >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                          {formatPercent(Math.abs(f.varMarkup))}
+                        </span>
+                      ) : <span className="text-gray-300 text-xs">—</span>}
+                    </td>
+                    <td className="py-2 px-3 text-right">{formatCurrency(f.valorLiquido)}</td>
+                    <td className="py-2 px-3 text-right">
+                      {f.varLiquido !== null ? (
+                        <span className={`flex items-center justify-end gap-1 text-xs font-semibold ${f.varLiquido >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {f.varLiquido >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                          {formatPercent(Math.abs(f.varLiquido))}
+                        </span>
+                      ) : <span className="text-gray-300 text-xs">—</span>}
+                    </td>
+                    <td className="py-2 px-3 text-right">{f.ecsAtivos}</td>
+                    <td className="py-2 px-3 text-right">
+                      {f.varEcs !== null ? (
+                        <span className={`flex items-center justify-end gap-1 text-xs font-semibold ${f.varEcs >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {f.varEcs >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                          {formatPercent(Math.abs(f.varEcs))}
+                        </span>
+                      ) : <span className="text-gray-300 text-xs">—</span>}
+                    </td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

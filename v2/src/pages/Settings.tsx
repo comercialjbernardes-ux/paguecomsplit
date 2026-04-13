@@ -14,6 +14,10 @@ import {
   FileSpreadsheet,
   Link2,
   Loader2,
+  PlusCircle,
+  Trash2,
+  History,
+  AlertTriangle,
 } from 'lucide-react'
 import { useDataContext } from '../contexts/DataContext'
 import { ErrorBanner } from '../components/ErrorBanner'
@@ -31,14 +35,35 @@ export function SettingsPage() {
     connect,
     currentSheetId,
     setSheetId,
+    historicalSheets,
+    isLoadingHistorical,
+    addHistoricalSheet,
+    removeHistoricalSheet,
   } = useDataContext()
 
   const [inputSheetId, setInputSheetId] = useState(currentSheetId)
   const [activePreview, setActivePreview] = useState<string>('fechamentos')
+  const [newHistSheetId, setNewHistSheetId] = useState('')
+  const [histError, setHistError] = useState<string | null>(null)
+  const [histSuccess, setHistSuccess] = useState<string | null>(null)
 
   const handleConnect = () => {
     setSheetId(inputSheetId)
     connect(inputSheetId)
+  }
+
+  const handleAddHistoricalSheet = async () => {
+    if (!newHistSheetId.trim()) return
+    setHistError(null)
+    setHistSuccess(null)
+    const result = await addHistoricalSheet(newHistSheetId.trim())
+    if (result.success) {
+      setHistSuccess(`Planilha "${result.label}" adicionada com sucesso!`)
+      setNewHistSheetId('')
+      setTimeout(() => setHistSuccess(null), 4000)
+    } else {
+      setHistError(result.error || 'Erro ao carregar planilha')
+    }
   }
 
   return (
@@ -144,6 +169,108 @@ export function SettingsPage() {
                     : 'Nunca'}
                 </p>
               </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Planilhas Históricas — Comparativo Mensal */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <History className="w-5 h-5 text-violet-500" />
+            Planilhas Historicas (Comparativo Mensal)
+          </h2>
+          {isLoadingHistorical && (
+            <span className="flex items-center gap-1.5 text-sm text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Carregando...
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-gray-500 mb-4">
+          Adicione planilhas de meses anteriores para habilitar o Comparativo Mensal e o historico no DRE.
+          Cada planilha deve ter o mesmo formato (aba Resumo ou Fechamento_*).
+        </p>
+
+        {/* Lista de planilhas históricas */}
+        {historicalSheets.length > 0 && (
+          <div className="space-y-2 mb-4">
+            {historicalSheets.map((hs) => (
+              <div key={hs.id} className="flex items-center gap-3 p-3 bg-violet-50 border border-violet-100 rounded-xl">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{hs.label}</p>
+                  <p className="text-xs text-gray-400 truncate">{hs.id}</p>
+                </div>
+                <button
+                  onClick={() => removeHistoricalSheet(hs.id)}
+                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                  title="Remover planilha historica"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {historicalSheets.length === 0 && (
+          <div className="text-center py-4 text-gray-400 text-sm mb-4">
+            Nenhuma planilha historica cadastrada ainda.
+          </div>
+        )}
+
+        {/* Formulario para adicionar */}
+        <div className="flex gap-3">
+          <div className="flex-1">
+            <div className="relative">
+              <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={newHistSheetId}
+                onChange={(e) => setNewHistSheetId(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddHistoricalSheet()}
+                placeholder="ID da planilha do mes anterior..."
+                className="input-field pl-10"
+              />
+            </div>
+          </div>
+          <button
+            onClick={handleAddHistoricalSheet}
+            disabled={isLoadingHistorical || !newHistSheetId.trim()}
+            className="btn-primary flex items-center gap-2 flex-shrink-0"
+          >
+            {isLoadingHistorical ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <PlusCircle className="w-4 h-4" />
+            )}
+            Adicionar
+          </button>
+        </div>
+
+        {histSuccess && (
+          <div className="mt-3 p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-700 flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+            {histSuccess}
+          </div>
+        )}
+        {histError && (
+          <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0" />
+            {histError}
+          </div>
+        )}
+
+        {fechamentos.length > 1 && (
+          <div className="mt-4 p-3 bg-gray-50 rounded-xl">
+            <p className="text-xs font-medium text-gray-600 mb-2">Periodos carregados ({fechamentos.length}):</p>
+            <div className="flex flex-wrap gap-2">
+              {fechamentos.map((f) => (
+                <span key={f.periodo} className="px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700">
+                  {f.periodo}
+                </span>
+              ))}
             </div>
           </div>
         )}

@@ -48,10 +48,21 @@ export function TransactionForm({
   const isEdit = editItem !== null
 
   // Preencher formulario ao editar
+  // EditItem.data pode ser DD/MM/AAAA (sheets) ou AAAA-MM-DD (ISO local)
+  // O input type="date" exige AAAA-MM-DD, entao convertemos se necessario
   useEffect(() => {
     if (editItem) {
+      const dataIso = (() => {
+        const d = editItem.data || ''
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) return d  // ja e ISO
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+          const [dd, mm, yyyy] = d.split('/')
+          return `${yyyy}-${mm}-${dd}`
+        }
+        return new Date().toISOString().split('T')[0]
+      })()
       setForm({
-        data: editItem.data,
+        data: dataIso,
         descricao: editItem.descricao,
         categoria: editItem.categoria,
         tipo: editItem.tipo,

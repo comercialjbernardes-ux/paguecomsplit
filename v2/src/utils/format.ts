@@ -70,3 +70,36 @@ export function getChartColor(index: number): string {
   ]
   return colors[index % colors.length]
 }
+
+/**
+ * Converte string de periodo "Mar2026" para data DD/MM/AAAA ("01/03/2026").
+ * Retorna a string original se nao reconhecer o formato.
+ */
+export function periodoToDate(periodo: string): string {
+  const monthMap: Record<string, string> = {
+    jan: '01', fev: '02', mar: '03', abr: '04',
+    mai: '05', jun: '06', jul: '07', ago: '08',
+    set: '09', out: '10', nov: '11', dez: '12',
+  }
+  const match = periodo.match(/^([A-Za-z]{3})(\d{4})$/i)
+  if (!match) return periodo
+  const month = monthMap[match[1].toLowerCase()]
+  if (!month) return periodo
+  return `01/${month}/${match[2]}`
+}
+
+/**
+ * Converte data no formato DD/MM/AAAA para Date (usado para ordenacao).
+ * Retorna new Date(0) como fallback para strings invalidas.
+ */
+export function parseDateBR(data: string): Date {
+  if (!data) return new Date(0)
+  const parts = data.split('/')
+  if (parts.length === 3) {
+    const [d, m, y] = parts.map(Number)
+    const dt = new Date(y, m - 1, d)
+    if (!isNaN(dt.getTime())) return dt
+  }
+  const fallback = new Date(data)
+  return isNaN(fallback.getTime()) ? new Date(0) : fallback
+}

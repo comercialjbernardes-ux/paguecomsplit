@@ -78,6 +78,9 @@ export interface LancamentoCusto {
   tipo: 'receita' | 'despesa'
   valor: number
   conta: string
+  cnpjCliente?: string  // CNPJ do EC (quando disponível — Repasses e Cobr. Digital)
+  nomeCliente?: string  // Nome/Estabelecimento do EC (quando disponível)
+  tipoAjuste?: string   // Tipo de Ajuste (quando disponível — Repasses)
   _sheetRow?: number
   source?: 'sheets' | 'local'
 }
@@ -136,6 +139,27 @@ export interface DadosFechamento {
   variacaoTpv?: number
   variacaoMarkup?: number
   variacaoMargem?: number
+}
+
+// ─── Gestao de Custos Operacionais ───────────────────────────
+
+export interface CustoOperacional {
+  id: string
+  data: string           // DD/MM/AAAA
+  descricao: string
+  categoria: 'Fixo' | 'Variavel' | 'Financeiro' | 'Fornecedor'
+  valor: number
+  recorrencia: 'unico' | 'mensal' | 'trimestral' | 'anual'
+}
+
+export interface Equipamento {
+  id: string
+  dataCompra: string     // DD/MM/AAAA
+  descricao: string
+  valorTotal: number
+  numeroParcelas: number
+  valorParcela: number
+  parcelasPagas: number
 }
 
 // ─── Auth ─────────────────────────────────────────────────────

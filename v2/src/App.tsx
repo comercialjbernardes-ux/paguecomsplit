@@ -25,6 +25,9 @@ import { InternoCarteira } from './pages/interno/Carteira'
 import { InternoTransacoes } from './pages/interno/Transacoes'
 import { RelatoriosPage } from './pages/Relatorios'
 import { ParametrizacaoPage } from './pages/config/Parametrizacao'
+import { InternoGestaoCustos } from './pages/interno/GestaoCustos'
+import { ComparativoMensalPage } from './pages/ComparativoMensal'
+import { RelatorioExecutivoPage } from './pages/RelatorioExecutivo'
 
 export default function App() {
   return (
@@ -56,9 +59,12 @@ export default function App() {
           <Route path="interno/custos" element={<InternoCustos />} />
           <Route path="interno/carteira" element={<InternoCarteira />} />
           <Route path="interno/transacoes" element={<InternoTransacoes />} />
+          <Route path="interno/gestao-custos" element={<InternoGestaoCustos />} />
 
           {/* ── Relatorios ────────────────────────────────── */}
           <Route path="relatorios" element={<RelatoriosPage />} />
+          <Route path="comparativo" element={<ComparativoMensalPage />} />
+          <Route path="relatorio-executivo" element={<RelatorioExecutivoPage />} />
 
           {/* ── Configuracao (laranja) ────────────────────── */}
           <Route path="parametrizacao" element={<ParametrizacaoPage />} />

@@ -19,6 +19,9 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  Wrench,
+  BarChart2,
+  FileText,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
@@ -89,6 +92,11 @@ const sections: NavSection[] = [
         path: '/interno/transacoes',
         icon: <Receipt className="w-4 h-4" />,
       },
+      {
+        label: 'Gestao de Custos',
+        path: '/interno/gestao-custos',
+        icon: <Wrench className="w-4 h-4" />,
+      },
     ],
   },
   {
@@ -100,6 +108,16 @@ const sections: NavSection[] = [
         label: 'Gerar Relatorios',
         path: '/relatorios',
         icon: <ClipboardList className="w-4 h-4" />,
+      },
+      {
+        label: 'Comparativo Mensal',
+        path: '/comparativo',
+        icon: <BarChart2 className="w-4 h-4" />,
+      },
+      {
+        label: 'Relatorio Executivo',
+        path: '/relatorio-executivo',
+        icon: <FileText className="w-4 h-4" />,
       },
     ],
   },
