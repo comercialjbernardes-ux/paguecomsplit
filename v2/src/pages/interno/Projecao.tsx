@@ -50,7 +50,7 @@ export function InternoProjecao() {
 
   // Base para projecao
   const baseValue = modo === 'manual'
-    ? (baseManual || fechamentoAtual?.markupPos || 30000)
+    ? (baseManual != null && baseManual > 0 ? baseManual : (fechamentoAtual?.markupPos || 30000))
     : modo === 'ec' && ecAtual
     ? ecAtual.ticketMedio  // markup deste EC especifico
     : (fechamentoAtual?.markupPos || 30000)

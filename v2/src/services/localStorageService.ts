@@ -51,7 +51,7 @@ export function setScalar<T>(key: LocalKey, value: T): void {
 export function upsert<T extends { id: string | number }>(key: LocalKey, item: T): void {
   try {
     const existing = getAll<T>(key)
-    const idx = existing.findIndex((e) => e.id === item.id)
+    const idx = existing.findIndex((e) => String(e.id) === String(item.id))
     if (idx >= 0) {
       existing[idx] = item
     } else {
@@ -67,7 +67,7 @@ export function upsert<T extends { id: string | number }>(key: LocalKey, item: T
 export function remove(key: LocalKey, id: string | number): void {
   try {
     const existing = getAll<{ id: string | number }>(key)
-    const updated = existing.filter((e) => e.id !== id)
+    const updated = existing.filter((e) => String(e.id) !== String(id))
     localStorage.setItem(key, JSON.stringify(updated))
   } catch (e) {
     console.warn(`[LocalStorage] Erro ao remover de "${key}":`, e)

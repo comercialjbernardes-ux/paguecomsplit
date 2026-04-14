@@ -97,7 +97,7 @@ export function EquipeDashboard() {
   const kpis = useMemo(() => {
     const f = fechamentoAtual; const ant = fechamentoAnt
     if (!f) return null
-    const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : f.taxaMargem
+    const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
     const ticketMedio = f.ecsAtivos > 0 ? f.markupPos / f.ecsAtivos : 0
     const lucroOp = f.valorLiquido - totalCustos
     const receitaBruta = f.markupPos + f.comissaoRede + f.repasse
@@ -486,7 +486,7 @@ export function EquipeDashboard() {
                   const prev = arr[i + 1]
                   const varM = prev?.markupPos ? ((f.markupPos - prev.markupPos) / prev.markupPos) * 100 : null
                   const varE = prev?.ecsAtivos ? ((f.ecsAtivos - prev.ecsAtivos) / prev.ecsAtivos) * 100 : null
-                  const marg = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : f.taxaMargem
+                  const marg = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
                   const isAtual = f.periodo === fechamentoAtual?.periodo
                   return (
                     <tr key={f.periodo} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${isAtual ? 'bg-blue-50/60' : ''}`}>
