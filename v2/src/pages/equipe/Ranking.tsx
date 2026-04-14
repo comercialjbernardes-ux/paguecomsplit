@@ -182,9 +182,9 @@ export function EquipeRanking() {
                         </span>
                       </td>
                       <td className="py-3 px-3 text-right">
-                        <span className={`flex items-center justify-end gap-1 ${v.variacaoMes >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                          {v.variacaoMes >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
-                          {formatPercent(Math.abs(v.variacaoMes))}
+                        <span className={`flex items-center justify-end gap-1 ${(v.variacaoMes ?? 0) >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                          {(v.variacaoMes ?? 0) >= 0 ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+                          {formatPercent(Math.abs(v.variacaoMes ?? 0))}
                         </span>
                       </td>
                     </tr>

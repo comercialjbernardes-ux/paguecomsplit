@@ -17,6 +17,7 @@ import { useDataContext } from '../contexts/DataContext'
 import { LoadingState } from '../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, getChartColor } from '../utils/format'
 import type { DadosFechamento } from '../types'
+import { PRECO_CONTA_DIGITAL } from '../constants/empresa'
 
 // ─── Logica de recomendacoes (funcao pura) ────────────────────
 
@@ -187,9 +188,9 @@ function gerarRecomendacoes(
 
   // ── 5. Oportunidade Conta Digital ────────────────────────────
   if (totalClientes > 0 && atual.faturaDigital > 0) {
-    const ecsDigital = Math.round(atual.faturaDigital / 29.9)
+    const ecsDigital = Math.round(atual.faturaDigital / PRECO_CONTA_DIGITAL)
     const ecsSemDigital = Math.max(0, atual.ecsAtivos - ecsDigital)
-    const potencialReceita = ecsSemDigital * 29.9
+    const potencialReceita = ecsSemDigital * PRECO_CONTA_DIGITAL
     const pctAdocao = (ecsDigital / Math.max(atual.ecsAtivos, 1)) * 100
 
     if (pctAdocao < 40 && ecsSemDigital > 5) {

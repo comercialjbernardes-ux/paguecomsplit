@@ -472,14 +472,24 @@ function parseNumericValue(value: string | number | undefined | null): number {
   if (value === undefined || value === null || value === '') return 0
   if (typeof value === 'number') return value
 
-  const cleaned = String(value)
+  const stripped = String(value)
     .replace(/R\$\s?/g, '')
     .replace(/%/g, '')
     .replace(/[▲▼\s]/g, '')
-    .replace(/\./g, '')         // remove separador de milhar brasileiro
-    .replace(',', '.')          // troca virgula decimal por ponto
-    .replace(/[^\d.\-]/g, '')   // remove tudo que nao e numero, ponto ou menos
     .trim()
+
+  // Detecta formato: BR tem vírgula decimal ("1.234,56"), Anglo tem ponto decimal ("1,234.56")
+  // Se a string tem vírgula → formato BR: remover pontos (milhar), trocar vírgula por ponto
+  // Se a string NÃO tem vírgula → formato Anglo ou inteiro BR: preservar ponto como decimal
+  let cleaned: string
+  if (stripped.includes(',')) {
+    // Formato BR: "1.234,56" → "1234.56"
+    cleaned = stripped.replace(/\./g, '').replace(',', '.')
+  } else {
+    // Formato Anglo ou sem separadores: "1234.56" → "1234.56"
+    cleaned = stripped
+  }
+  cleaned = cleaned.replace(/[^\d.\-]/g, '').trim()
 
   const num = parseFloat(cleaned)
   return isNaN(num) ? 0 : num

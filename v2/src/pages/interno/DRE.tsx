@@ -16,8 +16,7 @@ import { useDataContext } from '../../contexts/DataContext'
 import { LoadingState } from '../../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../../utils/format'
 import type { DadosFechamento } from '../../types'
-
-const COBR_DIGITAL_VALOR = 29.90 // valor fixo por EC com conta digital ativa
+import { PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 
 export function InternoDRE() {
   const { fechamentos, fechamentoAtual, lancamentos, clientes, isLoading } = useInternoData()
@@ -37,7 +36,7 @@ export function InternoDRE() {
     // Ex: R$28.759 markup / R$2.728.746 TPV = 1,054% — NAO dividir por receitas internas
     const margemCalculada = f.tpvTotal > 0
       ? (f.markupPos / f.tpvTotal) * 100
-      : f.taxaMargem
+      : (f.taxaMargem ?? 0) * 100  // taxaMargem stored as decimal (0.01 = 1%)
 
     // ERRO 05: deducoes locais (lancamentos manuais de despesa)
     const totalDeducoesLocais = lancamentos
@@ -132,7 +131,7 @@ export function InternoDRE() {
   // Receita recorrente = ECs com conta digital ativa × R$29,90/mes
   const ecsComContaDigital = useMemo(() =>
     clientes.filter((c) => c.contaDigitalAtiva), [clientes])
-  const receitaRecorrente = ecsComContaDigital.length * COBR_DIGITAL_VALOR
+  const receitaRecorrente = ecsComContaDigital.length * PRECO_CONTA_DIGITAL
 
   if (isLoading) return <LoadingState message="Carregando DRE..." />
 

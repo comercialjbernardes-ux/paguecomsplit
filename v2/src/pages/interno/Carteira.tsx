@@ -12,7 +12,6 @@ import {
 } from 'recharts'
 import { Users, Search, Filter, TrendingUp, Heart, Wifi, DollarSign } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
-import { useEquipeData } from '../../hooks/useEquipeData'
 import { useDataContext } from '../../contexts/DataContext'
 import { LoadingState } from '../../components/LoadingState'
 import {
@@ -28,7 +27,6 @@ const SEGMENTOS_FIXOS = ['Alimentacao', 'Comercio', 'Saude', 'Servicos', 'Hosped
 export function InternoCarteira() {
   const { clientes, segmentos, isLoading, lancamentos } = useInternoData()
   const { saveSegmentOverride, custos, equipamentos } = useDataContext()
-  useEquipeData()
   const [filtroSegmento, setFiltroSegmento] = useState('todos')
   const [filtroVendedor, setFiltroVendedor] = useState('todos')
   const [filtroStatus, setFiltroStatus] = useState('todos')
@@ -80,7 +78,7 @@ export function InternoCarteira() {
       nome: c.nome,
       cnpj: c.cnpj || '',
       segmento: c.segmento,
-      margem: c.margem || 0,
+      margem: calcMargemReal(c.ticketMedio, c.volumeTotal),
     }))
   }, [filtrados])
 
@@ -116,7 +114,7 @@ export function InternoCarteira() {
       const tendencia: 'CRESCENDO' | 'ESTAVEL' | 'DECLINANDO' =
         score >= 60 ? 'CRESCENDO' : score >= 30 ? 'ESTAVEL' : 'DECLINANDO'
       return { ...c, score, status: getHealthStatus(score), participacao, margemReal, tendencia }
-    }).sort((a, b) => a.score - b.score)
+    })
   }, [filtrados, totalVolumeFiltrado])
 
   // Análises acionáveis para a aba Saúde

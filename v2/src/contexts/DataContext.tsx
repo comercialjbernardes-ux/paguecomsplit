@@ -258,7 +258,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // ─ Dados mesclados ──────────────────────────────────────────
   const vendedores = mergeVendedores(sheets.vendedores, localVendedores)
   const lancamentos = mergeLancamentos(sheets.lancamentos, localLancamentos)
-  const clientes = mergeSegmentOverrides(sheets.clientes, segmentOverrides)
+
+  // A1: popular contaDigitalAtiva cruzando nome do cliente com lançamentos Cobr. Digital
+  const clientesBase = mergeSegmentOverrides(sheets.clientes, segmentOverrides)
+  const nomesComDigital = new Set(
+    lancamentos
+      .filter((l) => l.categoria === 'Conta Digital')
+      .map((l) => l.nomeCliente?.toLowerCase().trim())
+      .filter((n): n is string => Boolean(n))
+  )
+  const clientes = nomesComDigital.size > 0
+    ? clientesBase.map((c) => ({
+        ...c,
+        contaDigitalAtiva: nomesComDigital.has(c.nome.toLowerCase().trim()),
+      }))
+    : clientesBase
 
   // ─ isOffline: Sheets falhou mas ha dados locais ──────────────
   const isOffline = !sheets.connectionStatus.connected && (

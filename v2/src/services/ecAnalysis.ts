@@ -106,7 +106,7 @@ export function getHealthStatus(score: number): HealthStatus {
 /** ECs sem markup = sem receita no período → risco de churn */
 export function getECsSemReceita(clientes: ClienteCarteira[]): ClienteCarteira[] {
   return clientes
-    .filter((c) => (c.ticketMedio === 0 || c.volumeTotal === 0) && c.status !== 'inativo')
+    .filter((c) => (c.ticketMedio == null || c.ticketMedio === 0 || c.volumeTotal == null || c.volumeTotal === 0) && c.status !== 'inativo')
     .sort((a, b) => b.volumeTotal - a.volumeTotal)
 }
 
