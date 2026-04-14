@@ -39,7 +39,7 @@ function gerarRecomendacoes(
   // ── 1. Margem real (Markup / TPV) ────────────────────────────
   const margemCalc = atual.tpvTotal > 0
     ? (atual.markupPos / atual.tpvTotal) * 100
-    : atual.taxaMargem
+    : (atual.taxaMargem ?? 0) * 100  // taxaMargem stored as decimal (0.01 = 1%)
 
   if (margemCalc < 0.8) {
     rec.push({
@@ -52,7 +52,9 @@ function gerarRecomendacoes(
     rec.push({
       tipo: 'atencao',
       titulo: `Margem baixa (${margemCalc.toFixed(2)}%)`,
-      descricao: `Margem abaixo de 1,2%. Para cobrir custos operacionais, o TPV precisaria ser de ${formatCurrency(totalCustos > 0 ? totalCustos / (margemCalc / 100) : 0)}.`,
+      descricao: totalCustos > 0
+        ? `Margem abaixo de 1,2%. Para cobrir os ${formatCurrency(totalCustos)} em custos operacionais registrados, o TPV precisaria ser de ${formatCurrency(totalCustos / (margemCalc / 100))}.`
+        : `Margem abaixo de 1,2%. A cada R$1.000 processado, a empresa retém apenas R$${(margemCalc * 10).toFixed(2)} de markup. Para atingir 2% com o markup atual de ${formatCurrency(atual.markupPos)}, o TPV precisaria ser de ${formatCurrency(atual.markupPos / 0.02)}.`,
       acao: 'Priorizar ECs de alto volume, reduzir descontos concedidos e ampliar base de Conta Digital.',
     })
   } else if (margemCalc < 2) {
@@ -242,7 +244,7 @@ export function RelatorioExecutivoPage() {
 
     const totalReceitas = f.markupPos + f.comissaoRede + f.repasse
     const totalDeducoes = f.faturaDigital + f.descontos
-    const margemCalc = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : f.taxaMargem
+    const margemCalc = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
     const lucroOperacional = f.valorLiquido - totalCustosMensal
 
     // Despesas manuais locais

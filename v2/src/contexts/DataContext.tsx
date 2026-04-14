@@ -246,6 +246,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }))
   }, [sheets.fechamentos, historicalFechamentosMap])
 
+  // Fallback: soma de descontos dos lançamentos da aba "Descontos" (caso Resumo não tenha a linha)
+  const descontosDosMeses = useMemo(() => {
+    const total = sheets.lancamentos
+      .filter((l) => l.conta === 'Descontos' && l.source === 'sheets')
+      .reduce((s, l) => s + l.valor, 0)
+    return total
+  }, [sheets.lancamentos])
+
   // ─ Seed de vendedores do Sheets no first-run ─────────────────
   useEffect(() => {
     if (sheets.vendedores.length > 0 && !hasData('vdf_vendedores')) {
@@ -358,7 +366,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
         error: sheets.error,
         isOffline,
         periodo: allFechamentos[allFechamentos.length - 1]?.periodo || sheets.fechamentos[0]?.periodo || '',
-        fechamentos: allFechamentos,
+        // Patch: se o fechamento mais recente tem descontos=0 mas há lançamentos de descontos,
+        // substituir com a soma real dos lançamentos (label da aba Resumo pode ser diferente)
+        fechamentos: descontosDosMeses > 0
+          ? allFechamentos.map((f, i) =>
+              i === allFechamentos.length - 1 && f.descontos === 0
+                ? { ...f, descontos: descontosDosMeses }
+                : f
+            )
+          : allFechamentos,
         historicalSheets,
         isLoadingHistorical,
         addHistoricalSheet,
