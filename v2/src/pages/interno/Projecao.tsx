@@ -53,7 +53,7 @@ export function InternoProjecao() {
     ? (baseManual || fechamentoAtual?.markupPos || 30000)
     : modo === 'ec' && ecAtual
     ? ecAtual.ticketMedio  // markup deste EC especifico
-    : (fechamentoAtual?.markupPos || fechamentoAtual?.valorLiquido || 30000)
+    : (fechamentoAtual?.markupPos || 30000)
 
 
   const basePeriodo = fechamentoAtual?.periodo || 'ultimo fechamento'

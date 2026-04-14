@@ -155,7 +155,14 @@ export function mapRowsToFechamento(
     comissaoRede: findValue('comiss') || findValue('rede'),
     repasse: findValue('repasse') || findValue('transfer'),
     faturaDigital: Math.abs(findValue('digital') || findValue('conta digital')),
-    descontos: Math.abs(findValue('desconto')),
+    descontos: Math.abs(
+      findValue('desconto') ||
+      findValue('abatimento') ||
+      findValue('(-) desc') ||
+      findValue('ajuste negativo') ||
+      findValue('desc. concedido') ||
+      findValue('deducao')
+    ),
     valorLiquido: findValue('líquido') || findValue('liquido') || findValue('valor l'),
     variacaoEcs: findVariacao('ecs ativ') ?? findVariacao('clientes ativ'),
     variacaoTpv: findVariacao('tpv total') ?? findVariacao('tpv'),
@@ -226,9 +233,9 @@ export function mapRowsMKPdePOS(rows: (string | number)[][], periodo = 'atual'):
   const mkpIdx  = headers.findIndex((h) => /markup/i.test(h))
   const mrgIdx  = headers.findIndex((h) => /margem/i.test(h))
 
-  // Fallback: índice 1 = CNPJ (número), índice 2 = Nome/Estabelecimento
-  const CNPJi   = cnpjIdx >= 0 ? cnpjIdx : 1
-  const NOMEi   = nomeIdx >= 0 ? nomeIdx : 2
+  // Fallback: índice 1 = Nome/Estabelecimento (Col B), índice 2 = CNPJ (Col C)
+  const CNPJi   = cnpjIdx >= 0 ? cnpjIdx : 2
+  const NOMEi   = nomeIdx >= 0 ? nomeIdx : 1
   const TPVi    = tpvIdx  >= 0 ? tpvIdx  : COL_MKP_POS.TPV
   const MARKUPi = mkpIdx  >= 0 ? mkpIdx  : COL_MKP_POS.MARKUP
   const MARGEMi = mrgIdx  >= 0 ? mrgIdx  : COL_MKP_POS.MARGEM
@@ -260,7 +267,8 @@ export function mapRowsMKPdePOS(rows: (string | number)[][], periodo = 'atual'):
         margem,
         ultimaCompra: periodo,
         status: 'ativo' as const,
-        frequencia: margem > 1.2 ? 3 : margem > 0.8 ? 2 : 1,
+        // margem do sheet é decimal (0.012 = 1,2%); markup > 0 indica EC ativo
+        frequencia: markup > 500 ? 3 : markup > 100 ? 2 : 1,
         _sheetRow: index + 3,
       }
     })

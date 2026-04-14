@@ -206,7 +206,7 @@ export function InternoDRE() {
             />
             <DRECard
               label="Total Deducoes"
-              value={`- ${formatCurrency(fechamentoAtual.faturaDigital + fechamentoAtual.descontos)}`}
+              value={`- ${formatCurrency(dreData?.totalDeducoes ?? (fechamentoAtual.faturaDigital + fechamentoAtual.descontos))}`}
               icon={<TrendingDown className="w-5 h-5" />}
               color="red"
             />

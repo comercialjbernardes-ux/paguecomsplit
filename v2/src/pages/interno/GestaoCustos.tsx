@@ -305,7 +305,14 @@ export function InternoGestaoCustos() {
                   <label className="text-xs font-medium text-gray-600 mb-1 block">Valor Total (R$)</label>
                   <input
                     type="number" value={formEq.valorTotal || ''}
-                    onChange={(e) => setFormEq({ ...formEq, valorTotal: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const v = Number(e.target.value)
+                      setFormEq({
+                        ...formEq,
+                        valorTotal: v,
+                        valorParcela: v > 0 && formEq.numeroParcelas > 0 ? Number((v / formEq.numeroParcelas).toFixed(2)) : formEq.valorParcela,
+                      })
+                    }}
                     className="input-field" min={0} step={100}
                   />
                 </div>
@@ -313,7 +320,14 @@ export function InternoGestaoCustos() {
                   <label className="text-xs font-medium text-gray-600 mb-1 block">Numero de Parcelas</label>
                   <input
                     type="number" value={formEq.numeroParcelas}
-                    onChange={(e) => setFormEq({ ...formEq, numeroParcelas: Number(e.target.value) })}
+                    onChange={(e) => {
+                      const n = Math.max(1, Number(e.target.value))
+                      setFormEq({
+                        ...formEq,
+                        numeroParcelas: n,
+                        valorParcela: formEq.valorTotal > 0 ? Number((formEq.valorTotal / n).toFixed(2)) : formEq.valorParcela,
+                      })
+                    }}
                     className="input-field" min={1} step={1}
                   />
                 </div>

@@ -27,14 +27,17 @@ export function crossReferenceByEC(
   const cliente = clientes.find((c) => c.cnpj === cnpj)
   if (!cliente) return null
 
-  const nomeNorm = cliente.nome.toLowerCase()
+  const nomeNorm = cliente.nome.toLowerCase().trim()
+  // Usa nome completo para evitar colisões entre ECs com nomes similares.
+  // Fallback: primeiros 10 chars apenas se nome tiver menos de 6 chars (sigla).
+  const matchKey = nomeNorm.length >= 6 ? nomeNorm : nomeNorm.slice(0, 10)
   const repasses = lancamentos.filter(
     (l) => l.tipo === 'receita' && l.categoria === 'Repasse' &&
-      l.descricao.toLowerCase().includes(nomeNorm.slice(0, 10)),
+      l.descricao.toLowerCase().includes(matchKey),
   )
   const descontos = lancamentos.filter(
     (l) => l.tipo === 'despesa' && l.source === 'sheets' &&
-      l.descricao.toLowerCase().includes(nomeNorm.slice(0, 10)),
+      l.descricao.toLowerCase().includes(matchKey),
   )
 
   return {
@@ -82,7 +85,7 @@ export function calcHealthScore(
 
   const tpvScore = mediaTpv > 0
     ? Math.min((cliente.volumeTotal / mediaTpv) * 50, 100)
-    : 50
+    : cliente.volumeTotal > 0 ? 50 : 0
 
   const contaScore = cliente.contaDigitalAtiva ? 100 : 0
 

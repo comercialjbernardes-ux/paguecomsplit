@@ -395,7 +395,7 @@ export function EquipeDashboard() {
                         <span className="text-xs font-bold text-emerald-700 ml-2 flex-shrink-0">{formatCurrencyShort(ec.ticketMedio)}</span>
                       </div>
                       <div className="w-full bg-gray-100 rounded-full h-1.5">
-                        <div className={`h-1.5 rounded-full ${i === 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${pct}%` }} />
+                        <div className={`h-1.5 rounded-full ${i === 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
                       </div>
                     </div>
                     <span className="text-xs text-gray-400 w-10 text-right flex-shrink-0">{marg.toFixed(1)}%</span>
@@ -550,7 +550,7 @@ export function EquipeDashboard() {
                       </div>
                     </div>
                     <div className="w-full bg-white rounded-full h-1.5 border border-gray-200">
-                      <div className={`h-1.5 rounded-full ${i === 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${pct}%` }} />
+                      <div className={`h-1.5 rounded-full ${i === 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
                     </div>
                   </div>
                 </div>
