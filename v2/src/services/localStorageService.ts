@@ -13,6 +13,9 @@ export type LocalKey =
   | 'vdf_projecao_base'
   | 'vdf_custos_fixos'
   | 'vdf_equipamentos'
+  | 'vdf_ai_apikey'
+  | 'vdf_ai_model'
+  | 'vdf_ai_historico'
 
 /** Retorna todos os registros de uma chave. Retorna [] em caso de erro. */
 export function getAll<T>(key: LocalKey): T[] {
