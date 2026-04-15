@@ -99,11 +99,12 @@ export function EquipeDashboard() {
     if (!f) return null
     const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
     const ticketMedio = f.ecsAtivos > 0 ? f.markupPos / f.ecsAtivos : 0
-    // Valor liquido ajustado inclui receitas e despesas lancadas manualmente
-    const valorLiquidoAjustado = f.valorLiquido + totalReceitasLocais - totalDespesasLocais
-    const lucroOp = valorLiquidoAjustado - totalCustos
+    // Valor liquido ajustado inclui receitas/despesas manuais + custos operacionais + equipamentos
+    // (mesma logica do DRE Gerencial para consistencia)
+    const valorLiquidoAjustado = f.valorLiquido + totalReceitasLocais - totalDespesasLocais - totalCustos
+    const lucroOp = valorLiquidoAjustado
     const receitaBruta = f.markupPos + f.comissaoRede + f.repasse + totalReceitasLocais
-    const totalDeducoes = f.faturaDigital + f.descontos + totalDespesasLocais
+    const totalDeducoes = f.faturaDigital + f.descontos + totalDespesasLocais + totalCustos
     const pctDeducoes = receitaBruta > 0 ? (totalDeducoes / receitaBruta) * 100 : 0
     const var_ = (campo: keyof DadosFechamento) =>
       ant && (ant[campo] as number) > 0 ? (((f[campo] as number) - (ant[campo] as number)) / (ant[campo] as number)) * 100 : null

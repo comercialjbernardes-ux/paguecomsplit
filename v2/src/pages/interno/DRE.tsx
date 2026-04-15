@@ -20,7 +20,7 @@ import { PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 
 export function InternoDRE() {
   const { fechamentos, fechamentoAtual, lancamentos, clientes, isLoading } = useInternoData()
-  const { equipamentos } = useDataContext()
+  const { equipamentos, custos } = useDataContext()
 
   // Estrutura correta do DRE:
   // Receitas: Markup POS + Comissao Rede + Repasse
@@ -51,6 +51,11 @@ export function InternoDRE() {
       return s + (restantes > 0 ? eq.valorParcela : 0)
     }, 0)
 
+    // Custos operacionais mensais (Aluguel, Folha, Internet, etc.)
+    const totalCustosOperacionais = custos
+      .filter((c) => c.recorrencia === 'mensal')
+      .reduce((s, c) => s + c.valor, 0)
+
     // Receitas: planilha + manuais
     const receitas: { id: string; descricao: string; valor: number; isLocal?: boolean }[] = [
       { id: 'markup', descricao: 'Markup POS', valor: f.markupPos },
@@ -63,18 +68,21 @@ export function InternoDRE() {
 
     const totalReceitas = f.markupPos + f.comissaoRede + f.repasse + totalReceitasLocais
 
-    const deducoes: { id: string; descricao: string; valor: number; isLocal?: boolean; isEquip?: boolean }[] = [
+    const deducoes: { id: string; descricao: string; valor: number; isLocal?: boolean; isEquip?: boolean; isCustoOp?: boolean }[] = [
       { id: 'fatura', descricao: 'Cobranca Conta Digital', valor: f.faturaDigital },
       { id: 'descontos', descricao: 'Descontos do Periodo', valor: f.descontos },
     ]
     if (totalEquipMensal > 0) {
       deducoes.push({ id: 'equip', descricao: 'Ded. Equipamentos/Maquinas', valor: totalEquipMensal, isEquip: true })
     }
+    if (totalCustosOperacionais > 0) {
+      deducoes.push({ id: 'custosOp', descricao: 'Custos Operacionais', valor: totalCustosOperacionais, isCustoOp: true })
+    }
     if (totalDeducoesLocais > 0) {
       deducoes.push({ id: 'local', descricao: 'Deducoes Lancadas', valor: totalDeducoesLocais, isLocal: true })
     }
 
-    const totalDeducoes = f.faturaDigital + f.descontos + totalEquipMensal + totalDeducoesLocais
+    const totalDeducoes = f.faturaDigital + f.descontos + totalEquipMensal + totalCustosOperacionais + totalDeducoesLocais
 
     return {
       receitas,
@@ -82,18 +90,20 @@ export function InternoDRE() {
       totalReceitas,
       totalDeducoes,
       valorLiquido: f.valorLiquido,
-      // Liquido ajustado inclui receitas E despesas manuais + equipamentos
-      valorLiquidoAjustado: f.valorLiquido + totalReceitasLocais - totalDeducoesLocais - totalEquipMensal,
+      // Liquido ajustado inclui receitas E despesas manuais + equipamentos + custos operacionais
+      valorLiquidoAjustado: f.valorLiquido + totalReceitasLocais - totalDeducoesLocais - totalEquipMensal - totalCustosOperacionais,
       calculado: totalReceitas - totalDeducoes,
       margemCalculada,
       temReceitasLocais: totalReceitasLocais > 0,
       temDeducoesLocais: totalDeducoesLocais > 0,
       temEquip: totalEquipMensal > 0,
+      temCustosOp: totalCustosOperacionais > 0,
       totalEquipMensal,
+      totalCustosOperacionais,
       totalReceitasLocais,
       totalDeducoesLocais,
     }
-  }, [fechamentoAtual, lancamentos, equipamentos])
+  }, [fechamentoAtual, lancamentos, equipamentos, custos])
 
   // Waterfall chart: composicao do resultado (sem TPV — TPV e volume dos ECs, nao receita)
   const waterfallData = useMemo(() => {
@@ -113,6 +123,9 @@ export function InternoDRE() {
     )
     if (dreData.temEquip) {
       entries.push({ name: 'Equipamentos', valor: -dreData.totalEquipMensal, tipo: 'negativo' })
+    }
+    if (dreData.temCustosOp) {
+      entries.push({ name: 'Custos Op.', valor: -dreData.totalCustosOperacionais, tipo: 'negativo' })
     }
     if (dreData.temDeducoesLocais) {
       entries.push({ name: 'Ded. Manuais', valor: -dreData.totalDeducoesLocais, tipo: 'negativo' })
@@ -294,13 +307,16 @@ export function InternoDRE() {
                     </tr>
                     {dreData.deducoes.map((linha) => (
                       <tr key={linha.id} className="border-b border-gray-50">
-                        <td className={`py-2 px-3 pl-6 ${linha.isLocal ? 'text-amber-700 font-medium' : linha.isEquip ? 'text-orange-700 font-medium' : 'text-gray-700'}`}>
+                        <td className={`py-2 px-3 pl-6 ${linha.isLocal ? 'text-amber-700 font-medium' : linha.isEquip ? 'text-orange-700 font-medium' : linha.isCustoOp ? 'text-purple-700 font-medium' : 'text-gray-700'}`}>
                           {linha.descricao}
                           {linha.isLocal && (
                             <span className="ml-2 text-xs bg-amber-100 text-amber-600 px-1.5 py-0.5 rounded">manual</span>
                           )}
                           {linha.isEquip && (
                             <span className="ml-2 text-xs bg-orange-100 text-orange-600 px-1.5 py-0.5 rounded">equipamento</span>
+                          )}
+                          {linha.isCustoOp && (
+                            <span className="ml-2 text-xs bg-purple-100 text-purple-600 px-1.5 py-0.5 rounded">custo op.</span>
                           )}
                         </td>
                         <td className="py-2 px-3 text-right font-medium text-red-600">
