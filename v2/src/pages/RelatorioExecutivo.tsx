@@ -13,7 +13,7 @@ import {
   CheckCircle, AlertCircle, XCircle, Target, Lightbulb,
 } from 'lucide-react'
 import { useInternoData } from '../hooks/useInternoData'
-import { useDataContext } from '../contexts/DataContext'
+import { useDataContext } from '../contexts/dataContextValue'
 import { LoadingState } from '../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, getChartColor } from '../utils/format'
 import type { DadosFechamento } from '../types'

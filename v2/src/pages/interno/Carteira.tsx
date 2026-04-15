@@ -12,7 +12,7 @@ import {
 } from 'recharts'
 import { Users, Search, Filter, TrendingUp, Heart, Wifi, DollarSign, Activity } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
-import { useDataContext } from '../../contexts/DataContext'
+import { useDataContext } from '../../contexts/dataContextValue'
 import { LoadingState } from '../../components/LoadingState'
 import {
   formatCurrency, formatNumber, getStatusBadgeClass, getChartColor,

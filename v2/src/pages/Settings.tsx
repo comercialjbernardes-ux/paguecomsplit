@@ -19,7 +19,7 @@ import {
   History,
   AlertTriangle,
 } from 'lucide-react'
-import { useDataContext } from '../contexts/DataContext'
+import { useDataContext } from '../contexts/dataContextValue'
 import { ErrorBanner } from '../components/ErrorBanner'
 
 export function SettingsPage() {

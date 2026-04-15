@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { useMemo } from 'react'
-import { useDataContext } from '../contexts/DataContext'
+import { useDataContext } from '../contexts/dataContextValue'
 import type { LancamentoCusto, ClienteCarteira, DadosFechamento } from '../types'
 
 interface InternoData {

@@ -4,7 +4,7 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { useMemo } from 'react'
-import { useDataContext } from '../contexts/DataContext'
+import { useDataContext } from '../contexts/dataContextValue'
 import type { Vendedor, DadosMensais } from '../types'
 
 interface EquipeData {

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { useEquipeData } from '../../hooks/useEquipeData'
 import { useInternoData } from '../../hooks/useInternoData'
-import { useDataContext } from '../../contexts/DataContext'
+import { useDataContext } from '../../contexts/dataContextValue'
 import { NOME_EMPRESA, PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 import { LoadingState } from '../../components/LoadingState'
 import { ErrorBanner } from '../../components/ErrorBanner'
@@ -40,8 +40,10 @@ function gerarInsights(
 ): Insight[] {
   const ins: Insight[] = []
   const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : 0
-  const varMarkup = ant?.markupPos ? ((f.markupPos - ant.markupPos) / ant.markupPos) * 100 : null
-  const varEcs = ant?.ecsAtivos ? ((f.ecsAtivos - ant.ecsAtivos) / ant.ecsAtivos) * 100 : null
+  // Diferencia "sem periodo anterior" (null) de "periodo anterior com markup zero"
+  // Quando o anterior e > 0, calcula % normalmente. Quando e 0, nao ha base para %.
+  const varMarkup = ant && ant.markupPos > 0 ? ((f.markupPos - ant.markupPos) / ant.markupPos) * 100 : null
+  const varEcs = ant && ant.ecsAtivos > 0 ? ((f.ecsAtivos - ant.ecsAtivos) / ant.ecsAtivos) * 100 : null
 
   if (margem < 1) ins.push({ nivel: 'critico', titulo: 'Margem crítica', texto: `${margem.toFixed(2)}% — abaixo do mínimo viável. Renegociar taxas com a rede adquirente.` })
   else if (margem < 1.5) ins.push({ nivel: 'atencao', titulo: `Margem em atenção (${margem.toFixed(2)}%)`, texto: 'Viável, mas sensível a quedas de volume. Priorizar crescimento de TPV.' })

@@ -5,7 +5,7 @@
 
 import { useState } from 'react'
 import { WifiOff, RefreshCw, X, CheckCircle2 } from 'lucide-react'
-import { useDataContext } from '../contexts/DataContext'
+import { useDataContext } from '../contexts/dataContextValue'
 
 export function ConnectionStatus() {
   const { isOffline, error, refetch, isLoading, connectionStatus, periodo } = useDataContext()

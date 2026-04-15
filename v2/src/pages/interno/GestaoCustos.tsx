@@ -8,7 +8,7 @@ import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
 } from 'recharts'
 import { Wrench, Plus, Trash2, Package, ChevronDown, ChevronUp } from 'lucide-react'
-import { useDataContext } from '../../contexts/DataContext'
+import { useDataContext } from '../../contexts/dataContextValue'
 import { formatCurrency, getChartColor } from '../../utils/format'
 import type { CustoOperacional, Equipamento } from '../../types'
 

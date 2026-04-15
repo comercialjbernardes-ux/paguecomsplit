@@ -5,8 +5,6 @@
 // ═══════════════════════════════════════════════════════════════
 
 import {
-  createContext,
-  useContext,
   useState,
   useEffect,
   useCallback,
@@ -14,6 +12,7 @@ import {
   type ReactNode,
 } from 'react'
 import { useSheetsData } from './SheetsContext'
+import { DataContext } from './dataContextValue'
 import {
   getAll,
   upsert,
@@ -36,9 +35,6 @@ import type {
   DadosFechamento,
   Vendedor,
   LancamentoCusto,
-  ClienteCarteira,
-  SheetTab,
-  SheetConnectionStatus,
   MetaPeriodo,
   SegmentOverride,
   CustoOperacional,
@@ -60,63 +56,6 @@ function sortFechamentos(arr: DadosFechamento[]): DadosFechamento[] {
     return parse(a.periodo) - parse(b.periodo)
   })
 }
-
-interface DataContextType {
-  // ─ Estado de conexao ────────────────────────────────────────
-  connectionStatus: SheetConnectionStatus
-  isLoading: boolean
-  error: string | null
-  isOffline: boolean // true quando Sheets falha
-
-  // ─ Dados mesclados ──────────────────────────────────────────
-  fechamentos: DadosFechamento[]
-  vendedores: Vendedor[]
-  lancamentos: LancamentoCusto[]
-  clientes: ClienteCarteira[]
-  allTabs: SheetTab[]
-
-  // ─ Periodo detectado da planilha ────────────────────────────
-  periodo: string // ex: "Mar2026", "" se nao conectado
-
-  // ─ Operacoes do SheetsContext (passthrough) ─────────────────
-  connect: (sheetId?: string) => Promise<void>
-  refetch: () => Promise<void>
-  setSheetId: (id: string) => void
-  currentSheetId: string
-
-  // ─ Planilhas históricas (comparativo mensal) ─────────────────
-  historicalSheets: { id: string; label: string }[]
-  isLoadingHistorical: boolean
-  addHistoricalSheet: (id: string) => Promise<{ success: boolean; label?: string; error?: string }>
-  removeHistoricalSheet: (id: string) => void
-
-  // ─ CRUD de Vendedores (localStorage) ────────────────────────
-  saveVendedor: (vendedor: Vendedor) => void
-  deleteVendedor: (id: number) => void
-
-  // ─ CRUD de Lancamentos (localStorage) ───────────────────────
-  saveLancamento: (lancamento: LancamentoCusto) => void
-  deleteLancamento: (id: string) => void
-
-  // ─ Metas por periodo ────────────────────────────────────────
-  metas: MetaPeriodo[]
-  saveMeta: (periodo: string, meta: number) => void
-
-  // ─ Overrides de segmento de clientes ────────────────────────
-  saveSegmentOverride: (override: SegmentOverride) => void
-
-  // ─ CRUD de Custos Operacionais ───────────────────────────────
-  custos: CustoOperacional[]
-  saveCusto: (custo: CustoOperacional) => void
-  deleteCusto: (id: string) => void
-
-  // ─ CRUD de Equipamentos ──────────────────────────────────────
-  equipamentos: Equipamento[]
-  saveEquipamento: (eq: Equipamento) => void
-  deleteEquipamento: (id: string) => void
-}
-
-const DataContext = createContext<DataContextType | null>(null)
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const sheets = useSheetsData()
@@ -152,7 +91,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [historicalFechamentosMap, setHistoricalFechamentosMap] = useState<Record<string, DadosFechamento[]>>({})
   const [isLoadingHistorical, setIsLoadingHistorical] = useState(false)
 
-  // Carrega planilhas históricas salvas ao inicializar
+  // Carrega planilhas históricas salvas ao inicializar.
+  // Usa flag `cancelled` para evitar setState apos unmount (StrictMode / navegacao rapida).
   useEffect(() => {
     const stored = (() => {
       try {
@@ -161,6 +101,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       } catch { return [] }
     })()
     if (stored.length === 0) return
+    let cancelled = false
     setIsLoadingHistorical(true)
     Promise.all(
       stored.map(async (hs) => {
@@ -180,12 +121,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
       })
     ).then((results) => {
+      if (cancelled) return
       const map: Record<string, DadosFechamento[]> = {}
       results.forEach(r => { map[r.id] = r.fechamentos })
       setHistoricalFechamentosMap(map)
       setIsLoadingHistorical(false)
     })
-  }, []) // eslint-disable-line
+    return () => { cancelled = true }
+  }, [])
 
   const addHistoricalSheet = useCallback(async (id: string) => {
     if (!id.trim()) return { success: false, error: 'ID vazio' }
@@ -263,24 +206,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [sheets.vendedores])
 
-  // ─ Dados mesclados ──────────────────────────────────────────
-  const vendedores = mergeVendedores(sheets.vendedores, localVendedores)
-  const lancamentos = mergeLancamentos(sheets.lancamentos, localLancamentos)
+  // ─ Dados mesclados (memoizados para estabilidade de referencia) ─
+  const vendedores = useMemo(
+    () => mergeVendedores(sheets.vendedores, localVendedores),
+    [sheets.vendedores, localVendedores],
+  )
+  const lancamentos = useMemo(
+    () => mergeLancamentos(sheets.lancamentos, localLancamentos),
+    [sheets.lancamentos, localLancamentos],
+  )
 
   // A1: popular contaDigitalAtiva cruzando nome do cliente com lançamentos Cobr. Digital
-  const clientesBase = mergeSegmentOverrides(sheets.clientes, segmentOverrides)
-  const nomesComDigital = new Set(
-    lancamentos
-      .filter((l) => l.categoria === 'Conta Digital')
-      .map((l) => l.nomeCliente?.toLowerCase().trim())
-      .filter((n): n is string => Boolean(n))
-  )
-  const clientes = nomesComDigital.size > 0
-    ? clientesBase.map((c) => ({
-        ...c,
-        contaDigitalAtiva: nomesComDigital.has(c.nome.toLowerCase().trim()),
-      }))
-    : clientesBase
+  const clientes = useMemo(() => {
+    const clientesBase = mergeSegmentOverrides(sheets.clientes, segmentOverrides)
+    const nomesComDigital = new Set(
+      lancamentos
+        .filter((l) => l.categoria === 'Conta Digital')
+        .map((l) => l.nomeCliente?.toLowerCase().trim())
+        .filter((n): n is string => Boolean(n)),
+    )
+    if (nomesComDigital.size === 0) return clientesBase
+    return clientesBase.map((c) => ({
+      ...c,
+      contaDigitalAtiva: nomesComDigital.has(c.nome.toLowerCase().trim()),
+    }))
+  }, [sheets.clientes, segmentOverrides, lancamentos])
 
   // ─ isOffline: Sheets falhou mas ha dados locais ──────────────
   const isOffline = !sheets.connectionStatus.connected && (
@@ -358,62 +308,96 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSegmentOverrides(getAll<SegmentOverride>('vdf_segment_overrides'))
   }, [])
 
+  // Fechamentos com patch de descontos quando aplicavel — memoizado para nao gerar
+  // nova referencia a cada render.
+  const fechamentosPatched = useMemo(() => {
+    if (descontosDosMeses <= 0 || allFechamentos.length === 0) return allFechamentos
+    const lastIdx = allFechamentos.length - 1
+    return allFechamentos.map((f, i) =>
+      i === lastIdx && f.descontos === 0 ? { ...f, descontos: descontosDosMeses } : f,
+    )
+  }, [allFechamentos, descontosDosMeses])
+
+  const periodoAtual = useMemo(
+    () => fechamentosPatched[fechamentosPatched.length - 1]?.periodo || sheets.fechamentos[0]?.periodo || '',
+    [fechamentosPatched, sheets.fechamentos],
+  )
+
+  // Value memoizado — evita re-render de todos os consumidores quando
+  // apenas uma parte do estado muda.
+  const contextValue = useMemo(
+    () => ({
+      connectionStatus: sheets.connectionStatus,
+      isLoading: sheets.isLoading,
+      error: sheets.error,
+      isOffline,
+      periodo: periodoAtual,
+      fechamentos: fechamentosPatched,
+      historicalSheets,
+      isLoadingHistorical,
+      addHistoricalSheet,
+      removeHistoricalSheet,
+      vendedores,
+      lancamentos,
+      clientes,
+      allTabs: sheets.allTabs,
+      connect,
+      refetch: sheets.refetch,
+      setSheetId: sheets.setSheetId,
+      currentSheetId: sheets.currentSheetId,
+      saveVendedor,
+      deleteVendedor,
+      saveLancamento,
+      deleteLancamento,
+      metas,
+      saveMeta,
+      saveSegmentOverride,
+      custos,
+      saveCusto,
+      deleteCusto,
+      equipamentos,
+      saveEquipamento,
+      deleteEquipamento,
+    }),
+    [
+      sheets.connectionStatus,
+      sheets.isLoading,
+      sheets.error,
+      sheets.allTabs,
+      sheets.refetch,
+      sheets.setSheetId,
+      sheets.currentSheetId,
+      isOffline,
+      periodoAtual,
+      fechamentosPatched,
+      historicalSheets,
+      isLoadingHistorical,
+      addHistoricalSheet,
+      removeHistoricalSheet,
+      vendedores,
+      lancamentos,
+      clientes,
+      connect,
+      saveVendedor,
+      deleteVendedor,
+      saveLancamento,
+      deleteLancamento,
+      metas,
+      saveMeta,
+      saveSegmentOverride,
+      custos,
+      saveCusto,
+      deleteCusto,
+      equipamentos,
+      saveEquipamento,
+      deleteEquipamento,
+    ],
+  )
+
   return (
-    <DataContext.Provider
-      value={{
-        connectionStatus: sheets.connectionStatus,
-        isLoading: sheets.isLoading,
-        error: sheets.error,
-        isOffline,
-        periodo: allFechamentos[allFechamentos.length - 1]?.periodo || sheets.fechamentos[0]?.periodo || '',
-        // Patch: se o fechamento mais recente tem descontos=0 mas há lançamentos de descontos,
-        // substituir com a soma real dos lançamentos (label da aba Resumo pode ser diferente)
-        fechamentos: descontosDosMeses > 0
-          ? allFechamentos.map((f, i) =>
-              i === allFechamentos.length - 1 && f.descontos === 0
-                ? { ...f, descontos: descontosDosMeses }
-                : f
-            )
-          : allFechamentos,
-        historicalSheets,
-        isLoadingHistorical,
-        addHistoricalSheet,
-        removeHistoricalSheet,
-        vendedores,
-        lancamentos,
-        clientes,
-        allTabs: sheets.allTabs,
-        connect,
-        refetch: sheets.refetch,
-        setSheetId: sheets.setSheetId,
-        currentSheetId: sheets.currentSheetId,
-        saveVendedor,
-        deleteVendedor,
-        saveLancamento,
-        deleteLancamento,
-        metas,
-        saveMeta,
-        saveSegmentOverride,
-        custos,
-        saveCusto,
-        deleteCusto,
-        equipamentos,
-        saveEquipamento,
-        deleteEquipamento,
-      }}
-    >
+    <DataContext.Provider value={contextValue}>
       {children}
     </DataContext.Provider>
   )
 }
 
-export function useDataContext(): DataContextType {
-  const context = useContext(DataContext)
-  if (!context) {
-    throw new Error('useDataContext deve ser usado dentro de um DataProvider')
-  }
-  return context
-}
-
-/** Alias para compatibilidade — hooks migrados usam useDataContext diretamente */
-export const useSheetsDataCompat = useDataContext

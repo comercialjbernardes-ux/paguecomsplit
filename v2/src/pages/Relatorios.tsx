@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { useInternoData } from '../hooks/useInternoData'
 import { useEquipeData } from '../hooks/useEquipeData'
-import { useDataContext } from '../contexts/DataContext'
+import { useDataContext } from '../contexts/dataContextValue'
 import { NOME_EMPRESA, PRECO_CONTA_DIGITAL } from '../constants/empresa'
 import { LoadingState } from '../components/LoadingState'
 import { exportElementToPDF } from '../services/exportService'

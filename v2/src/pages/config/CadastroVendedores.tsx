@@ -8,7 +8,7 @@ import {
   Users, Plus, Pencil, Trash2, Save, X,
   Search, MapPin, Target, AlertTriangle, Check,
 } from 'lucide-react'
-import { useDataContext } from '../../contexts/DataContext'
+import { useDataContext } from '../../contexts/dataContextValue'
 import { useEquipeData } from '../../hooks/useEquipeData'
 import { formatCurrency, formatPercent } from '../../utils/format'
 import type { Vendedor } from '../../types'

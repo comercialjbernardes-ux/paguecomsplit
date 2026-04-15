@@ -4,13 +4,13 @@
 // Grava diretamente na planilha Google Sheets via API
 // ═══════════════════════════════════════════════════════════════
 
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
 import {
   Receipt, Plus, Search, Filter, Edit3, Trash2,
   ArrowUpRight, ArrowDownRight, RefreshCw, ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
-import { useDataContext } from '../../contexts/DataContext'
+import { useDataContext } from '../../contexts/dataContextValue'
 import { TransactionForm } from '../../components/TransactionForm'
 import { DeleteConfirmDialog } from '../../components/DeleteConfirmDialog'
 import { LoadingState } from '../../components/LoadingState'
@@ -75,10 +75,25 @@ export function InternoTransacoes() {
     return { receitas, despesas, saldo: receitas - despesas }
   }, [filtrados])
 
-  // Limpar feedback apos 4 segundos
+  // Limpar feedback apos 4 segundos — cancela timer anterior e limpa no unmount
+  const feedbackTimerRef = useRef<number | null>(null)
   const showFeedback = useCallback((type: 'success' | 'error', message: string) => {
     setFeedback({ type, message })
-    setTimeout(() => setFeedback(null), 4000)
+    if (feedbackTimerRef.current !== null) {
+      window.clearTimeout(feedbackTimerRef.current)
+    }
+    feedbackTimerRef.current = window.setTimeout(() => {
+      setFeedback(null)
+      feedbackTimerRef.current = null
+    }, 4000)
+  }, [])
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimerRef.current !== null) {
+        window.clearTimeout(feedbackTimerRef.current)
+      }
+    }
   }, [])
 
   // ─── Handlers CRUD ──────────────────────────────────────────

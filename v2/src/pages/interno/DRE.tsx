@@ -12,7 +12,7 @@ import {
 } from 'recharts'
 import { FileBarChart, TrendingUp, TrendingDown, ArrowRight, CreditCard, Users, BookOpen } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
-import { useDataContext } from '../../contexts/DataContext'
+import { useDataContext } from '../../contexts/dataContextValue'
 import { LoadingState } from '../../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../../utils/format'
 import type { DadosFechamento } from '../../types'

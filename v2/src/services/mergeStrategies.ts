@@ -41,22 +41,26 @@ export function mergeVendedores(
 }
 
 /**
- * Merge de lancamentos: concatena Sheets + local, deduplica por (data+descricao+valor).
+ * Merge de lancamentos: concatena local + Sheets, deduplica por (data+descricao+valor).
+ * Local vem primeiro para que, em conflito, a versao local sobrescreva a do Sheets.
  * Cada lancamento recebe source: 'sheets' | 'local'.
  */
 export function mergeLancamentos(
   sheetsRows: LancamentoCusto[],
   localRows: LancamentoCusto[],
 ): LancamentoCusto[] {
+  // ORDEM IMPORTANTE: local primeiro para vencer na deduplicacao
   const tagged: LancamentoCusto[] = [
-    ...sheetsRows.map((l) => ({ ...l, source: 'sheets' as const })),
     ...localRows.map((l) => ({ ...l, source: 'local' as const })),
+    ...sheetsRows.map((l) => ({ ...l, source: 'sheets' as const })),
   ]
 
-  // Deduplica por chave composta (data + descricao normalizada + valor)
+  // Deduplica por chave composta (data + descricao normalizada + valor).
+  // Normaliza espacos internos para evitar falsos positivos/negativos.
   const seen = new Set<string>()
   return tagged.filter((l) => {
-    const key = `${l.data}|${l.descricao.trim().toLowerCase()}|${l.valor}`
+    const descNorm = l.descricao.trim().toLowerCase().replace(/\s+/g, ' ')
+    const key = `${l.data}|${descNorm}|${l.valor}`
     if (seen.has(key)) return false
     seen.add(key)
     return true
