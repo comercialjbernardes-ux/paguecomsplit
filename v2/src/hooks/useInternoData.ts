@@ -15,6 +15,10 @@ interface InternoData {
   categorias: string[]
   contas: string[]
   segmentos: string[]
+  /** Total de receitas lancadas manualmente (source === 'local') */
+  totalReceitasLocais: number
+  /** Total de despesas lancadas manualmente (source === 'local') */
+  totalDespesasLocais: number
   isLoading: boolean
   error: string | null
 }
@@ -46,6 +50,20 @@ export function useInternoData(): InternoData {
     return Array.from(set).sort()
   }, [clientes])
 
+  // Lancamentos manuais (source === 'local') — agregacoes centralizadas
+  // para que TODOS os consumidores (DRE, Dashboard, Custos) leiam os mesmos valores
+  const totalReceitasLocais = useMemo(() =>
+    lancamentos
+      .filter((l) => l.tipo === 'receita' && l.source === 'local')
+      .reduce((s, l) => s + l.valor, 0),
+  [lancamentos])
+
+  const totalDespesasLocais = useMemo(() =>
+    lancamentos
+      .filter((l) => l.tipo === 'despesa' && l.source === 'local')
+      .reduce((s, l) => s + l.valor, 0),
+  [lancamentos])
+
   return {
     fechamentos,
     fechamentoAtual,
@@ -54,6 +72,8 @@ export function useInternoData(): InternoData {
     categorias,
     contas,
     segmentos,
+    totalReceitasLocais,
+    totalDespesasLocais,
     isLoading,
     error,
   }

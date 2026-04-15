@@ -69,7 +69,7 @@ function gerarInsights(
 
 export function EquipeDashboard() {
   const { vendedores, isLoading, error } = useEquipeData()
-  const { fechamentos, clientes } = useInternoData()
+  const { fechamentos, clientes, totalReceitasLocais, totalDespesasLocais } = useInternoData()
   const { custos, equipamentos } = useDataContext()
   const [periodoSel, setPeriodoSel] = useState<string>('ultimo')
 
@@ -99,18 +99,21 @@ export function EquipeDashboard() {
     if (!f) return null
     const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
     const ticketMedio = f.ecsAtivos > 0 ? f.markupPos / f.ecsAtivos : 0
-    const lucroOp = f.valorLiquido - totalCustos
-    const receitaBruta = f.markupPos + f.comissaoRede + f.repasse
-    const totalDeducoes = f.faturaDigital + f.descontos
+    // Valor liquido ajustado inclui receitas e despesas lancadas manualmente
+    const valorLiquidoAjustado = f.valorLiquido + totalReceitasLocais - totalDespesasLocais
+    const lucroOp = valorLiquidoAjustado - totalCustos
+    const receitaBruta = f.markupPos + f.comissaoRede + f.repasse + totalReceitasLocais
+    const totalDeducoes = f.faturaDigital + f.descontos + totalDespesasLocais
     const pctDeducoes = receitaBruta > 0 ? (totalDeducoes / receitaBruta) * 100 : 0
     const var_ = (campo: keyof DadosFechamento) =>
       ant && (ant[campo] as number) > 0 ? (((f[campo] as number) - (ant[campo] as number)) / (ant[campo] as number)) * 100 : null
     const saude: 'CRITICA' | 'ATENCAO' | 'SAUDAVEL' = margem < 1 ? 'CRITICA' : margem < 1.5 ? 'ATENCAO' : 'SAUDAVEL'
     return { f, ant, margem, ticketMedio, lucroOp, receitaBruta, totalDeducoes, pctDeducoes, saude,
+      valorLiquidoAjustado,
       varTpv: var_('tpvTotal'), varMarkup: var_('markupPos'), varLiquido: var_('valorLiquido'),
       varEcs: var_('ecsAtivos'), varMargem: ant?.tpvTotal ? margem - (ant.markupPos / ant.tpvTotal * 100) : null,
     }
-  }, [fechamentoAtual, fechamentoAnt, totalCustos])
+  }, [fechamentoAtual, fechamentoAnt, totalCustos, totalReceitasLocais, totalDespesasLocais])
 
   // Análise de carteira
   const carteira = useMemo(() => {
@@ -198,9 +201,9 @@ export function EquipeDashboard() {
         {kpis && (
           <div className="border-t border-slate-700 grid grid-cols-3 divide-x divide-slate-700">
             {[
-              { label: 'Markup / Receita', valor: formatCurrencyShort(kpis.f.markupPos), var_: kpis.varMarkup },
+              { label: 'Markup / Receita', valor: formatCurrencyShort(kpis.receitaBruta), var_: kpis.varMarkup },
               { label: 'ECs Ativos', valor: String(kpis.f.ecsAtivos), var_: kpis.varEcs },
-              { label: 'Valor Líquido', valor: formatCurrencyShort(kpis.f.valorLiquido), var_: kpis.varLiquido },
+              { label: 'Valor Líquido', valor: formatCurrencyShort(kpis.valorLiquidoAjustado), var_: kpis.varLiquido },
             ].map((item) => (
               <div key={item.label} className="px-6 py-3 text-center">
                 <p className="text-slate-400 text-xs mb-0.5">{item.label}</p>
@@ -229,7 +232,7 @@ export function EquipeDashboard() {
             color={kpis.margem >= 1.5 ? 'emerald' : kpis.margem >= 1 ? 'amber' : 'red'} />
           <MiniKPI label="ECs Ativos" value={String(kpis.f.ecsAtivos)} var_={kpis.varEcs}
             icon={<Store className="w-3.5 h-3.5" />} color="blue" />
-          <MiniKPI label="Valor Líquido" value={formatCurrencyShort(kpis.f.valorLiquido)} var_={kpis.varLiquido}
+          <MiniKPI label="Valor Líquido" value={formatCurrencyShort(kpis.valorLiquidoAjustado)} var_={kpis.varLiquido}
             icon={<DollarSign className="w-3.5 h-3.5" />} color="blue" />
           <MiniKPI label="Ticket/EC" value={formatCurrencyShort(kpis.ticketMedio)}
             icon={<CreditCard className="w-3.5 h-3.5" />} color="purple" />

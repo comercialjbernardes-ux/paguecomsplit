@@ -30,15 +30,17 @@ export function InternoDRE() {
     if (!fechamentoAtual) return null
     const f = fechamentoAtual
 
-    const totalReceitas = f.markupPos + f.comissaoRede + f.repasse
-
     // Margem real = Markup POS / TPV Total (quanto a empresa ganha sobre o volume processado)
     // Ex: R$28.759 markup / R$2.728.746 TPV = 1,054% — NAO dividir por receitas internas
     const margemCalculada = f.tpvTotal > 0
       ? (f.markupPos / f.tpvTotal) * 100
       : (f.taxaMargem ?? 0) * 100  // taxaMargem stored as decimal (0.01 = 1%)
 
-    // ERRO 05: deducoes locais (lancamentos manuais de despesa)
+    // Lancamentos manuais (source === 'local')
+    const totalReceitasLocais = lancamentos
+      .filter((l) => l.tipo === 'receita' && l.source === 'local')
+      .reduce((s, l) => s + l.valor, 0)
+
     const totalDeducoesLocais = lancamentos
       .filter((l) => l.tipo === 'despesa' && l.source === 'local')
       .reduce((s, l) => s + l.valor, 0)
@@ -48,6 +50,18 @@ export function InternoDRE() {
       const restantes = eq.numeroParcelas - eq.parcelasPagas
       return s + (restantes > 0 ? eq.valorParcela : 0)
     }, 0)
+
+    // Receitas: planilha + manuais
+    const receitas: { id: string; descricao: string; valor: number; isLocal?: boolean }[] = [
+      { id: 'markup', descricao: 'Markup POS', valor: f.markupPos },
+      { id: 'comissao', descricao: 'Comissao de Rede', valor: f.comissaoRede },
+      { id: 'repasse', descricao: 'Repasse', valor: f.repasse },
+    ]
+    if (totalReceitasLocais > 0) {
+      receitas.push({ id: 'receitas-locais', descricao: 'Receitas Lancadas', valor: totalReceitasLocais, isLocal: true })
+    }
+
+    const totalReceitas = f.markupPos + f.comissaoRede + f.repasse + totalReceitasLocais
 
     const deducoes: { id: string; descricao: string; valor: number; isLocal?: boolean; isEquip?: boolean }[] = [
       { id: 'fatura', descricao: 'Cobranca Conta Digital', valor: f.faturaDigital },
@@ -63,21 +77,21 @@ export function InternoDRE() {
     const totalDeducoes = f.faturaDigital + f.descontos + totalEquipMensal + totalDeducoesLocais
 
     return {
-      receitas: [
-        { id: 'markup', descricao: 'Markup POS', valor: f.markupPos },
-        { id: 'comissao', descricao: 'Comissao de Rede', valor: f.comissaoRede },
-        { id: 'repasse', descricao: 'Repasse', valor: f.repasse },
-      ],
+      receitas,
       deducoes,
       totalReceitas,
       totalDeducoes,
       valorLiquido: f.valorLiquido,
-      valorLiquidoAjustado: f.valorLiquido - totalDeducoesLocais - totalEquipMensal,
+      // Liquido ajustado inclui receitas E despesas manuais + equipamentos
+      valorLiquidoAjustado: f.valorLiquido + totalReceitasLocais - totalDeducoesLocais - totalEquipMensal,
       calculado: totalReceitas - totalDeducoes,
       margemCalculada,
+      temReceitasLocais: totalReceitasLocais > 0,
       temDeducoesLocais: totalDeducoesLocais > 0,
       temEquip: totalEquipMensal > 0,
       totalEquipMensal,
+      totalReceitasLocais,
+      totalDeducoesLocais,
     }
   }, [fechamentoAtual, lancamentos, equipamentos])
 
@@ -89,15 +103,19 @@ export function InternoDRE() {
       { name: 'Markup POS', valor: f.markupPos, tipo: 'positivo' },
       { name: 'Comissao', valor: f.comissaoRede, tipo: 'positivo' },
       { name: 'Repasse', valor: f.repasse, tipo: 'positivo' },
+    ]
+    if (dreData.temReceitasLocais) {
+      entries.push({ name: 'Rec. Manuais', valor: dreData.totalReceitasLocais, tipo: 'positivo' })
+    }
+    entries.push(
       { name: 'Conta Digital', valor: -f.faturaDigital, tipo: 'negativo' },
       { name: 'Descontos', valor: -f.descontos, tipo: 'negativo' },
-    ]
+    )
     if (dreData.temEquip) {
       entries.push({ name: 'Equipamentos', valor: -dreData.totalEquipMensal, tipo: 'negativo' })
     }
     if (dreData.temDeducoesLocais) {
-      const localTotal = dreData.totalDeducoes - f.faturaDigital - f.descontos - dreData.totalEquipMensal
-      entries.push({ name: 'Ded. Manuais', valor: -localTotal, tipo: 'negativo' })
+      entries.push({ name: 'Ded. Manuais', valor: -dreData.totalDeducoesLocais, tipo: 'negativo' })
     }
     entries.push({ name: 'Liquido', valor: dreData.valorLiquidoAjustado, tipo: 'destaque' })
     return entries
@@ -212,7 +230,7 @@ export function InternoDRE() {
             />
             <DRECard
               label="Valor Liquido"
-              value={formatCurrency(fechamentoAtual.valorLiquido)}
+              value={formatCurrency(dreData?.valorLiquidoAjustado ?? fechamentoAtual.valorLiquido)}
               icon={<ArrowRight className="w-5 h-5" />}
               color="navy"
             />
