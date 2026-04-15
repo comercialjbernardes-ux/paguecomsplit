@@ -157,12 +157,6 @@ export function EquipeDashboard() {
 
   if (isLoading) return <LoadingState message="Carregando dashboard..." />
 
-  const saúdeConfig = {
-    CRITICA:  { bg: 'bg-red-500',    pill: 'bg-red-100 text-red-700',    icon: <XCircle className="w-4 h-4" />,       label: 'Situação Crítica' },
-    ATENCAO:  { bg: 'bg-amber-500',  pill: 'bg-amber-100 text-amber-700', icon: <AlertTriangle className="w-4 h-4" />, label: 'Requer Atenção' },
-    SAUDAVEL: { bg: 'bg-emerald-500',pill: 'bg-emerald-100 text-emerald-700',icon: <CheckCircle className="w-4 h-4" />, label: 'Situação Saudável' },
-  }
-  const sc = kpis ? saúdeConfig[kpis.saude] : null
   const hoje = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
 
   return (
@@ -181,11 +175,6 @@ export function EquipeDashboard() {
             <p className="text-slate-400 text-sm mt-0.5">Central de desempenho comercial · {hoje}</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            {sc && kpis && (
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-white text-xs font-semibold ${sc.bg}`}>
-                {sc.icon} {sc.label}
-              </div>
-            )}
             <div className="flex items-center gap-2 bg-slate-700 rounded-lg px-3 py-2">
               <Calendar className="w-3.5 h-3.5 text-slate-400" />
               <select value={periodoSel} onChange={(e) => setPeriodoSel(e.target.value)}
@@ -291,8 +280,8 @@ export function EquipeDashboard() {
             </div>
           )}
 
-          {/* DRE snapshot — 1/3 */}
-          {kpis && (
+          {/* DRE snapshot — 1/3 — so aparece com 2+ fechamentos para fins comparativos */}
+          {kpis && fechamentos.length >= 2 && (
             <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col">
               <h3 className="text-sm font-semibold text-gray-800 mb-1">DRE — {kpis.f.periodo}</h3>
               <p className="text-xs text-gray-400 mb-4">Composição do resultado do período</p>
