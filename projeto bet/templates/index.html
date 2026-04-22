@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prospector Bets — Dashboard</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  <!-- Chart.js para gráficos -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- SheetJS para exportação XLSX -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.1/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ===== HEADER — KPI CARDS ===== -->
+<header class="header">
+  <div class="header-title">
+    <span class="header-icon">&#127922;</span>
+    <div>
+      <h1>Prospector Bets</h1>
+      <p class="header-subtitle">Inteligência de Bets Regulamentadas — Brasil</p>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <span class="kpi-label">Total de Bets</span>
+      <span class="kpi-value" id="kpi-total">—</span>
+    </div>
+    <div class="kpi-card kpi-success">
+      <span class="kpi-label">Com Email</span>
+      <span class="kpi-value" id="kpi-email">—</span>
+    </div>
+    <div class="kpi-card kpi-danger">
+      <span class="kpi-label">Sem Email</span>
+      <span class="kpi-value" id="kpi-sem-email">—</span>
+    </div>
+    <div class="kpi-card kpi-success">
+      <span class="kpi-label">Com Afiliados</span>
+      <span class="kpi-value" id="kpi-afiliados">—</span>
+    </div>
+    <div class="kpi-card kpi-success">
+      <span class="kpi-label">URLs Ativas</span>
+      <span class="kpi-value" id="kpi-urls-ativas">—</span>
+    </div>
+    <div class="kpi-card kpi-danger">
+      <span class="kpi-label">URLs Inativas</span>
+      <span class="kpi-value" id="kpi-urls-inativas">—</span>
+    </div>
+    <div class="kpi-card kpi-accent">
+      <span class="kpi-label">Editados Manualmente</span>
+      <span class="kpi-value" id="kpi-editados">—</span>
+    </div>
+    <div class="kpi-card">
+      <span class="kpi-label">Última Atualização</span>
+      <span class="kpi-value kpi-value-sm" id="kpi-atualizacao">—</span>
+    </div>
+  </div>
+
+  <div class="header-actions">
+    <span class="sync-indicator" id="sync-indicator" title="Última sincronização com o CSV oficial do gov.br">
+      CSV: <span id="sync-status">—</span>
+    </span>
+    <button class="btn btn-ghost" onclick="forcarSyncCsv()" title="Força uma sincronização imediata com o CSV oficial do gov.br">
+      &#8635; Sincronizar CSV
+    </button>
+    <button class="btn btn-ghost" onclick="recarregarDados()" title="Recarregar dados do servidor">
+      &#8635; Recarregar
+    </button>
+  </div>
+</header>
+
+<!-- ===== LAYOUT PRINCIPAL ===== -->
+<div class="layout">
+
+  <!-- ===== SIDEBAR — FILTROS ===== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <span>&#128269;</span> Filtros
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="f-marca">Marca</label>
+      <input type="text" id="f-marca" class="filter-input" placeholder="Buscar marca..." />
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="f-status">Status do Email</label>
+      <select id="f-status" class="filter-input">
+        <option value="">Todos</option>
+        <option value="com_email">Com email</option>
+        <option value="sem_email">Sem email</option>
+        <option value="falhou">Falhou</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="f-afiliados">Afiliados</label>
+      <select id="f-afiliados" class="filter-input">
+        <option value="">Todos</option>
+        <option value="com">Com link</option>
+        <option value="sem">Sem link</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="f-saude-url">Saúde da URL</label>
+      <select id="f-saude-url" class="filter-input">
+        <option value="">Todas</option>
+        <option value="ativa">🟢 Ativas</option>
+        <option value="redirect">🟡 Redirecionadas</option>
+        <option value="erro">🔴 Com erro</option>
+        <option value="desconhecido">⚪ Não checadas</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="f-porte">Porte da Empresa</label>
+      <select id="f-porte" class="filter-input">
+        <option value="">Todos</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="f-situacao">Situação Cadastral</label>
+      <select id="f-situacao" class="filter-input">
+        <option value="">Todas</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="f-uf">UF</label>
+      <select id="f-uf" class="filter-input" onchange="atualizarMunicipios()">
+        <option value="">Todas</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label" for="f-municipio">Município</label>
+      <select id="f-municipio" class="filter-input">
+        <option value="">Todos</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label class="filter-label">Data de Coleta</label>
+      <input type="date" id="f-data-inicio" class="filter-input" title="De" />
+      <input type="date" id="f-data-fim" class="filter-input" style="margin-top:4px" title="Até" />
+    </div>
+
+    <div class="filter-actions">
+      <button class="btn btn-primary" onclick="aplicarFiltros()">Aplicar Filtros</button>
+      <button class="btn btn-ghost" onclick="limparFiltros()">Limpar</button>
+    </div>
+
+    <div class="export-actions">
+      <p class="filter-label" style="margin-bottom:8px">Exportar dados filtrados</p>
+      <button class="btn btn-success" onclick="exportarCSV()">&#8659; CSV</button>
+      <button class="btn btn-accent" onclick="exportarXLSX()">&#8659; XLSX</button>
+    </div>
+  </aside>
+
+  <!-- ===== CONTEÚDO PRINCIPAL ===== -->
+  <main class="main-content">
+
+    <!-- Barra de status da tabela -->
+    <div class="table-statusbar">
+      <span id="table-count">Carregando...</span>
+      <div class="pagination-size">
+        Exibir
+        <select id="page-size" class="filter-input" style="width:80px;padding:4px 8px"
+                onchange="mudarTamanhoPagina()">
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100">100</option>
+        </select>
+        por página
+      </div>
+    </div>
+
+    <!-- Spinner de carregamento -->
+    <div id="loading" class="loading-overlay">
+      <div class="spinner"></div>
+      <p>Carregando dados...</p>
+    </div>
+
+    <!-- Tabela principal -->
+    <div class="table-wrapper" id="table-wrapper" style="display:none">
+      <table class="data-table" id="data-table">
+        <thead>
+          <tr>
+            <th class="sortable" data-col="marca" onclick="ordenarPor('marca')">Marca <span class="sort-icon">&#8597;</span></th>
+            <th class="sortable" data-col="razao_social" onclick="ordenarPor('razao_social')">Razão Social <span class="sort-icon">&#8597;</span></th>
+            <th class="sortable" data-col="cnpj" onclick="ordenarPor('cnpj')">CNPJ <span class="sort-icon">&#8597;</span></th>
+            <th>URL</th>
+            <th>Email</th>
+            <th>Afiliado (Link)</th>
+            <th class="sortable" data-col="uf" onclick="ordenarPor('uf')">UF <span class="sort-icon">&#8597;</span></th>
+            <th class="sortable" data-col="municipio" onclick="ordenarPor('municipio')">Município <span class="sort-icon">&#8597;</span></th>
+            <th class="sortable" data-col="status" onclick="ordenarPor('status')">Status <span class="sort-icon">&#8597;</span></th>
+            <th class="sortable num-col" data-col="capital_social" onclick="ordenarPor('capital_social')">Capital Social <span class="sort-icon">&#8597;</span></th>
+            <th class="sortable" data-col="data_abertura" onclick="ordenarPor('data_abertura')">Abertura <span class="sort-icon">&#8597;</span></th>
+            <th class="sortable" data-col="data_coleta" onclick="ordenarPor('data_coleta')">Coleta <span class="sort-icon">&#8597;</span></th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Paginação -->
+    <div class="pagination" id="pagination" style="display:none">
+      <button class="btn btn-ghost" onclick="irParaPagina(paginaAtual - 1)" id="btn-prev">&#8249; Anterior</button>
+      <div id="page-numbers" class="page-numbers"></div>
+      <button class="btn btn-ghost" onclick="irParaPagina(paginaAtual + 1)" id="btn-next">Próximo &#8250;</button>
+    </div>
+
+    <!-- ===== SEÇÃO DE GRÁFICOS ===== -->
+    <section class="charts-section">
+      <h2 class="section-title">&#128202; Visualizações</h2>
+      <p class="section-subtitle">Todos os gráficos refletem os filtros aplicados</p>
+
+      <div class="charts-grid">
+        <div class="chart-card">
+          <h3 class="chart-title">Porte da Empresa</h3>
+          <div class="chart-container">
+            <canvas id="chart-porte"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <h3 class="chart-title">Status de Email</h3>
+          <div class="chart-container">
+            <canvas id="chart-status"></canvas>
+          </div>
+        </div>
+
+        <div class="chart-card chart-card-wide">
+          <h3 class="chart-title">Bets por UF</h3>
+          <div class="chart-container chart-container-bar">
+            <canvas id="chart-uf"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+  Prospector Bets &mdash; Dados: Ministério da Fazenda / Secretaria de Prêmios e Apostas
+</footer>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
