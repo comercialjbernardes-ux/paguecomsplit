@@ -23,7 +23,8 @@ const PAGE_SIZE = 15
 
 export function InternoTransacoes() {
   const { lancamentos, categorias, contas, isLoading, error } = useInternoData()
-  const { refetch, saveLancamento, deleteLancamento } = useDataContext()
+  const { refetch, saveLancamento, deleteLancamento, historicalSheets } = useDataContext()
+  const isBenchmarkMode = historicalSheets.length > 0
 
   // Estado do CRUD
   const [isFormOpen, setIsFormOpen] = useState(false)
@@ -191,14 +192,17 @@ export function InternoTransacoes() {
           </p>
         </div>
         <div className="flex gap-3">
-          <button
-            onClick={() => refetch()}
-            className="btn-outline flex items-center gap-2"
-            title="Recarregar dados"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Sincronizar
-          </button>
+          {/* Sincronizar só faz sentido quando há planilha principal conectada */}
+          {!isBenchmarkMode && (
+            <button
+              onClick={() => refetch()}
+              className="btn-outline flex items-center gap-2"
+              title="Recarregar dados da planilha principal"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Sincronizar
+            </button>
+          )}
           <button
             onClick={handleOpenNew}
             className="btn-primary flex items-center gap-2"
@@ -303,6 +307,7 @@ export function InternoTransacoes() {
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Estabelecimento</th>
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Tipo de Ajuste</th>
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Categoria</th>
+                <th className="text-left py-3 px-3 font-medium text-gray-500">Conta</th>
                 <th className="text-left py-3 px-3 font-medium text-gray-500">Tipo</th>
                 <th className="text-right py-3 px-3 font-medium text-gray-500">Valor</th>
                 <th className="text-center py-3 px-3 font-medium text-gray-500">Acoes</th>
@@ -311,7 +316,7 @@ export function InternoTransacoes() {
             <tbody>
               {paginados.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-400">
+                  <td colSpan={9} className="text-center py-12 text-gray-400">
                     <Receipt className="w-10 h-10 mx-auto mb-2 opacity-50" />
                     <p>Nenhum lancamento encontrado</p>
                     <button onClick={handleOpenNew} className="text-emerald-600 hover:text-emerald-700 font-medium mt-2 text-sm">

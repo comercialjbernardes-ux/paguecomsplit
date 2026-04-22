@@ -230,11 +230,12 @@ export function RelatorioExecutivoPage() {
     return op + eq
   }, [custos, equipamentos])
 
-  // Periodo anterior
+  // Periodo anterior — usando indexOf para garantir ordem correta independente do array
   const periodoAnterior = useMemo(() => {
-    if (fechamentos.length < 2) return null
-    return fechamentos[fechamentos.length - 2]
-  }, [fechamentos])
+    if (!fechamentoAtual || fechamentos.length < 2) return null
+    const idx = fechamentos.indexOf(fechamentoAtual)
+    return idx > 0 ? fechamentos[idx - 1] : null
+  }, [fechamentos, fechamentoAtual])
 
   // Calculos do relatorio
   const relatorio = useMemo(() => {
@@ -298,13 +299,17 @@ export function RelatorioExecutivoPage() {
     })()
 
     const ultimoMarkup = f.markupPos
+    const ultimoPeriodoMatch = f.periodo.match(/^([A-Za-z]{3})(\d{4})$/)
+    const mesBaseRaw = ultimoPeriodoMatch
+      ? ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+          .indexOf(ultimoPeriodoMatch[1].toLowerCase())
+      : -1
+    // indexOf retorna -1 quando o período não bate — cair para mês atual como fallback
+    const mesBaseGlobal = mesBaseRaw === -1 ? new Date().getMonth() : mesBaseRaw
+    const anoBaseGlobal = ultimoPeriodoMatch ? parseInt(ultimoPeriodoMatch[2]) : new Date().getFullYear()
     const projecao3meses = [1, 2, 3].map((n) => {
-      const ultimoPeriodoMatch = f.periodo.match(/^([A-Za-z]{3})(\d{4})$/)
-      const mesBase = ultimoPeriodoMatch
-        ? ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
-            .indexOf(ultimoPeriodoMatch[1].toLowerCase())
-        : new Date().getMonth()
-      const anoBase = ultimoPeriodoMatch ? parseInt(ultimoPeriodoMatch[2]) : new Date().getFullYear()
+      const mesBase = mesBaseGlobal
+      const anoBase = anoBaseGlobal
       const mesAbs = mesBase + n
       const mesIdx = mesAbs % 12
       const anoOffset = Math.floor(mesAbs / 12)
@@ -315,10 +320,11 @@ export function RelatorioExecutivoPage() {
       }
     })
 
-    // Meta de margem: para atingir margemAlvo, receita precisa ser X ou custos reduzidos em Y
+    // Meta de margem: TPV necessário = custos / (margem% / 100)
+    // Exemplo: custos=10k, margem=2% → TPV=500k para gerar 10k de Markup
     const margemAlvo = 2 // %
     const receitaMeta = totalCustosMensal > 0
-      ? totalCustosMensal / (1 - margemAlvo / 100)
+      ? totalCustosMensal / (margemAlvo / 100)
       : totalReceitas * (1 + (margemAlvo - margemCalc) / 100)
     const reducaoCustoNecessaria = totalCustosMensal > 0
       ? totalCustosMensal - totalReceitas * (1 - margemAlvo / 100)

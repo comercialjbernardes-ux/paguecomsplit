@@ -99,9 +99,9 @@ export function CadastroVendedoresPage() {
     }
 
     if (isCreating) {
-      const newId = vendedores.length > 0
-        ? Math.max(...vendedores.map((v) => v.id)) + 1
-        : Date.now()
+      // Filtrar IDs inválidos (NaN pode vir de planilhas com células vazias)
+      const validIds = vendedores.map((v) => v.id).filter((id) => Number.isFinite(id))
+      const newId = validIds.length > 0 ? Math.max(...validIds) + 1 : Date.now()
       const novoVendedor: Vendedor = {
         id: newId,
         nome: form.nome.trim(),
@@ -134,7 +134,8 @@ export function CadastroVendedoresPage() {
         comissaoBase: form.comissaoBase,
         bonus: form.bonus,
         source: 'local',
-        _seededFromSheets: false,
+        // B-10: preservar valor original em vez de forcar false ao editar
+        _seededFromSheets: existing._seededFromSheets ?? false,
       }
       saveVendedor(updated)
       showFeedback('success', `Vendedor "${form.nome}" atualizado`)

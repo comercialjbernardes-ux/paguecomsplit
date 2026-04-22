@@ -192,7 +192,7 @@ export function RelatoriosPage() {
     const f = periodoAtual
     const ant = periodoAnterior
 
-    const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : f.taxaMargem
+    const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
     const receitaBruta = f.markupPos + f.comissaoRede + f.repasse
     const totalDeducoes = f.faturaDigital + f.descontos
     const lucroOp = f.valorLiquido - totalCustos
@@ -443,7 +443,12 @@ export function RelatoriosPage() {
               <KPICard
                 label="Margem Real"
                 value={`${margem.toFixed(2)}%`}
-                variacao={ant?.tpvTotal > 0 ? margem - (ant.markupPos / ant.tpvTotal * 100) : null}
+                variacao={
+                  // M-14: guard explícito — ant.markupPos pode ser undefined → NaN pp
+                  (ant?.tpvTotal ?? 0) > 0 && ant?.markupPos != null
+                    ? margem - (ant.markupPos / ant.tpvTotal! * 100)
+                    : null
+                }
                 icon={<TrendingUp className="w-4 h-4" />}
                 color={margem >= 1.5 ? 'emerald' : margem >= 1 ? 'amber' : 'red'}
                 detalhe="Markup / TPV"
@@ -557,7 +562,7 @@ export function RelatoriosPage() {
                       {[...fechamentos].reverse().slice(0, 8).map((fec, i, arr) => {
                         const prev = arr[i + 1]
                         const varM = prev?.markupPos > 0 ? ((fec.markupPos - prev.markupPos) / prev.markupPos) * 100 : null
-                        const marg = fec.tpvTotal > 0 ? (fec.markupPos / fec.tpvTotal) * 100 : fec.taxaMargem
+                        const marg = fec.tpvTotal > 0 ? (fec.markupPos / fec.tpvTotal) * 100 : (fec.taxaMargem ?? 0) * 100
                         const isAtual = fec.periodo === f.periodo
                         return (
                           <tr key={fec.periodo} className={`border-b border-gray-50 ${isAtual ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>

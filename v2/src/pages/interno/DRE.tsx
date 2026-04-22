@@ -226,12 +226,12 @@ export function InternoDRE() {
             />
             <DRECard
               label="Taxa de Margem"
-              value={formatPercent(dreData?.margemCalculada ?? fechamentoAtual.taxaMargem, 2)}
+              value={formatPercent(dreData?.margemCalculada ?? (fechamentoAtual.taxaMargem * 100), 2)}
               variacao={fechamentoAtual.variacaoMargem}
               icon={<TrendingUp className="w-5 h-5" />}
               color={
-                (dreData?.margemCalculada ?? fechamentoAtual.taxaMargem) >= 2 ? 'emerald'
-                : (dreData?.margemCalculada ?? fechamentoAtual.taxaMargem) >= 1 ? 'blue'
+                (dreData?.margemCalculada ?? (fechamentoAtual.taxaMargem * 100)) >= 2 ? 'emerald'
+                : (dreData?.margemCalculada ?? (fechamentoAtual.taxaMargem * 100)) >= 1 ? 'blue'
                 : 'red'
               }
             />
@@ -433,7 +433,7 @@ export function InternoDRE() {
             <div className="bg-white rounded-xl p-4 border border-blue-100 flex justify-between items-center">
               <span className="font-semibold text-gray-800">Resultado Ajustado (Sheets + Manual)</span>
               <span className="text-xl font-bold text-blue-900">
-                {formatCurrency(fechamentoAtual.valorLiquido + totalReceitasLocais - totalDespesasLocais)}
+                {formatCurrency(dreData?.valorLiquidoAjustado ?? fechamentoAtual.valorLiquido)}
               </span>
             </div>
           )}
@@ -478,7 +478,7 @@ function DRECard({ label, value, variacao, icon, color }: {
     emerald: 'bg-emerald-50 text-emerald-600',
     blue: 'bg-blue-50 text-blue-600',
     red: 'bg-red-50 text-red-600',
-    navy: 'bg-navy-50 text-navy-600',
+    navy: 'bg-slate-100 text-slate-700',
   }
   return (
     <div className="card-hover">

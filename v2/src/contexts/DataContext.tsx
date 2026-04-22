@@ -13,6 +13,7 @@ import {
 } from 'react'
 import { useSheetsData } from './SheetsContext'
 import { DataContext } from './dataContextValue'
+import type { HistoricalSheet } from './dataContextValue'
 import {
   getAll,
   upsert,
@@ -28,20 +29,53 @@ import {
 import { getSpreadsheetMetadata, readRange } from '../services/sheetsApi'
 import {
   filterFechamentoTabs,
-  extractPeriodoFromTab,
   mapRowsToFechamento,
+  mapRowsToVendedores,
+  mapRowsToClientes,
+  mapRowsMKPdePOS,
+  mapRowsToLancamentos,
+  mapRowsRepasses,
+  mapRowsDescontos,
+  mapRowsCobrDigital,
 } from '../services/sheetMappers'
+import { SHEET_TABS } from '../config/sheets'
 import type {
   DadosFechamento,
   Vendedor,
   LancamentoCusto,
+  ClienteCarteira,
+  SheetTab,
   MetaPeriodo,
   SegmentOverride,
   CustoOperacional,
   Equipamento,
 } from '../types'
 
-// Ordena fechamentos por período cronológico (Jan2025 < Fev2025 < ... < Dez2026)
+// ─── Tipos internos ──────────────────────────────────────────────────────────
+
+/** Snapshot completo de dados de uma planilha mensal histórica */
+interface HistoricalSheetData {
+  fechamentos: DadosFechamento[]
+  vendedores:  Vendedor[]
+  lancamentos: LancamentoCusto[]
+  clientes:    ClienteCarteira[]
+}
+
+// ─── Helpers de módulo (sem estado React) ────────────────────────────────────
+
+/** Abreviaturas canônicas de mês — usadas para gerar periodo como "Jan2026" */
+const MESES_ABBR = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+const MESES_LABEL = [
+  'Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+  'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro',
+]
+
+/** Utilitario: encontra aba pelo nome (case-insensitive) */
+function findTabLocal(tabs: SheetTab[], name: string): SheetTab | undefined {
+  return tabs.find(s => s.title.toLowerCase() === name.toLowerCase())
+}
+
+/** Ordena fechamentos por período cronológico (Jan2025 < Fev2025 < ... < Dez2026) */
 function sortFechamentos(arr: DadosFechamento[]): DadosFechamento[] {
   const mesMap: Record<string, number> = {
     jan:0, fev:1, mar:2, abr:3, mai:4, jun:5,
@@ -56,6 +90,101 @@ function sortFechamentos(arr: DadosFechamento[]): DadosFechamento[] {
     return parse(a.periodo) - parse(b.periodo)
   })
 }
+
+/**
+ * Carrega todos os dados de uma planilha mensal histórica.
+ * Replica o pipeline de SheetsContext.connect() para uso no DataContext.
+ * Suporta o mesmo fallback de abas (MKP de POS, Repasses etc).
+ */
+async function loadHistoricalSheetData(
+  sheetId: string,
+  canonicalPeriodo: string,
+): Promise<HistoricalSheetData> {
+  const meta = await getSpreadsheetMetadata(sheetId)
+
+  // ── Fechamentos ─────────────────────────────────────────────
+  const fTabs = filterFechamentoTabs(meta.sheets)
+  const fechamentos: DadosFechamento[] = []
+  for (const tab of fTabs) {
+    try {
+      const rows = await readRange(`'${tab.title}'!A:J`, sheetId) as (string | number)[][]
+      fechamentos.push(mapRowsToFechamento(rows, canonicalPeriodo))
+    } catch {
+      console.warn(`[Historical] Erro ao ler aba "${tab.title}"`)
+    }
+  }
+
+  // ── Vendedores ──────────────────────────────────────────────
+  let vendedores: Vendedor[] = []
+  if (findTabLocal(meta.sheets, SHEET_TABS.VENDEDORES)) {
+    try {
+      const rows = await readRange(`'${SHEET_TABS.VENDEDORES}'!A:Z`, sheetId) as (string | number)[][]
+      vendedores = mapRowsToVendedores(rows)
+    } catch {
+      console.warn('[Historical] Erro ao ler aba Vendedores')
+    }
+  }
+
+  // ── Clientes (fallback: MKP de POS) ────────────────────────
+  let clientes: ClienteCarteira[] = []
+  if (findTabLocal(meta.sheets, SHEET_TABS.CLIENTES)) {
+    try {
+      const rows = await readRange(`'${SHEET_TABS.CLIENTES}'!A:Z`, sheetId) as (string | number)[][]
+      clientes = mapRowsToClientes(rows)
+    } catch {
+      console.warn('[Historical] Erro ao ler aba Clientes')
+    }
+  } else if (findTabLocal(meta.sheets, SHEET_TABS.MKP_POS)) {
+    try {
+      const rows = await readRange(`'${SHEET_TABS.MKP_POS}'!A:F`, sheetId) as (string | number)[][]
+      clientes = mapRowsMKPdePOS(rows, canonicalPeriodo)
+    } catch {
+      console.warn('[Historical] Erro ao ler aba MKP de POS')
+    }
+  }
+
+  // ── Lancamentos (fallback: Repasses + Descontos + Digital) ──
+  let lancamentos: LancamentoCusto[] = []
+  if (findTabLocal(meta.sheets, SHEET_TABS.LANCAMENTOS)) {
+    try {
+      const rows = await readRange(`'${SHEET_TABS.LANCAMENTOS}'!A:Z`, sheetId) as (string | number)[][]
+      lancamentos = mapRowsToLancamentos(rows)
+    } catch {
+      console.warn('[Historical] Erro ao ler aba Lancamentos')
+    }
+  } else {
+    const combined: LancamentoCusto[] = []
+    if (findTabLocal(meta.sheets, SHEET_TABS.REPASSES)) {
+      try {
+        const rows = await readRange(`'${SHEET_TABS.REPASSES}'!A:F`, sheetId) as (string | number)[][]
+        combined.push(...mapRowsRepasses(rows))
+      } catch {
+        console.warn('[Historical] Erro ao ler aba Repasses')
+      }
+    }
+    if (findTabLocal(meta.sheets, SHEET_TABS.DESCONTOS)) {
+      try {
+        const rows = await readRange(`'${SHEET_TABS.DESCONTOS}'!A:E`, sheetId) as (string | number)[][]
+        combined.push(...mapRowsDescontos(rows, canonicalPeriodo))
+      } catch {
+        console.warn('[Historical] Erro ao ler aba Descontos')
+      }
+    }
+    if (findTabLocal(meta.sheets, SHEET_TABS.COBR_DIGITAL)) {
+      try {
+        const rows = await readRange(`'${SHEET_TABS.COBR_DIGITAL}'!A:E`, sheetId) as (string | number)[][]
+        combined.push(...mapRowsCobrDigital(rows, canonicalPeriodo))
+      } catch {
+        console.warn('[Historical] Erro ao ler aba Cobr. Conta Digital')
+      }
+    }
+    lancamentos = combined
+  }
+
+  return { fechamentos, vendedores, lancamentos, clientes }
+}
+
+// ─── DataProvider ────────────────────────────────────────────────────────────
 
 export function DataProvider({ children }: { children: ReactNode }) {
   const sheets = useSheetsData()
@@ -80,24 +209,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
     getAll<Equipamento>('vdf_equipamentos'),
   )
 
-  // ─ Planilhas históricas para comparativo ─────────────────────
-  const [historicalSheets, setHistoricalSheets] = useState<{ id: string; label: string }[]>(() => {
+  // ─ Planilhas históricas para benchmark anual ─────────────────
+  const [historicalSheets, setHistoricalSheets] = useState<HistoricalSheet[]>(() => {
     try {
       const saved = localStorage.getItem('vdf_historical_sheets')
-      return saved ? JSON.parse(saved) : []
+      if (!saved) return []
+      const parsed = JSON.parse(saved) as unknown[]
+      // Retrocompatibilidade: ignora itens antigos sem month/year
+      return parsed.filter(
+        (s): s is HistoricalSheet =>
+          typeof s === 'object' && s !== null &&
+          'id' in s && 'month' in s && 'year' in s
+      )
     } catch { return [] }
   })
-  // Mapa sheetId → fechamentos carregados daquela planilha
-  const [historicalFechamentosMap, setHistoricalFechamentosMap] = useState<Record<string, DadosFechamento[]>>({})
+
+  // Mapa por chave composta "YYYY-MM" → dados completos da planilha daquele mês
+  const [historicalDataMap, setHistoricalDataMap] = useState<Record<string, HistoricalSheetData>>({})
   const [isLoadingHistorical, setIsLoadingHistorical] = useState(false)
 
-  // Carrega planilhas históricas salvas ao inicializar.
-  // Usa flag `cancelled` para evitar setState apos unmount (StrictMode / navegacao rapida).
+  // ─ Carrega planilhas históricas salvas ao inicializar ────────
+  // Agora carrega TODOS os dados (fechamentos + vendedores + clientes + lancamentos)
   useEffect(() => {
     const stored = (() => {
       try {
         const s = localStorage.getItem('vdf_historical_sheets')
-        return s ? (JSON.parse(s) as { id: string; label: string }[]) : []
+        if (!s) return []
+        const parsed = JSON.parse(s) as unknown[]
+        return parsed.filter(
+          (e): e is HistoricalSheet =>
+            typeof e === 'object' && e !== null && 'id' in e && 'month' in e && 'year' in e
+        )
       } catch { return [] }
     })()
     if (stored.length === 0) return
@@ -105,56 +247,55 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setIsLoadingHistorical(true)
     Promise.all(
       stored.map(async (hs) => {
+        const canonicalPeriodo = `${MESES_ABBR[hs.month - 1]}${hs.year}`
+        const mapKey = `${hs.year}-${String(hs.month).padStart(2, '0')}`
         try {
-          const meta = await getSpreadsheetMetadata(hs.id)
-          const fTabs = filterFechamentoTabs(meta.sheets)
-          const loaded: DadosFechamento[] = []
-          for (const tab of fTabs) {
-            const rows = await readRange(`'${tab.title}'!A:J`, hs.id)
-            const rowsTyped = rows as (string | number)[][]
-            const periodo = extractPeriodoFromTab(tab.title, rowsTyped)
-            loaded.push(mapRowsToFechamento(rowsTyped, periodo))
-          }
-          return { id: hs.id, fechamentos: loaded }
+          const data = await loadHistoricalSheetData(hs.id, canonicalPeriodo)
+          return { mapKey, data }
         } catch {
-          return { id: hs.id, fechamentos: [] }
+          return {
+            mapKey,
+            data: { fechamentos: [], vendedores: [], lancamentos: [], clientes: [] } as HistoricalSheetData,
+          }
         }
       })
     ).then((results) => {
       if (cancelled) return
-      const map: Record<string, DadosFechamento[]> = {}
-      results.forEach(r => { map[r.id] = r.fechamentos })
-      setHistoricalFechamentosMap(map)
+      const map: Record<string, HistoricalSheetData> = {}
+      results.forEach(r => { map[r.mapKey] = r.data })
+      setHistoricalDataMap(map)
       setIsLoadingHistorical(false)
     })
     return () => { cancelled = true }
   }, [])
 
-  const addHistoricalSheet = useCallback(async (id: string) => {
+  // ─ addHistoricalSheet — carrega dados completos da planilha ──
+  const addHistoricalSheet = useCallback(async (id: string, month: number, year: number) => {
     if (!id.trim()) return { success: false, error: 'ID vazio' }
     setIsLoadingHistorical(true)
     try {
-      const meta = await getSpreadsheetMetadata(id)
-      const fTabs = filterFechamentoTabs(meta.sheets)
-      if (fTabs.length === 0) {
+      const canonicalPeriodo = `${MESES_ABBR[month - 1]}${year}`
+      const mapKey = `${year}-${String(month).padStart(2, '0')}`
+
+      const data = await loadHistoricalSheetData(id, canonicalPeriodo)
+
+      if (data.fechamentos.length === 0) {
         setIsLoadingHistorical(false)
         return { success: false, error: 'Nenhuma aba de fechamento encontrada nesta planilha' }
       }
-      const loaded: DadosFechamento[] = []
-      for (const tab of fTabs) {
-        const rows = await readRange(`'${tab.title}'!A:J`, id)
-        const rowsTyped = rows as (string | number)[][]
-        const periodo = extractPeriodoFromTab(tab.title, rowsTyped)
-        loaded.push(mapRowsToFechamento(rowsTyped, periodo))
-      }
-      const label = loaded.map(f => f.periodo).join(', ') || meta.title
+
+      const monthLabel = MESES_LABEL[month - 1]
+      const label = `${monthLabel}/${year}`
+      const entry: HistoricalSheet = { id, label, month, year, monthLabel }
+
       setHistoricalSheets(prev => {
-        const filtered = prev.filter(s => s.id !== id)
-        const next = [...filtered, { id, label }]
+        // Substitui se já existia planilha para o mesmo mês/ano
+        const filtered = prev.filter(s => !(s.month === month && s.year === year))
+        const next = [...filtered, entry]
         localStorage.setItem('vdf_historical_sheets', JSON.stringify(next))
         return next
       })
-      setHistoricalFechamentosMap(prev => ({ ...prev, [id]: loaded }))
+      setHistoricalDataMap(prev => ({ ...prev, [mapKey]: data }))
       setIsLoadingHistorical(false)
       return { success: true, label }
     } catch (err) {
@@ -166,20 +307,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const removeHistoricalSheet = useCallback((id: string) => {
     setHistoricalSheets(prev => {
+      const entry = prev.find(s => s.id === id)
       const next = prev.filter(s => s.id !== id)
       localStorage.setItem('vdf_historical_sheets', JSON.stringify(next))
-      return next
-    })
-    setHistoricalFechamentosMap(prev => {
-      const next = { ...prev }
-      delete next[id]
+      if (entry) {
+        const mapKey = `${entry.year}-${String(entry.month).padStart(2, '0')}`
+        setHistoricalDataMap(p => {
+          const n = { ...p }
+          delete n[mapKey]
+          return n
+        })
+      }
       return next
     })
   }, [])
 
-  // Merge primary + historical fechamentos, sem duplicatas, ordem cronológica
+  // ─ Dados históricos computados ───────────────────────────────
+
+  /** Fechamentos de todos os meses históricos — merge + dedup + ordem cronológica */
   const allFechamentos = useMemo(() => {
-    const historical = Object.values(historicalFechamentosMap).flat()
+    const historical = Object.values(historicalDataMap).flatMap(d => d.fechamentos)
     const all = [...sheets.fechamentos, ...historical]
     const seen = new Set<string>()
     return sortFechamentos(all.filter(f => {
@@ -187,9 +334,48 @@ export function DataProvider({ children }: { children: ReactNode }) {
       seen.add(f.periodo)
       return true
     }))
-  }, [sheets.fechamentos, historicalFechamentosMap])
+  }, [sheets.fechamentos, historicalDataMap])
 
-  // Fallback: soma de descontos dos lançamentos da aba "Descontos" (caso Resumo não tenha a linha)
+  /**
+   * Vendedores históricos: dedup por id, mês mais recente vence.
+   * Servem de fallback quando a planilha principal não está conectada.
+   */
+  const historicalVendedores = useMemo(() => {
+    // Ordena chaves desc para que o mês mais recente apareça primeiro
+    const sortedKeys = Object.keys(historicalDataMap).sort().reverse()
+    const seen = new Set<number>()
+    const result: Vendedor[] = []
+    for (const key of sortedKeys) {
+      for (const v of historicalDataMap[key].vendedores) {
+        if (!seen.has(v.id)) {
+          seen.add(v.id)
+          result.push(v)
+        }
+      }
+    }
+    return result
+  }, [historicalDataMap])
+
+  /**
+   * Lancamentos históricos: todos os meses concatenados.
+   * São transações aditivas — cada mês contribui com seus registros.
+   */
+  const historicalLancamentos = useMemo(() => {
+    return Object.values(historicalDataMap)
+      .flatMap(d => d.lancamentos)
+      .map(l => ({ ...l, source: 'sheets' as const }))
+  }, [historicalDataMap])
+
+  /**
+   * Clientes históricos: apenas o mês mais recente disponível.
+   * A carteira é um snapshot — usar o mais atual é o mais relevante.
+   */
+  const historicalClientes = useMemo(() => {
+    const latestKey = Object.keys(historicalDataMap).sort().at(-1)
+    return latestKey ? historicalDataMap[latestKey].clientes : []
+  }, [historicalDataMap])
+
+  // Fallback: soma de descontos dos lançamentos da aba "Descontos"
   const descontosDosMeses = useMemo(() => {
     const total = sheets.lancamentos
       .filter((l) => l.conta === 'Descontos' && l.source === 'sheets')
@@ -206,19 +392,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [sheets.vendedores])
 
-  // ─ Dados mesclados (memoizados para estabilidade de referencia) ─
-  const vendedores = useMemo(
-    () => mergeVendedores(sheets.vendedores, localVendedores),
-    [sheets.vendedores, localVendedores],
-  )
-  const lancamentos = useMemo(
-    () => mergeLancamentos(sheets.lancamentos, localLancamentos),
-    [sheets.lancamentos, localLancamentos],
-  )
+  // ─ Dados mesclados ────────────────────────────────────────────
 
-  // A1: popular contaDigitalAtiva cruzando nome do cliente com lançamentos Cobr. Digital
+  /**
+   * Vendedores: primary sheet > local; histórico serve de base quando primary vazio.
+   * Isso permite que o dashboard funcione mesmo sem a planilha principal conectada.
+   */
+  const vendedores = useMemo(() => {
+    const baseSheets = sheets.vendedores.length > 0 ? sheets.vendedores : historicalVendedores
+    return mergeVendedores(baseSheets, localVendedores)
+  }, [sheets.vendedores, localVendedores, historicalVendedores])
+
+  /**
+   * Lancamentos: todos os meses históricos + primary + local.
+   * O DRE e Custos ganham visibilidade de todos os períodos cadastrados.
+   */
+  const lancamentos = useMemo(() => {
+    const allSheets = [...sheets.lancamentos, ...historicalLancamentos]
+    return mergeLancamentos(allSheets, localLancamentos)
+  }, [sheets.lancamentos, localLancamentos, historicalLancamentos])
+
+  /**
+   * Clientes: primary sheet > histórico mais recente.
+   * Mantém segmentOverrides e enriquecimento de contaDigitalAtiva.
+   */
   const clientes = useMemo(() => {
-    const clientesBase = mergeSegmentOverrides(sheets.clientes, segmentOverrides)
+    const baseClientes = sheets.clientes.length > 0 ? sheets.clientes : historicalClientes
+    const clientesBase = mergeSegmentOverrides(baseClientes, segmentOverrides)
     const nomesComDigital = new Set(
       lancamentos
         .filter((l) => l.categoria === 'Conta Digital')
@@ -230,9 +430,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       ...c,
       contaDigitalAtiva: nomesComDigital.has(c.nome.toLowerCase().trim()),
     }))
-  }, [sheets.clientes, segmentOverrides, lancamentos])
+  }, [sheets.clientes, historicalClientes, segmentOverrides, lancamentos])
 
-  // ─ isOffline: Sheets falhou mas ha dados locais ──────────────
+  // ─ isOffline: apenas quando primary falhou E há dados locais manuais ──
+  // Dados históricos do Benchmark Anual são o modo normal — não é "offline".
   const isOffline = !sheets.connectionStatus.connected && (
     localVendedores.length > 0 || localLancamentos.length > 0
   )
@@ -267,8 +468,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // ─ Connect com clean-slate ──────────────────────────────────
-  // Limpa dados transacionais do periodo anterior antes de semear novos dados.
-  // Preserva: vdf_metas, vdf_regras_comissao, vdf_projecao_base, vdf_segment_overrides
   const connect = useCallback(async (sheetId?: string) => {
     clear('vdf_vendedores')
     clear('vdf_lancamentos')
@@ -308,8 +507,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSegmentOverrides(getAll<SegmentOverride>('vdf_segment_overrides'))
   }, [])
 
-  // Fechamentos com patch de descontos quando aplicavel — memoizado para nao gerar
-  // nova referencia a cada render.
+  // Fechamentos com patch de descontos quando aplicável
   const fechamentosPatched = useMemo(() => {
     if (descontosDosMeses <= 0 || allFechamentos.length === 0) return allFechamentos
     const lastIdx = allFechamentos.length - 1
@@ -328,8 +526,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(
     () => ({
       connectionStatus: sheets.connectionStatus,
-      isLoading: sheets.isLoading,
-      error: sheets.error,
+      // Quando o Benchmark está ativo (historicalSheets.length > 0), a planilha
+      // principal não é a fonte de dados. Suprimimos seu erro e loading para que
+      // todas as páginas mostrem os dados históricos sem bloqueios.
+      isLoading: historicalSheets.length > 0
+        ? isLoadingHistorical
+        : (sheets.isLoading || isLoadingHistorical),
+      error: historicalSheets.length > 0 ? null : sheets.error,
       isOffline,
       periodo: periodoAtual,
       fechamentos: fechamentosPatched,
@@ -400,4 +603,3 @@ export function DataProvider({ children }: { children: ReactNode }) {
     </DataContext.Provider>
   )
 }
-

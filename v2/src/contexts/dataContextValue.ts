@@ -6,6 +6,16 @@
 // ═══════════════════════════════════════════════════════════════
 
 import { createContext, useContext } from 'react'
+
+/** Representa uma planilha cadastrada no benchmark anual. */
+export interface HistoricalSheet {
+  id: string          // Google Sheets ID
+  label: string       // Ex: "Janeiro/2026"
+  month: number       // 1–12
+  year: number        // ex: 2026
+  monthLabel: string  // "Janeiro", "Fevereiro", …
+}
+
 import type {
   DadosFechamento,
   Vendedor,
@@ -42,10 +52,14 @@ export interface DataContextType {
   setSheetId: (id: string) => void
   currentSheetId: string
 
-  // ─ Planilhas históricas (comparativo mensal) ─────────────────
-  historicalSheets: { id: string; label: string }[]
+  // ─ Planilhas históricas (benchmark anual) ────────────────────
+  historicalSheets: HistoricalSheet[]
   isLoadingHistorical: boolean
-  addHistoricalSheet: (id: string) => Promise<{ success: boolean; label?: string; error?: string }>
+  addHistoricalSheet: (
+    id: string,
+    month: number,
+    year: number,
+  ) => Promise<{ success: boolean; label?: string; error?: string }>
   removeHistoricalSheet: (id: string) => void
 
   // ─ CRUD de Vendedores (localStorage) ────────────────────────

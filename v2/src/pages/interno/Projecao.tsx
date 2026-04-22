@@ -133,7 +133,7 @@ export function InternoProjecao() {
       return
     }
     if (fechamentos.length === 0) {
-      setErro('Nenhum fechamento disponivel. Conecte a planilha primeiro.')
+      setErro('Nenhum fechamento disponivel. Adicione planilhas ao Benchmark Anual nas Configuracoes.')
       return
     }
 
@@ -647,7 +647,7 @@ export function InternoProjecao() {
           <Brain className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-500">Sem dados para analisar</h3>
           <p className="text-sm text-gray-400 mt-1">
-            Conecte uma planilha com dados de fechamento para o agente comecar.
+            Adicione planilhas mensais no Benchmark Anual (Configuracoes) para o agente comecar.
           </p>
         </div>
       )}

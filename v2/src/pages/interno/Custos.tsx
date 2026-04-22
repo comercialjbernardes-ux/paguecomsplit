@@ -38,7 +38,7 @@ export function InternoCustos() {
   const totais = useMemo(() => {
     const receitaBruta = filtrados.filter((l) => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0)
     const custoContaDigital = filtrados
-      .filter((l) => l.categoria === 'Conta Digital')
+      .filter((l) => l.categoria === 'Conta Digital' && l.tipo === 'despesa')
       .reduce((s, l) => s + l.valor, 0)
     const receitaLiquida = receitaBruta - custoContaDigital
     const despesas = filtrados.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + l.valor, 0)
@@ -218,7 +218,7 @@ export function InternoCustos() {
             <tbody>
               {filtrados.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-8 text-gray-400">
+                  <td colSpan={6} className="text-center py-8 text-gray-400">
                     Nenhum lancamento encontrado
                   </td>
                 </tr>

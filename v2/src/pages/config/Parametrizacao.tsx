@@ -49,9 +49,9 @@ export function ParametrizacaoPage() {
         ))}
       </div>
 
-      {/* Conteudo da tab */}
-      {activeTab === 'comissoes' && <RegrasComissaoPage />}
-      {activeTab === 'vendedores' && <CadastroVendedoresPage />}
+      {/* Conteudo da tab — usar hidden ao invés de unmount para preservar estado dos formulários */}
+      <div className={activeTab === 'comissoes' ? '' : 'hidden'}><RegrasComissaoPage /></div>
+      <div className={activeTab === 'vendedores' ? '' : 'hidden'}><CadastroVendedoresPage /></div>
     </div>
   )
 }

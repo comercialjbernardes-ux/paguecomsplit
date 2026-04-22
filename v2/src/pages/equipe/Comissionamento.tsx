@@ -4,7 +4,7 @@
 // Conforme fluxograma: seletor vendedor + calculos + tabela
 // ═══════════════════════════════════════════════════════════════
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
 } from 'recharts'
@@ -17,6 +17,13 @@ import type { Vendedor } from '../../types'
 export function EquipeComissionamento() {
   const { vendedores, isLoading } = useEquipeData()
   const [vendedorId, setVendedorId] = useState<number | null>(null)
+
+  // Resetar seleção quando o vendedor selecionado for deletado
+  useEffect(() => {
+    if (vendedorId !== null && !vendedores.find((v) => v.id === vendedorId)) {
+      setVendedorId(null)
+    }
+  }, [vendedores, vendedorId])
 
   // Vendedor selecionado (ou o primeiro)
   const vendedorSelecionado = useMemo((): Vendedor | null => {
@@ -162,23 +169,30 @@ export function EquipeComissionamento() {
           <div className="card lg:col-span-2">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Composicao da Comissao</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={pieData}
-                    cx="50%" cy="50%"
-                    innerRadius={60} outerRadius={90}
-                    dataKey="value"
-                    paddingAngle={4}
-                  >
-                    {pieData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
+              {/* M-16: evitar SVG em branco quando nao ha faturamento */}
+              {pieData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      cx="50%" cy="50%"
+                      innerRadius={60} outerRadius={90}
+                      dataKey="value"
+                      paddingAngle={4}
+                    >
+                      {pieData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[250px] text-gray-400 text-sm">
+                  Sem faturamento no periodo
+                </div>
+              )}
               <div className="flex flex-col justify-center space-y-4">
                 <div className="p-4 bg-emerald-50 rounded-xl">
                   <p className="text-xs text-gray-500 uppercase font-medium">Comissao Base ({comissao.pctBase}%)</p>

@@ -26,10 +26,10 @@ interface InternoData {
 export function useInternoData(): InternoData {
   const { fechamentos, lancamentos, clientes, isLoading, error } = useDataContext()
 
-  // Ultimo fechamento = periodo mais recente
+  // B-02: ordenar por periodo antes de pegar o ultimo (garante "mais recente" mesmo com dados fora de ordem)
   const fechamentoAtual = useMemo(() => {
     if (fechamentos.length === 0) return null
-    return fechamentos[fechamentos.length - 1]
+    return [...fechamentos].sort((a, b) => a.periodo.localeCompare(b.periodo)).at(-1) ?? null
   }, [fechamentos])
 
   // Categorias unicas dos lancamentos

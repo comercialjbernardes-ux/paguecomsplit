@@ -121,9 +121,14 @@ export function EquipeRanking() {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Atingimento</span>
-                    <span className={`font-semibold ${ating >= 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
-                      {formatPercent(ating)}
-                    </span>
+                    {/* B-04: meta zerada nao deve gerar badge vermelho de 0% */}
+                    {meta === 0 ? (
+                      <span className="font-semibold text-gray-400">Sem meta</span>
+                    ) : (
+                      <span className={`font-semibold ${ating >= 100 ? 'text-emerald-600' : 'text-amber-600'}`}>
+                        {formatPercent(ating)}
+                      </span>
+                    )}
                   </div>
                   {/* Barra de progresso */}
                   <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
@@ -144,7 +149,7 @@ export function EquipeRanking() {
         <div className="card">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
             <Medal className="w-5 h-5 text-gray-400" />
-            Ranking Completo
+            {filtroRegiao !== 'todas' ? `Ranking — ${filtroRegiao}` : 'Ranking Completo'}
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -196,12 +201,21 @@ export function EquipeRanking() {
         </div>
       )}
 
-      {/* Vazio */}
+      {/* Vazio — sem vendedores cadastrados */}
       {vendedores.length === 0 && !isLoading && (
         <div className="card text-center py-12">
           <Trophy className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-500">Sem vendedores cadastrados</h3>
           <p className="text-sm text-gray-400 mt-1">Conecte a planilha com a aba "Vendedores".</p>
+        </div>
+      )}
+
+      {/* Vazio — filtro de região sem resultados */}
+      {ranking.length === 0 && !isLoading && vendedores.length > 0 && (
+        <div className="card text-center py-12">
+          <Filter className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-500">Nenhum vendedor nesta região</h3>
+          <p className="text-sm text-gray-400 mt-1">Selecione outra região ou "Todas as regiões".</p>
         </div>
       )}
     </div>

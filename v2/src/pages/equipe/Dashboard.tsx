@@ -111,10 +111,20 @@ export function EquipeDashboard() {
     const var_ = (campo: keyof DadosFechamento) =>
       ant && (ant[campo] as number) > 0 ? (((f[campo] as number) - (ant[campo] as number)) / (ant[campo] as number)) * 100 : null
     const saude: 'CRITICA' | 'ATENCAO' | 'SAUDAVEL' = margem < 1 ? 'CRITICA' : margem < 1.5 ? 'ATENCAO' : 'SAUDAVEL'
+    // M-03: comparar varLiquido contra o valor ajustado do período anterior (não o bruto)
+    const valorLiquidoAjustadoAnt = ant
+      ? ant.valorLiquido + totalReceitasLocais - totalDespesasLocais - totalCustos
+      : null
     return { f, ant, margem, ticketMedio, lucroOp, receitaBruta, totalDeducoes, pctDeducoes, saude,
       valorLiquidoAjustado,
-      varTpv: var_('tpvTotal'), varMarkup: var_('markupPos'), varLiquido: var_('valorLiquido'),
-      varEcs: var_('ecsAtivos'), varMargem: ant?.tpvTotal ? margem - (ant.markupPos / ant.tpvTotal * 100) : null,
+      varTpv: var_('tpvTotal'), varMarkup: var_('markupPos'),
+      // M-03: variação % sobre o valor ajustado (não o campo bruto valorLiquido)
+      varLiquido: valorLiquidoAjustadoAnt && valorLiquidoAjustadoAnt !== 0
+        ? ((valorLiquidoAjustado - valorLiquidoAjustadoAnt) / Math.abs(valorLiquidoAjustadoAnt)) * 100
+        : null,
+      varEcs: var_('ecsAtivos'),
+      // M-04: guard para ant.markupPos undefined — evita NaN pp
+      varMargem: (ant?.tpvTotal && ant.markupPos != null) ? margem - (ant.markupPos / ant.tpvTotal * 100) : null,
     }
   }, [fechamentoAtual, fechamentoAnt, totalCustos, totalReceitasLocais, totalDespesasLocais])
 
@@ -234,7 +244,7 @@ export function EquipeDashboard() {
           <MiniKPI label="Descontos" value={formatCurrencyShort(kpis.f.descontos)}
             icon={<ShieldAlert className="w-3.5 h-3.5" />}
             color={kpis.pctDeducoes > 15 ? 'red' : 'slate'}
-            sub={kpis.pctDeducoes > 0 ? `${kpis.pctDeducoes.toFixed(1)}% do Markup` : '—'} />
+            sub={kpis.pctDeducoes > 0 ? `${kpis.pctDeducoes.toFixed(1)}% da receita bruta` : '—'} />
         </div>
       )}
 
@@ -292,6 +302,8 @@ export function EquipeDashboard() {
                   { label: 'Markup POS', valor: kpis.f.markupPos, tipo: 'receita' },
                   { label: 'Comissão de Rede', valor: kpis.f.comissaoRede, tipo: 'receita' },
                   { label: 'Repasse', valor: kpis.f.repasse, tipo: 'receita' },
+                  // M-05: exibir receitas manuais quando existirem para que o subtotal bata
+                  ...(totalReceitasLocais > 0 ? [{ label: 'Receitas Manuais', valor: totalReceitasLocais, tipo: 'receita' }] : []),
                   { label: 'Receita Bruta', valor: kpis.receitaBruta, tipo: 'subtotal' },
                   { label: '(-) Descontos', valor: kpis.f.descontos, tipo: 'deducao' },
                   { label: '(-) Cobr. Conta Digital', valor: kpis.f.faturaDigital, tipo: 'deducao' },

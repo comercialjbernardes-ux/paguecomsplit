@@ -1,68 +1,53 @@
 // ═══════════════════════════════════════════════════════════════
-// ConnectionStatus — Banner nao-bloqueante de status da planilha
-// Lê isOffline do DataContext; aparece apenas quando desconectado
+// ConnectionStatus — Banner de status do Benchmark Anual
+// Exibe quantos meses estão conectados via grade mensal.
+// O modelo antigo de "planilha única" foi substituído pelo Benchmark.
 // ═══════════════════════════════════════════════════════════════
 
 import { useState } from 'react'
-import { WifiOff, RefreshCw, X, CheckCircle2 } from 'lucide-react'
+import { TrendingUp, X, Loader2 } from 'lucide-react'
 import { useDataContext } from '../contexts/dataContextValue'
 
 export function ConnectionStatus() {
-  const { isOffline, error, refetch, isLoading, connectionStatus, periodo } = useDataContext()
+  const { historicalSheets, isLoadingHistorical, periodo } = useDataContext()
   const [dismissed, setDismissed] = useState(false)
-  const [connectedDismissed, setConnectedDismissed] = useState(false)
 
-  const isConnected = connectionStatus.connected && !error && !isOffline
-
-  // Banner verde quando conectado e com periodo detectado
-  if (isConnected && periodo && !connectedDismissed) {
+  // Carregando planilhas históricas
+  if (isLoadingHistorical) {
     return (
-      <div className="bg-emerald-50 border-b border-emerald-200 px-4 py-2 flex items-center justify-between gap-4 text-sm">
-        <div className="flex items-center gap-2 text-emerald-700">
-          <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-          <span>Conectado: {periodo}</span>
-        </div>
-        <button
-          onClick={() => setConnectedDismissed(true)}
-          className="text-emerald-500 hover:text-emerald-700"
-          title="Fechar"
-        >
-          <X className="w-4 h-4" />
-        </button>
+      <div className="bg-violet-50 border-b border-violet-200 px-4 py-2 flex items-center gap-2 text-sm text-violet-700">
+        <Loader2 className="w-4 h-4 animate-spin flex-shrink-0" />
+        <span>Carregando planilhas do benchmark...</span>
       </div>
     )
   }
 
-  // So exibe se houver erro ou modo offline, e usuario nao dispensou
-  if ((!isOffline && !error) || dismissed) return null
+  // Nenhuma planilha cadastrada — banner explicativo (dispensável)
+  if (historicalSheets.length === 0 || dismissed) return null
+
+  // Meses conectados — banner verde compacto
+  const count = historicalSheets.length
+  const lastPeriodo = periodo || historicalSheets
+    .slice()
+    .sort((a, b) => a.year !== b.year ? b.year - a.year : b.month - a.month)[0]
+    ?.label
 
   return (
-    <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-between gap-4 text-sm">
-      <div className="flex items-center gap-2 text-amber-800">
-        <WifiOff className="w-4 h-4 flex-shrink-0" />
+    <div className="bg-emerald-50 border-b border-emerald-200 px-4 py-2 flex items-center justify-between gap-4 text-sm">
+      <div className="flex items-center gap-2 text-emerald-700">
+        <TrendingUp className="w-4 h-4 flex-shrink-0" />
         <span>
-          {isOffline
-            ? 'Planilha desconectada — exibindo dados locais salvos'
-            : `Erro de conexao — ${error}`}
+          Benchmark Anual: <strong>{count} {count === 1 ? 'mês' : 'meses'}</strong> conectado{count !== 1 ? 's' : ''}
+          {lastPeriodo && <span className="text-emerald-500 ml-1">· último: {lastPeriodo}</span>}
         </span>
       </div>
-      <div className="flex items-center gap-2">
-        <button
-          onClick={() => refetch()}
-          disabled={isLoading}
-          className="flex items-center gap-1.5 text-amber-700 hover:text-amber-900 font-medium disabled:opacity-50"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
-          Reconectar
-        </button>
-        <button
-          onClick={() => setDismissed(true)}
-          className="text-amber-500 hover:text-amber-700 ml-2"
-          title="Fechar"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
+      <button
+        onClick={() => setDismissed(true)}
+        className="text-emerald-500 hover:text-emerald-700 flex-shrink-0"
+        title="Fechar"
+      >
+        <X className="w-4 h-4" />
+      </button>
     </div>
   )
 }

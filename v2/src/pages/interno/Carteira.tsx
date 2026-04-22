@@ -64,14 +64,16 @@ export function InternoCarteira() {
   // Scatter agrupado por segmento (uma série por segmento = cor diferente + legenda)
   const scatterPorSegmento = useMemo(() => {
     const groups = new Map<string, Array<{ x: number; y: number; z: number; nome: string; cnpj: string; segmento: string; margem: number }>>()
+    // M-13: normalizar z relativo ao maior ticketMedio da carteira para evitar bolhas gigantes
+    const maxTicket = Math.max(...filtrados.map((c) => c.ticketMedio), 1)
     filtrados.forEach((c) => {
       const seg = c.segmento || 'Outros'
       if (!groups.has(seg)) groups.set(seg, [])
       groups.get(seg)!.push({
         x: c.volumeTotal,
         y: c.ticketMedio,
-        // Tamanho da bolha proporcional ao markup (mínimo 40 para ser visível)
-        z: Math.max(c.ticketMedio, 40),
+        // Tamanho normalizado: mínimo 40, máximo 500 (proporcional ao maior da carteira)
+        z: 40 + (c.ticketMedio / maxTicket) * 460,
         nome: c.nome,
         cnpj: c.cnpj || '',
         segmento: seg,
@@ -698,7 +700,8 @@ export function InternoCarteira() {
                   <Tooltip
                     formatter={(v: number) => [formatCurrency(v), 'Markup']}
                     labelFormatter={(label) => {
-                      const ec = topByMarkup.find((c) => c.nome.startsWith(label))
+                      // B-05: usar === para evitar mapeamento errado em nomes ambiguos
+                      const ec = topByMarkup.find((c) => c.nome.split(' ')[0] === label)
                       return ec ? ec.nome : label
                     }}
                   />

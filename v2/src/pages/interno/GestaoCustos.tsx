@@ -335,8 +335,8 @@ export function InternoGestaoCustos() {
                   <label className="text-xs font-medium text-gray-600 mb-1 block">Parcelas Pagas</label>
                   <input
                     type="number" value={formEq.parcelasPagas}
-                    onChange={(e) => setFormEq({ ...formEq, parcelasPagas: Number(e.target.value) })}
-                    className="input-field" min={0} step={1}
+                    onChange={(e) => setFormEq({ ...formEq, parcelasPagas: Math.min(Number(e.target.value), formEq.numeroParcelas) })}
+                    className="input-field" min={0} step={1} max={formEq.numeroParcelas}
                   />
                 </div>
               </div>

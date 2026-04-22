@@ -130,6 +130,20 @@ export function RegrasComissaoPage() {
       return
     }
 
+    // M-10A: validar ordenação e continuidade das faixas
+    if (formFaixas.length > 1) {
+      for (let i = 1; i < formFaixas.length; i++) {
+        if (formFaixas[i].de !== formFaixas[i - 1].ate + 1) {
+          showFeedback('error', `Faixa ${i + 1}: "De" deve ser exatamente ${formFaixas[i - 1].ate + 1} (continuidade obrigatoria)`)
+          return
+        }
+        if (formFaixas[i].de > formFaixas[i].ate) {
+          showFeedback('error', `Faixa ${i + 1}: valor "Ate" deve ser maior que "De"`)
+          return
+        }
+      }
+    }
+
     const newRegra: RegraComissao = {
       id: editingId || `PROD_${Date.now().toString(36).toUpperCase()}`,
       produto: formProduto.trim(),
@@ -162,6 +176,11 @@ export function RegrasComissaoPage() {
 
   const addFaixa = () => {
     const lastFaixa = formFaixas[formFaixas.length - 1]
+    // M-10B: bloquear quando a ultima faixa ja e "infinita" (ate >= 999999999)
+    if (lastFaixa && lastFaixa.ate >= 999999999) {
+      showFeedback('error', 'A ultima faixa ja cobre todos os valores — remova o limite superior antes de adicionar outra')
+      return
+    }
     const newDe = lastFaixa ? lastFaixa.ate + 1 : 0
     setFormFaixas([...formFaixas, { de: newDe, ate: newDe + 50000, percentual: 1.0 }])
   }
