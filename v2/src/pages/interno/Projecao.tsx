@@ -27,19 +27,19 @@ import {
 // Sugestoes pre-definidas
 const QUICK_PROMPTS = [
   {
-    id: 'projecao12m',
-    titulo: 'Projecao Realista 12 meses',
-    descricao: 'Cenario base + otimista + pessimista usando crescimento historico',
-    icone: <TrendingUp className="w-4 h-4" />,
-    prompt: 'Gere uma projecao realista de crescimento para os proximos 12 meses, baseada na tendencia historica do meu negocio. Inclua cenarios pessimista, base e otimista. Aponte os principais riscos e oportunidades especificos para o meu modelo de adquirencia.',
+    id: 'analise_completa',
+    titulo: 'Analise Completa',
+    descricao: 'Diagnostico + projecao 12m + pontos criticos + oportunidades + plano de acao',
+    icone: <Brain className="w-4 h-4" />,
+    prompt: 'Realize a analise completa de projecao de crescimento. Quero as 5 dimensoes: (1) diagnostico atual do negocio com indicadores abaixo do esperado, (2) projecao para 3, 6 e 12 meses nos cenarios conservador, moderado e otimista com base no historico real, (3) pontos criticos que limitam meu crescimento hoje — vazamentos financeiros e gargalo principal, (4) oportunidades estrategicas com maior retorno potencial e menor investimento, (5) plano de acao priorizado de 3 a 5 acoes concretas com evidencia dos dados e impacto financeiro estimado em R$.',
     horizonte: 12,
   },
   {
     id: 'plano6m',
     titulo: 'Plano Agressivo 6 meses',
-    descricao: 'Como dobrar o markup em 6 meses — quais alavancas usar',
+    descricao: 'Como acelerar o markup em 6 meses — quais alavancas usar',
     icone: <Target className="w-4 h-4" />,
-    prompt: 'Quero crescer agressivamente nos proximos 6 meses. Analise meus dados e me diga: quais sao as 3-5 alavancas concretas para acelerar o crescimento? Quanto cada uma pode adicionar de markup mensal? Qual o esforco/risco de cada uma?',
+    prompt: 'Quero crescer agressivamente nos proximos 6 meses. Analise meus dados e me diga: quais sao as 3-5 alavancas concretas para acelerar o crescimento? Quanto cada uma pode adicionar de markup mensal? Qual o esforco/risco de cada uma? Cite os numeros do meu historico que justificam cada alavanca.',
     horizonte: 6,
   },
   {
@@ -47,15 +47,15 @@ const QUICK_PROMPTS = [
     titulo: 'Analise de Break-even',
     descricao: 'Qual TPV minimo para cobrir todos os custos?',
     icone: <ShieldAlert className="w-4 h-4" />,
-    prompt: 'Faca uma analise de break-even completa. Qual o TPV minimo mensal necessario para cobrir TODOS os custos operacionais (incluindo equipamentos parcelados)? Quanto cada EC adicional precisa contribuir? Quando vou atingir esse break-even na trajetoria atual?',
+    prompt: 'Faca uma analise de break-even completa. Qual o TPV minimo mensal necessario para cobrir TODOS os custos operacionais (incluindo equipamentos parcelados)? Quanto cada EC adicional precisa contribuir? Quando vou atingir esse break-even na trajetoria atual? Identifique os principais vazamentos financeiros que aumentam o ponto de equilibrio.',
     horizonte: 12,
   },
   {
     id: 'oportunidades',
     titulo: 'Oportunidades Ocultas',
-    descricao: 'Cross-sell, upsell, ECs subutilizados',
+    descricao: 'Cross-sell, upsell, ECs subutilizados e alavancas de maior retorno',
     icone: <Lightbulb className="w-4 h-4" />,
-    prompt: 'Analise minha carteira de ECs e identifique oportunidades ocultas: ECs sem Conta Digital, ECs com queda de TPV, ECs em risco de churn, oportunidades de upsell. Quantifique o impacto potencial de cada acao em receita mensal.',
+    prompt: 'Analise minha carteira de ECs e identifique oportunidades ocultas com maior retorno e menor investimento: ECs sem Conta Digital, ECs com queda de TPV, ECs em risco de churn, oportunidades de upsell. Quantifique o impacto potencial de cada acao em receita mensal e priorize por esforco x retorno.',
     horizonte: 6,
   },
 ] as const
@@ -433,6 +433,11 @@ export function InternoProjecao() {
           {/* Diagnostico */}
           <DiagnosticoCard diag={resultado.diagnostico} />
 
+          {/* Pontos Criticos de Melhoria */}
+          {resultado.pontoscriticos && (
+            <PontoscriticosCard dados={resultado.pontoscriticos} />
+          )}
+
           {/* Grafico de projecao */}
           <div className="card">
             <div className="flex items-center justify-between mb-4">
@@ -458,7 +463,7 @@ export function InternoProjecao() {
                   connectNulls={false}
                 />
                 <Area
-                  type="monotone" dataKey="pessimista" name="Pessimista"
+                  type="monotone" dataKey="pessimista" name="Conservador"
                   stroke="#ef4444" fill="#ef4444" fillOpacity={0.1} strokeWidth={1}
                   connectNulls={false}
                 />
@@ -468,7 +473,7 @@ export function InternoProjecao() {
                   connectNulls={false}
                 />
                 <Line
-                  type="monotone" dataKey="base" name="Projetado (base)"
+                  type="monotone" dataKey="base" name="Moderado"
                   stroke="#8b5cf6" strokeWidth={2.5} strokeDasharray="5 5" dot={{ r: 3 }}
                   connectNulls={false}
                 />
@@ -577,6 +582,11 @@ export function InternoProjecao() {
                       </div>
                       <div className="flex-1">
                         <p className="text-sm font-semibold text-gray-900">{acao.acao}</p>
+                        {acao.evidencia && (
+                          <p className="text-xs text-blue-700 mt-1 italic">
+                            📊 {acao.evidencia}
+                          </p>
+                        )}
                         <div className="flex items-center gap-3 mt-1.5">
                           <span className="text-xs text-purple-700 font-medium flex items-center gap-1">
                             <ArrowRight className="w-3 h-3" />
@@ -656,6 +666,60 @@ export function InternoProjecao() {
 }
 
 // ─── Componentes auxiliares ────────────────────────────────────
+
+function PontoscriticosCard({ dados }: { dados: ProjecaoIA['pontoscriticos'] }) {
+  return (
+    <div className="card">
+      <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+        <AlertTriangle className="w-5 h-5 text-orange-500" />
+        Pontos Criticos de Melhoria
+      </h3>
+
+      {/* Gargalo Principal */}
+      <div className="bg-orange-50 border border-orange-100 rounded-lg p-3 mb-4">
+        <p className="text-xs font-semibold text-orange-600 uppercase tracking-wide mb-1">Gargalo Principal</p>
+        <p className="text-sm text-gray-800">{dados.gargaloPrincipal}</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Vazamentos Financeiros */}
+        {dados.vazamentos.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Vazamentos Financeiros</p>
+            <div className="space-y-1">
+              {dados.vazamentos.map((v, i) => (
+                <div key={i} className="flex items-start justify-between gap-2 py-2 border-b border-gray-50 last:border-0">
+                  <span className="text-sm text-gray-700 flex-1">{v.descricao}</span>
+                  <span className="text-sm font-bold text-red-700 flex-shrink-0 whitespace-nowrap">
+                    - {formatCurrency(v.valorEstimado)}/mes
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Categorias com Maior Potencial */}
+        {dados.categorias.length > 0 && (
+          <div>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Maior Potencial Inexplorado</p>
+            <div className="space-y-2">
+              {dados.categorias.map((c, i) => (
+                <div key={i} className="border border-amber-100 bg-amber-50/40 rounded-lg p-3">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-gray-900">{c.nome}</span>
+                    <span className="text-sm font-bold text-amber-700">+ {formatCurrency(c.potencialMensal)}/mes</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">{c.descricao}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 function DiagnosticoCard({ diag }: { diag: ProjecaoIA['diagnostico'] }) {
   const config = {
