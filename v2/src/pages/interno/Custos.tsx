@@ -106,7 +106,7 @@ export function InternoCustos() {
         <div className="card-hover border border-blue-100">
           <div className="flex items-center gap-2 mb-2">
             <Wallet className="w-5 h-5 text-blue-500" />
-            <span className="text-sm text-gray-500">Receita Liquida</span>
+            <span className="text-sm text-gray-500">Valor Líquido</span>
           </div>
           <p className={`text-2xl font-bold ${totais.receitaLiquida >= 0 ? 'text-blue-700' : 'text-red-700'}`}>
             {formatCurrency(totais.receitaLiquida)}

@@ -5,14 +5,14 @@
 
 import { useState, useMemo } from 'react'
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Legend, PieChart, Pie, Cell,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, Legend,
 } from 'recharts'
 import {
   LayoutDashboard, TrendingUp, TrendingDown, DollarSign,
   Users, Store, ArrowUpRight, ArrowDownRight, Activity,
   CheckCircle, AlertTriangle, XCircle, Lightbulb,
-  CreditCard, Percent, Wallet, ShieldAlert, Star,
+  CreditCard, Percent, Wallet, ShieldAlert,
   Calendar, ChevronRight,
 } from 'lucide-react'
 import { useEquipeData } from '../../hooks/useEquipeData'
@@ -23,8 +23,8 @@ import { LoadingState } from '../../components/LoadingState'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { formatCurrency, formatCurrencyShort } from '../../utils/format'
 import {
-  calcMargemReal, getECsSemReceita,
-  getOportunidadesContaDigital, getTopByMarkup, getMarkupDistribution,
+  getECsSemReceita,
+  getOportunidadesContaDigital, getMarkupDistribution,
 } from '../../services/ecAnalysis'
 import type { DadosFechamento } from '../../types'
 
@@ -131,31 +131,16 @@ export function EquipeDashboard() {
   // Análise de carteira
   const carteira = useMemo(() => {
     if (!clientes.length) return null
-    const totalVol = clientes.reduce((s, c) => s + c.volumeTotal, 0)
     const comReceita = clientes.filter((c) => c.ticketMedio > 0)
     const semReceita = getECsSemReceita(clientes)
     const oportunidades = getOportunidadesContaDigital(clientes)
-    const top5 = getTopByMarkup(clientes, 5)
     const distribuicao = getMarkupDistribution(clientes)
-    const ordenados = [...clientes].sort((a, b) => b.volumeTotal - a.volumeTotal)
-    let acum = 0
-    const top5pct = totalVol > 0
-      ? Math.round(ordenados.slice(0, 5).reduce((s, c) => s + c.volumeTotal, 0) / totalVol * 100) : 0
-    const paretoData = ordenados.slice(0, 8).map((c) => {
-      acum += c.volumeTotal
-      return { nome: c.nome.slice(0, 14), tpv: c.volumeTotal, pctAcum: totalVol > 0 ? Math.round(acum / totalVol * 100) : 0 }
-    })
-    return { totalVol, comReceita: comReceita.length, semReceita, oportunidades, top5, distribuicao, top5pct, paretoData }
+    return { comReceita: comReceita.length, semReceita, oportunidades, distribuicao }
   }, [clientes])
 
   // Dados evolução (últimos 10 períodos)
   const evolucao = useMemo(() =>
     fechamentos.slice(-10).map((f) => ({ periodo: f.periodo, markup: f.markupPos, liquido: f.valorLiquido, tpv: f.tpvTotal, ecs: f.ecsAtivos }))
-  , [fechamentos])
-
-  // Gráfico all-in-one (todos os períodos)
-  const chartTodos = useMemo(() =>
-    fechamentos.map((f) => ({ periodo: f.periodo, markup: f.markupPos, liquido: f.valorLiquido }))
   , [fechamentos])
 
   // Insights
@@ -248,179 +233,89 @@ export function EquipeDashboard() {
         </div>
       )}
 
-      {/* ══ EVOLUÇÃO + DRE ══════════════════════════════════════ */}
-      {(evolucao.length > 1 || kpis) && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-          {/* Gráfico evolução — 2/3 */}
-          {evolucao.length > 1 && (
-            <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-5">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-800">Evolução de Resultados</h3>
-                  <p className="text-xs text-gray-400 mt-0.5">Markup POS e Valor Líquido — últimos períodos</p>
-                </div>
-                {kpis?.varMarkup !== null && kpis?.varMarkup !== undefined && (
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${kpis.varMarkup >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
-                    Markup {kpis.varMarkup >= 0 ? '+' : ''}{kpis.varMarkup.toFixed(1)}% vs anterior
-                  </span>
-                )}
-              </div>
-              <ResponsiveContainer width="100%" height={230}>
-                <AreaChart data={evolucao} margin={{ top: 5, right: 10, bottom: 20, left: 5 }}>
-                  <defs>
-                    <linearGradient id="gMkp" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#059669" stopOpacity={0.18}/>
-                      <stop offset="95%" stopColor="#059669" stopOpacity={0}/>
-                    </linearGradient>
-                    <linearGradient id="gLiq" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.12}/>
-                      <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="periodo" tick={{ fontSize: 10 }} angle={-15} textAnchor="end" height={35} />
-                  <YAxis tickFormatter={(v: number) => formatCurrencyShort(v)} tick={{ fontSize: 10 }} width={68} />
-                  <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                  <Legend wrapperStyle={{ fontSize: 11 }} />
-                  <Area type="monotone" dataKey="markup" name="Markup POS" stroke="#059669" strokeWidth={2.5}
-                    fill="url(#gMkp)" dot={{ r: 3, fill: '#059669' }} activeDot={{ r: 5 }} />
-                  <Area type="monotone" dataKey="liquido" name="Valor Líquido" stroke="#3B82F6" strokeWidth={2}
-                    fill="url(#gLiq)" dot={{ r: 3, fill: '#3B82F6' }} strokeDasharray="4 2" />
-                </AreaChart>
-              </ResponsiveContainer>
+      {/* ══ EVOLUÇÃO DE RESULTADOS ══════════════════════════════ */}
+      {evolucao.length > 1 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-gray-800">Evolução de Resultados</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Markup POS e Valor Líquido — últimos períodos</p>
             </div>
-          )}
-
-          {/* DRE snapshot — 1/3 — so aparece com 2+ fechamentos para fins comparativos */}
-          {kpis && fechamentos.length >= 2 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col">
-              <h3 className="text-sm font-semibold text-gray-800 mb-1">DRE — {kpis.f.periodo}</h3>
-              <p className="text-xs text-gray-400 mb-4">Composição do resultado do período</p>
-              <div className="space-y-2 flex-1">
-                {[
-                  { label: 'Markup POS', valor: kpis.f.markupPos, tipo: 'receita' },
-                  { label: 'Comissão de Rede', valor: kpis.f.comissaoRede, tipo: 'receita' },
-                  { label: 'Repasse', valor: kpis.f.repasse, tipo: 'receita' },
-                  // M-05: exibir receitas manuais quando existirem para que o subtotal bata
-                  ...(totalReceitasLocais > 0 ? [{ label: 'Receitas Manuais', valor: totalReceitasLocais, tipo: 'receita' }] : []),
-                  { label: 'Receita Bruta', valor: kpis.receitaBruta, tipo: 'subtotal' },
-                  { label: '(-) Descontos', valor: kpis.f.descontos, tipo: 'deducao' },
-                  { label: '(-) Cobr. Conta Digital', valor: kpis.f.faturaDigital, tipo: 'deducao' },
-                  { label: 'Valor Líquido', valor: kpis.f.valorLiquido, tipo: 'resultado' },
-                  ...(totalCustos > 0 ? [{ label: '(-) Custos Op.', valor: totalCustos, tipo: 'custo' }] : []),
-                  ...(totalCustos > 0 ? [{ label: 'Resultado Op.', valor: kpis.lucroOp, tipo: 'lucro' }] : []),
-                ].filter((l) => l.valor !== 0).map((linha, i) => (
-                  <div key={i} className={`flex justify-between items-center px-2.5 py-1.5 rounded-lg text-xs ${
-                    linha.tipo === 'subtotal' ? 'bg-gray-50 font-semibold text-gray-700 border border-gray-200' :
-                    linha.tipo === 'resultado' ? 'bg-blue-50 font-bold text-blue-800 border border-blue-200' :
-                    linha.tipo === 'lucro' ? `${kpis.lucroOp >= 0 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-red-50 text-red-800 border border-red-200'} font-bold` :
-                    linha.tipo === 'deducao' || linha.tipo === 'custo' ? 'text-red-600' :
-                    'text-gray-600'
-                  }`}>
-                    <span>{linha.label}</span>
-                    <span className="font-medium">
-                      {(linha.tipo === 'deducao' || linha.tipo === 'custo') && linha.valor > 0
-                        ? `(${formatCurrencyShort(linha.valor)})` : formatCurrencyShort(linha.valor)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+            {kpis?.varMarkup !== null && kpis?.varMarkup !== undefined && (
+              <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${kpis.varMarkup >= 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'}`}>
+                Markup {kpis.varMarkup >= 0 ? '+' : ''}{kpis.varMarkup.toFixed(1)}% vs anterior
+              </span>
+            )}
+          </div>
+          <ResponsiveContainer width="100%" height={230}>
+            <AreaChart data={evolucao} margin={{ top: 5, right: 10, bottom: 20, left: 5 }}>
+              <defs>
+                <linearGradient id="gMkp" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#059669" stopOpacity={0.18}/>
+                  <stop offset="95%" stopColor="#059669" stopOpacity={0}/>
+                </linearGradient>
+                <linearGradient id="gLiq" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.12}/>
+                  <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <XAxis dataKey="periodo" tick={{ fontSize: 10 }} angle={-15} textAnchor="end" height={35} />
+              <YAxis tickFormatter={(v: number) => formatCurrencyShort(v)} tick={{ fontSize: 10 }} width={68} />
+              <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+              <Legend wrapperStyle={{ fontSize: 11 }} />
+              <Area type="monotone" dataKey="markup" name="Markup POS" stroke="#059669" strokeWidth={2.5}
+                fill="url(#gMkp)" dot={{ r: 3, fill: '#059669' }} activeDot={{ r: 5 }} />
+              <Area type="monotone" dataKey="liquido" name="Valor Líquido" stroke="#3B82F6" strokeWidth={2}
+                fill="url(#gLiq)" dot={{ r: 3, fill: '#3B82F6' }} strokeDasharray="4 2" />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
       )}
 
       {/* ══ CARTEIRA DE ECs ═════════════════════════════════════ */}
       {carteira && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-
-          {/* Saúde da carteira */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <h3 className="text-sm font-semibold text-gray-800 mb-4">Saúde da Carteira de ECs</h3>
-            <div className="grid grid-cols-2 gap-3 mb-5">
-              {[
-                { label: 'Total na base', value: clientes.length, color: 'text-gray-800', bg: 'bg-gray-50', desc: 'estabelecimentos' },
-                { label: 'Gerando receita', value: carteira.comReceita, color: 'text-emerald-700', bg: 'bg-emerald-50',
-                  desc: `${clientes.length > 0 ? Math.round(carteira.comReceita / clientes.length * 100) : 0}% da base` },
-                { label: 'Sem receita (risco)', value: carteira.semReceita.length, color: carteira.semReceita.length > 0 ? 'text-red-700' : 'text-gray-400', bg: carteira.semReceita.length > 0 ? 'bg-red-50' : 'bg-gray-50',
-                  desc: carteira.semReceita.length > 0 ? 'Risco de churn' : 'Tudo em dia' },
-                { label: 'Sem Conta Digital', value: carteira.oportunidades.length, color: 'text-blue-700', bg: 'bg-blue-50',
-                  desc: carteira.oportunidades.length > 0 ? `+${formatCurrencyShort(carteira.oportunidades.length * PRECO_CONTA_DIGITAL)}/mês pot.` : 'Nenhuma' },
-              ].map((item) => (
-                <div key={item.label} className={`${item.bg} rounded-xl p-3`}>
-                  <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
-                  <p className="text-xs text-gray-600 font-medium mt-0.5">{item.label}</p>
-                  <p className="text-xs text-gray-400">{item.desc}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Distribuição por faixa de markup */}
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Distribuição por Faixa de Receita</h4>
-            <div className="space-y-2">
-              {carteira.distribuicao.map((d) => {
-                const pct = clientes.length > 0 ? (d.count / clientes.length) * 100 : 0
-                return (
-                  <div key={d.faixa} className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full flex-shrink-0`} style={{ backgroundColor: d.color }} />
-                    <span className="text-xs text-gray-600 w-28 flex-shrink-0">{d.faixa}</span>
-                    <div className="flex-1 bg-gray-100 rounded-full h-1.5">
-                      <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: d.color }} />
-                    </div>
-                    <span className="text-xs font-medium text-gray-700 w-12 text-right">{d.count} ECs</span>
-                  </div>
-                )
-              })}
-            </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-gray-800">Saúde da Carteira de ECs</h3>
+            <a href="/interno/carteira" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 font-medium">
+              Ver carteira completa <ChevronRight className="w-3.5 h-3.5" />
+            </a>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+            {[
+              { label: 'Total na base', value: clientes.length, color: 'text-gray-800', bg: 'bg-gray-50', desc: 'estabelecimentos' },
+              { label: 'Gerando receita', value: carteira.comReceita, color: 'text-emerald-700', bg: 'bg-emerald-50',
+                desc: `${clientes.length > 0 ? Math.round(carteira.comReceita / clientes.length * 100) : 0}% da base` },
+              { label: 'Sem receita (risco)', value: carteira.semReceita.length, color: carteira.semReceita.length > 0 ? 'text-red-700' : 'text-gray-400', bg: carteira.semReceita.length > 0 ? 'bg-red-50' : 'bg-gray-50',
+                desc: carteira.semReceita.length > 0 ? 'Risco de churn' : 'Tudo em dia' },
+              { label: 'Sem Conta Digital', value: carteira.oportunidades.length, color: 'text-blue-700', bg: 'bg-blue-50',
+                desc: carteira.oportunidades.length > 0 ? `+${formatCurrencyShort(carteira.oportunidades.length * PRECO_CONTA_DIGITAL)}/mês pot.` : 'Nenhuma' },
+            ].map((item) => (
+              <div key={item.label} className={`${item.bg} rounded-xl p-3`}>
+                <p className={`text-2xl font-bold ${item.color}`}>{item.value}</p>
+                <p className="text-xs text-gray-600 font-medium mt-0.5">{item.label}</p>
+                <p className="text-xs text-gray-400">{item.desc}</p>
+              </div>
+            ))}
           </div>
 
-          {/* Top 5 ECs + Pareto */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-800 flex items-center gap-2">
-                  <Star className="w-4 h-4 text-amber-400" /> Top 5 ECs por Receita
-                </h3>
-                <p className="text-xs text-gray-400 mt-0.5">Top 5 = {carteira.top5pct}% do TPV total</p>
-              </div>
-              {carteira.top5pct > 50 && (
-                <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium flex-shrink-0">⚠ Concentrado</span>
-              )}
-            </div>
-
-            <div className="space-y-3 mb-5">
-              {carteira.top5.map((ec, i) => {
-                const pct = carteira.top5[0].ticketMedio > 0 ? (ec.ticketMedio / carteira.top5[0].ticketMedio) * 100 : 0
-                const marg = calcMargemReal(ec.ticketMedio, ec.volumeTotal)
-                return (
-                  <div key={ec.id} className="flex items-center gap-2">
-                    <span className={`text-xs font-bold w-4 ${i === 0 ? 'text-amber-500' : 'text-gray-300'}`}>{i + 1}</span>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between mb-0.5">
-                        <span className="text-xs font-medium text-gray-700 truncate">{ec.nome}</span>
-                        <span className="text-xs font-bold text-emerald-700 ml-2 flex-shrink-0">{formatCurrencyShort(ec.ticketMedio)}</span>
-                      </div>
-                      <div className="w-full bg-gray-100 rounded-full h-1.5">
-                        <div className={`h-1.5 rounded-full ${i === 0 ? 'bg-amber-400' : 'bg-emerald-400'}`} style={{ width: `${Math.min(pct, 100)}%` }} />
-                      </div>
-                    </div>
-                    <span className="text-xs text-gray-400 w-10 text-right flex-shrink-0">{marg.toFixed(1)}%</span>
+          {/* Distribuição por faixa de markup */}
+          <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Distribuição por Faixa de Receita</h4>
+          <div className="space-y-2">
+            {carteira.distribuicao.map((d) => {
+              const pct = clientes.length > 0 ? (d.count / clientes.length) * 100 : 0
+              return (
+                <div key={d.faixa} className="flex items-center gap-3">
+                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: d.color }} />
+                  <span className="text-xs text-gray-600 w-28 flex-shrink-0">{d.faixa}</span>
+                  <div className="flex-1 bg-gray-100 rounded-full h-1.5">
+                    <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: d.color }} />
                   </div>
-                )
-              })}
-            </div>
-
-            {/* Mini pareto */}
-            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Concentração de TPV</h4>
-            <ResponsiveContainer width="100%" height={130}>
-              <BarChart data={carteira.paretoData} margin={{ bottom: 25, left: 0, right: 5 }}>
-                <XAxis dataKey="nome" tick={{ fontSize: 9 }} angle={-30} textAnchor="end" interval={0} />
-                <YAxis tickFormatter={(v: number) => formatCurrencyShort(v)} tick={{ fontSize: 9 }} width={55} />
-                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                <Bar dataKey="tpv" name="TPV" fill="#3B82F6" radius={[3, 3, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+                  <span className="text-xs font-medium text-gray-700 w-12 text-right">{d.count} ECs</span>
+                </div>
+              )
+            })}
           </div>
         </div>
       )}
@@ -454,71 +349,19 @@ export function EquipeDashboard() {
         </div>
       )}
 
-      {/* ══ GRÁFICO HISTÓRICO COMPLETO ═══════════════════════════ */}
-      {chartTodos.length > 1 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-800 mb-1">Histórico Completo de Resultados</h3>
-          <p className="text-xs text-gray-400 mb-4">Markup POS vs Valor Líquido — todos os períodos cadastrados</p>
-          <ResponsiveContainer width="100%" height={240}>
-            <BarChart data={chartTodos} margin={{ bottom: 20, left: 5, right: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-              <XAxis dataKey="periodo" tick={{ fontSize: 10 }} angle={-20} textAnchor="end" height={40} />
-              <YAxis tickFormatter={(v: number) => formatCurrencyShort(v)} tick={{ fontSize: 10 }} width={68} />
-              <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="markup" name="Markup POS" fill="#059669" radius={[3, 3, 0, 0]} />
-              <Bar dataKey="liquido" name="Valor Líquido" fill="#3B82F6" radius={[3, 3, 0, 0]} opacity={0.7} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      )}
-
-      {/* ══ TABELA HISTÓRICA COMPARATIVA ════════════════════════ */}
+      {/* ══ LINK PARA RELATÓRIOS ════════════════════════════════ */}
       {fechamentos.length > 1 && (
-        <div className="bg-white rounded-xl border border-gray-200 p-5">
-          <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-gray-400" /> Evolução por Período
-          </h3>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  {['Período','ECs','Var. ECs','TPV','Markup','Margem','Líquido','Var. Markup'].map((h) => (
-                    <th key={h} className={`py-2.5 px-3 text-xs font-medium text-gray-400 ${h === 'Período' ? 'text-left' : 'text-right'}`}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {[...fechamentos].reverse().slice(0, 10).map((f, i, arr) => {
-                  const prev = arr[i + 1]
-                  const varM = prev?.markupPos ? ((f.markupPos - prev.markupPos) / prev.markupPos) * 100 : null
-                  const varE = prev?.ecsAtivos ? ((f.ecsAtivos - prev.ecsAtivos) / prev.ecsAtivos) * 100 : null
-                  const marg = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
-                  const isAtual = f.periodo === fechamentoAtual?.periodo
-                  return (
-                    <tr key={f.periodo} className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${isAtual ? 'bg-blue-50/60' : ''}`}>
-                      <td className={`py-2.5 px-3 font-medium ${isAtual ? 'text-blue-700' : 'text-gray-700'}`}>
-                        {f.periodo} {isAtual && <span className="ml-1 text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">atual</span>}
-                      </td>
-                      <td className="py-2.5 px-3 text-right text-gray-600">{f.ecsAtivos}</td>
-                      <td className="py-2.5 px-3 text-right">
-                        <VarBadge val={varE} suffix="%" />
-                      </td>
-                      <td className="py-2.5 px-3 text-right text-gray-600">{formatCurrencyShort(f.tpvTotal)}</td>
-                      <td className="py-2.5 px-3 text-right font-medium text-gray-800">{formatCurrencyShort(f.markupPos)}</td>
-                      <td className={`py-2.5 px-3 text-right text-xs font-semibold ${marg >= 1.5 ? 'text-emerald-600' : marg >= 1 ? 'text-amber-600' : 'text-red-600'}`}>
-                        {marg.toFixed(2)}%
-                      </td>
-                      <td className="py-2.5 px-3 text-right text-blue-700 font-medium">{formatCurrencyShort(f.valorLiquido)}</td>
-                      <td className="py-2.5 px-3 text-right">
-                        <VarBadge val={varM} suffix="%" />
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
+        <div className="bg-gray-50 border border-gray-200 rounded-xl px-5 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <TrendingUp className="w-4 h-4 text-gray-400" />
+            <div>
+              <p className="text-sm font-medium text-gray-700">Histórico completo de {fechamentos.length} períodos disponível</p>
+              <p className="text-xs text-gray-400">Evolução detalhada, comparativos e análise por período completos em Relatórios</p>
+            </div>
           </div>
+          <a href="/relatorios" className="flex-shrink-0 text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 bg-blue-50 hover:bg-blue-100 px-3 py-2 rounded-lg transition-colors">
+            Ver Relatórios <ChevronRight className="w-3.5 h-3.5" />
+          </a>
         </div>
       )}
 

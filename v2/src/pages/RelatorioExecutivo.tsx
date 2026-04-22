@@ -6,7 +6,7 @@
 import { useMemo } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, PieChart, Pie, Cell, Legend,
+  ResponsiveContainer,
 } from 'recharts'
 import {
   FileText, TrendingUp, TrendingDown, AlertTriangle,
@@ -15,7 +15,7 @@ import {
 import { useInternoData } from '../hooks/useInternoData'
 import { useDataContext } from '../contexts/dataContextValue'
 import { LoadingState } from '../components/LoadingState'
-import { formatCurrency, formatCurrencyShort, getChartColor } from '../utils/format'
+import { formatCurrency, formatCurrencyShort } from '../utils/format'
 import type { DadosFechamento } from '../types'
 import { PRECO_CONTA_DIGITAL } from '../constants/empresa'
 
@@ -265,11 +265,6 @@ export function RelatorioExecutivoPage() {
       : lucroOperacional < 0 ? 'ATENCAO'
       : 'SAUDAVEL'
 
-    // Top 3 clientes por markup
-    const top3 = [...clientes]
-      .sort((a, b) => b.ticketMedio - a.ticketMedio)
-      .slice(0, 3)
-
     // Recomendacoes
     const recomendacoes = gerarRecomendacoes(f, ant, totalCustosMensal, clientes.length)
 
@@ -278,12 +273,6 @@ export function RelatorioExecutivoPage() {
       .filter((r) => (r.tipo === 'critica' || r.tipo === 'atencao') && r.acao)
       .slice(0, 3)
       .map((r) => r.acao as string)
-
-    // Por categoria de custo (pizza)
-    const custosPorCat = ['Fixo', 'Variavel', 'Financeiro', 'Fornecedor'].map((cat) => ({
-      name: cat,
-      value: custos.filter((c) => c.categoria === cat).reduce((s, c) => s + c.valor, 0),
-    })).filter((d) => d.value > 0)
 
     // Bloco 7: projecao rapida (taxa de crescimento media dos ultimos fechamentos)
     const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -335,7 +324,7 @@ export function RelatorioExecutivoPage() {
       totalReceitas, totalDeducoes, margemCalc,
       lucroOperacional, despesasLocais,
       varMarkup, varLiquido, varEcs,
-      saude, top3, recomendacoes, acoes, custosPorCat,
+      saude, recomendacoes, acoes,
       projecao3meses, taxaMedia, receitaMeta, reducaoCustoNecessaria, margemAlvo,
     }
   }, [fechamentoAtual, periodoAnterior, totalCustosMensal, clientes, lancamentos, custos, fechamentos])
@@ -352,7 +341,7 @@ export function RelatorioExecutivoPage() {
     )
   }
 
-  const { f, ant, totalReceitas, totalDeducoes, margemCalc, lucroOperacional, varMarkup, varLiquido, varEcs, saude, top3, recomendacoes, acoes, custosPorCat } = relatorio
+  const { f, ant, totalReceitas, totalDeducoes, margemCalc, lucroOperacional, varMarkup, varLiquido, varEcs, saude, recomendacoes, acoes } = relatorio
 
   const saúdeConfig = {
     CRITICA: { bg: 'bg-red-100 border-red-300', text: 'text-red-800', icon: <XCircle className="w-5 h-5 text-red-600" />, label: 'SITUACAO CRITICA' },
@@ -452,49 +441,36 @@ export function RelatorioExecutivoPage() {
       </div>
 
       {/* 3. Analise de Custos */}
-      {(custosPorCat.length > 0 || totalCustosMensal > 0) && (
+      {totalCustosMensal > 0 && (
         <div>
           <h2 className="text-base font-semibold text-gray-700 uppercase tracking-wide mb-3">
             3. Analise de Custos
           </h2>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {custosPorCat.length > 0 && (
-              <div className="card">
-                <h3 className="text-sm font-semibold text-gray-700 mb-3">Distribuicao por Categoria</h3>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie data={custosPorCat} cx="50%" cy="50%" outerRadius={75} dataKey="value" paddingAngle={2}
-                      label={({ name, percent }) => `${name} (${((Number(percent) || 0) * 100).toFixed(0)}%)`}
-                    >
-                      {custosPorCat.map((_, i) => <Cell key={i} fill={getChartColor(i)} />)}
-                    </Pie>
-                    <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-            <div className="card space-y-3">
+          <div className="card space-y-3">
+            <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-gray-700">Resumo de Custos Mensais</h3>
-              {custos.filter((c) => c.recorrencia === 'mensal').slice(0, 5).map((c) => (
-                <div key={c.id} className="flex justify-between text-sm">
-                  <span className="text-gray-600">{c.descricao}</span>
-                  <span className="font-medium text-red-700">- {formatCurrency(c.valor)}</span>
-                </div>
-              ))}
-              {custos.filter((c) => c.recorrencia === 'mensal').length > 5 && (
-                <p className="text-xs text-gray-400">+ {custos.filter((c) => c.recorrencia === 'mensal').length - 5} outros</p>
-              )}
-              <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-sm">
-                <span>Total Custos Mensais</span>
-                <span className="text-red-700">- {formatCurrency(totalCustosMensal)}</span>
-              </div>
-              {f.markupPos > 0 && (
-                <p className="text-xs text-gray-400">
-                  {((totalCustosMensal / f.markupPos) * 100).toFixed(1)}% do Markup POS
-                </p>
-              )}
+              <a href="/interno/custos" className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                Ver detalhamento completo →
+              </a>
             </div>
+            {custos.filter((c) => c.recorrencia === 'mensal').slice(0, 5).map((c) => (
+              <div key={c.id} className="flex justify-between text-sm">
+                <span className="text-gray-600">{c.descricao}</span>
+                <span className="font-medium text-red-700">- {formatCurrency(c.valor)}</span>
+              </div>
+            ))}
+            {custos.filter((c) => c.recorrencia === 'mensal').length > 5 && (
+              <p className="text-xs text-gray-400">+ {custos.filter((c) => c.recorrencia === 'mensal').length - 5} outros</p>
+            )}
+            <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-sm">
+              <span>Total Custos Mensais</span>
+              <span className="text-red-700">- {formatCurrency(totalCustosMensal)}</span>
+            </div>
+            {f.markupPos > 0 && (
+              <p className="text-xs text-gray-400">
+                {((totalCustosMensal / f.markupPos) * 100).toFixed(1)}% do Markup POS — distribuição por categoria disponível em Gestão de Custos
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -504,42 +480,52 @@ export function RelatorioExecutivoPage() {
         <h2 className="text-base font-semibold text-gray-700 uppercase tracking-wide mb-3">
           4. Analise de Carteira
         </h2>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top 3 clientes */}
-          {top3.length > 0 && (
-            <div className="card">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Top 3 Clientes por Markup</h3>
-              {top3.map((c, i) => (
-                <div key={c.id} className="flex items-center gap-3 py-2 border-b border-gray-50 last:border-0">
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${i === 0 ? 'bg-yellow-100 text-yellow-700' : i === 1 ? 'bg-gray-100 text-gray-600' : 'bg-orange-100 text-orange-700'}`}>
-                    {i + 1}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{c.nome}</p>
-                    <p className="text-xs text-gray-500">{c.segmento}</p>
-                  </div>
-                  <span className="text-sm font-bold text-emerald-700">{formatCurrency(c.ticketMedio)}</span>
-                </div>
-              ))}
+        {ant ? (
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-gray-700">Comparativo vs Período Anterior</h3>
+              <a href="/relatorios" className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                Ver histórico completo →
+              </a>
             </div>
-          )}
-
-          {/* Evolucao por periodo (grafico) */}
-          {fechamentos.length > 1 && (
-            <div className="card">
-              <h3 className="text-sm font-semibold text-gray-700 mb-3">Evolucao do Markup POS</h3>
-              <ResponsiveContainer width="100%" height={180}>
-                <BarChart data={fechamentos}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                  <XAxis dataKey="periodo" tick={{ fontSize: 9 }} />
-                  <YAxis tickFormatter={(v: number) => formatCurrencyShort(v)} tick={{ fontSize: 9 }} />
-                  <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                  <Bar dataKey="markupPos" name="Markup POS" fill="#00C896" radius={[3, 3, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </div>
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-gray-100">
+                  <th className="text-left py-2 text-xs text-gray-500 font-medium">Métrica</th>
+                  <th className="text-right py-2 text-xs text-gray-500 font-medium">{ant.periodo}</th>
+                  <th className="text-right py-2 text-xs text-gray-500 font-medium">{f.periodo}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { label: 'Markup POS', prev: formatCurrency(ant.markupPos), curr: formatCurrency(f.markupPos), up: f.markupPos >= ant.markupPos },
+                  { label: 'Valor Líquido', prev: formatCurrency(ant.valorLiquido), curr: formatCurrency(f.valorLiquido), up: f.valorLiquido >= ant.valorLiquido },
+                  { label: 'ECs Ativos', prev: String(ant.ecsAtivos), curr: String(f.ecsAtivos), up: f.ecsAtivos >= ant.ecsAtivos },
+                  {
+                    label: 'Margem',
+                    prev: `${(ant.tpvTotal > 0 ? (ant.markupPos / ant.tpvTotal) * 100 : 0).toFixed(2)}%`,
+                    curr: `${margemCalc.toFixed(2)}%`,
+                    up: margemCalc >= (ant.tpvTotal > 0 ? (ant.markupPos / ant.tpvTotal) * 100 : 0),
+                  },
+                ].map((row, i) => (
+                  <tr key={i} className="border-b border-gray-50 last:border-0">
+                    <td className="py-2.5 text-gray-600">{row.label}</td>
+                    <td className="py-2.5 text-right text-gray-400">{row.prev}</td>
+                    <td className={`py-2.5 text-right font-semibold ${row.up ? 'text-emerald-700' : 'text-red-700'}`}>{row.curr}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-xs text-gray-400 mt-3">
+              Ver carteira de ECs, saúde e oportunidades em{' '}
+              <a href="/interno/carteira" className="text-blue-500 hover:underline">Carteira</a>
+            </p>
+          </div>
+        ) : (
+          <div className="card text-center py-6 text-gray-400 text-sm">
+            Apenas um período disponível — adicione mais fechamentos para ver o comparativo
+          </div>
+        )}
       </div>
 
       {/* 5. Recomendacoes Estrategicas */}

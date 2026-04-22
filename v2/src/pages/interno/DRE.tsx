@@ -293,7 +293,7 @@ export function InternoDRE() {
                       </tr>
                     ))}
                     <tr className="border-b-2 border-gray-200">
-                      <td className="py-2 px-3 font-semibold text-gray-800">Total Receitas</td>
+                      <td className="py-2 px-3 font-semibold text-gray-800">Receita Bruta</td>
                       <td className="py-2 px-3 text-right font-bold text-emerald-800">
                         {formatCurrency(dreData.totalReceitas)}
                       </td>

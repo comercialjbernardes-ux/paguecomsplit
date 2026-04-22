@@ -232,7 +232,7 @@ export function InternoCarteira() {
           <p className="text-2xl font-bold text-blue-700 mt-1">{formatCurrency(kpis.markupMedio)}</p>
         </div>
         <div className="card-hover">
-          <p className="text-sm text-gray-500">Clientes Ativos</p>
+          <p className="text-sm text-gray-500">ECs Ativos</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {kpis.ativos}
             <span className="text-sm font-normal text-gray-400 ml-1">

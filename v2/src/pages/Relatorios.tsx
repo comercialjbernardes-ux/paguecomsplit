@@ -246,7 +246,7 @@ export function RelatoriosPage() {
       { label: 'Receita Bruta', valor: receitaBruta, tipo: 'subtotal' as const },
       { label: '(-) Descontos', valor: -f.descontos, tipo: 'deducao' as const },
       { label: '(-) Cobra Digital', valor: -f.faturaDigital, tipo: 'deducao' as const },
-      { label: 'Receita Líquida', valor: f.valorLiquido, tipo: 'resultado' as const },
+      { label: 'Valor Líquido', valor: f.valorLiquido, tipo: 'resultado' as const },
     ].filter((l) => l.valor !== 0)
 
     // Insights inteligentes

@@ -8,7 +8,7 @@ import { useState, useMemo, useEffect } from 'react'
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
 } from 'recharts'
-import { DollarSign, User, TrendingUp, Percent } from 'lucide-react'
+import { DollarSign, User, TrendingUp } from 'lucide-react'
 import { useEquipeData } from '../../hooks/useEquipeData'
 import { LoadingState } from '../../components/LoadingState'
 import { formatCurrency, formatPercent, calcAtingimento } from '../../utils/format'
@@ -142,12 +142,14 @@ export function EquipeComissionamento() {
                 </div>
               </div>
               <div className="space-y-3">
-                <InfoRow icon={<DollarSign className="w-4 h-4" />} label="Faturamento" value={formatCurrency(comissao.faturamento)} />
-                <InfoRow icon={<TrendingUp className="w-4 h-4" />} label="Meta" value={formatCurrency(comissao.meta)} />
-                <InfoRow icon={<Percent className="w-4 h-4" />} label="Atingimento" value={formatPercent(comissao.atingimento)} highlight={comissao.atingimento >= 100} />
+                <InfoRow icon={<TrendingUp className="w-4 h-4" />} label="Meta Mensal" value={formatCurrency(comissao.meta)} />
                 <InfoRow icon={<User className="w-4 h-4" />} label="Comissao Base" value={`${comissao.pctBase}%`} />
-                <InfoRow icon={<User className="w-4 h-4" />} label="Bonus" value={`${comissao.pctBonus}%`} />
+                <InfoRow icon={<DollarSign className="w-4 h-4" />} label="Bonus" value={`${comissao.pctBonus}%`} />
               </div>
+              <p className="text-xs text-gray-400 mt-3">
+                Faturamento e atingimento disponíveis em{' '}
+                <a href="/equipe/ranking" className="text-blue-500 hover:underline">Ranking</a>
+              </p>
             </div>
 
             {/* Comissao Total */}
