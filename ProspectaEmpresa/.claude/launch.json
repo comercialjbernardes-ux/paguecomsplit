@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "prospectaempresa",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["C:\\Users\\otavio\\Downloads\\Arquivos site\\busca empresa\\app.py"],
+      "port": 5001
+    }
+  ]
+}
