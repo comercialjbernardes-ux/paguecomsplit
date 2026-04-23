@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ProspectaEmpresa — Prospecção de Empresas Brasileiras</title>
   <meta name="description" content="Prospecção de empresas brasileiras com dados da Receita Federal do Brasil. Busque por CNPJ, UF, CNAE, porte e muito mais." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" />
   <link rel="stylesheet" href="/static/style.css" />
   <!-- SheetJS para exportação XLSX -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.1/dist/xlsx.full.min.js"></script>
@@ -28,31 +31,37 @@
     <span class="header-icon" aria-hidden="true">&#127970;</span>
     <div>
       <h1>ProspectaEmpresa</h1>
-      <p class="header-subtitle">Prospecção de Empresas Brasileiras</p>
+      <p class="header-subtitle">Prospecção Inteligente · Dados Receita Federal</p>
     </div>
   </div>
 
   <div class="kpi-grid" role="list" aria-label="Indicadores de resultado">
+
     <div class="kpi-card" role="listitem">
       <span class="kpi-label" id="label-kpi-total">Total Encontradas</span>
       <span class="kpi-value" id="kpi-total" aria-labelledby="label-kpi-total">—</span>
     </div>
+
     <div class="kpi-card kpi-success" role="listitem">
       <span class="kpi-label" id="label-kpi-email">Com Email</span>
       <span class="kpi-value" id="kpi-email" aria-labelledby="label-kpi-email">—</span>
     </div>
+
     <div class="kpi-card kpi-accent" role="listitem">
       <span class="kpi-label" id="label-kpi-telefone">Com Telefone</span>
       <span class="kpi-value" id="kpi-telefone" aria-labelledby="label-kpi-telefone">—</span>
     </div>
+
     <div class="kpi-card kpi-success" role="listitem">
       <span class="kpi-label" id="label-kpi-ativas">Ativas</span>
       <span class="kpi-value" id="kpi-ativas" aria-labelledby="label-kpi-ativas">—</span>
     </div>
+
     <div class="kpi-card" role="listitem">
       <span class="kpi-label" id="label-kpi-capital">Capital Total</span>
       <span class="kpi-value kpi-value-sm" id="kpi-capital" aria-labelledby="label-kpi-capital">—</span>
     </div>
+
   </div>
 </header>
 
@@ -61,11 +70,12 @@
 
   <!-- ===== SIDEBAR — FILTROS ===== -->
   <aside class="sidebar" id="sidebar" aria-label="Painel de filtros">
+
     <div class="sidebar-header">
-      <span aria-hidden="true">&#128269;</span> Buscar Empresas
+      <span aria-hidden="true">&#9672;</span> Filtros de Busca
     </div>
 
-    <!-- Razão Social (filtro local pós-busca) -->
+    <!-- Razão Social -->
     <div class="filter-group">
       <label class="filter-label" for="f-razao">Razão Social / Nome Fantasia</label>
       <input type="text" id="f-razao" class="filter-input" placeholder="Filtrar nos resultados..."
@@ -119,7 +129,8 @@
     <div class="filter-group">
       <label class="filter-label" for="f-cnae-busca">CNAE / Segmento</label>
       <input type="text" id="f-cnae-busca" class="filter-input" placeholder="Filtrar segmentos..."
-             oninput="filtrarOpcoesCnae(this.value)" autocomplete="off" aria-label="Filtrar segmento de atividade econômica" />
+             oninput="filtrarOpcoesCnae(this.value)" autocomplete="off"
+             aria-label="Filtrar segmento de atividade econômica" />
       <select id="f-cnae" class="filter-input filter-input-mt" aria-label="Selecionar CNAE">
         <option value="">Todos os segmentos</option>
         {% for c in cnaes %}
@@ -128,7 +139,7 @@
       </select>
     </div>
 
-    <!-- Busca por CNPJ direto -->
+    <!-- CNPJ exato -->
     <div class="filter-group">
       <label class="filter-label" for="f-cnpj">CNPJ Exato</label>
       <input type="text" id="f-cnpj" class="filter-input" placeholder="00.000.000/0000-00"
@@ -156,11 +167,13 @@
       <div class="filter-range">
         <div class="filter-range-item">
           <label class="filter-sublabel" for="f-capital-min">Mín</label>
-          <input type="number" id="f-capital-min" class="filter-input" placeholder="0" min="0" aria-label="Capital social mínimo em reais" />
+          <input type="number" id="f-capital-min" class="filter-input" placeholder="0" min="0"
+                 aria-label="Capital social mínimo em reais" />
         </div>
         <div class="filter-range-item">
           <label class="filter-sublabel" for="f-capital-max">Máx</label>
-          <input type="number" id="f-capital-max" class="filter-input" placeholder="∞" min="0" aria-label="Capital social máximo em reais" />
+          <input type="number" id="f-capital-max" class="filter-input" placeholder="∞" min="0"
+                 aria-label="Capital social máximo em reais" />
         </div>
       </div>
     </div>
@@ -199,14 +212,17 @@
       </select>
     </div>
 
+    <!-- Ações de filtro -->
     <div class="filter-actions">
       <button class="btn btn-primary btn-full" onclick="iniciarBusca()"
               aria-label="Iniciar busca de empresas com os filtros selecionados">
-        <span aria-hidden="true">&#128269;</span> Buscar Empresas
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Buscar Empresas
       </button>
       <button class="btn btn-ghost btn-full" onclick="limparTudo()"
               aria-label="Limpar todos os filtros e resultados">
-        <span aria-hidden="true">&#10006;</span> Limpar Filtros
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        Limpar Filtros
       </button>
     </div>
 
@@ -215,20 +231,24 @@
       <p class="filter-label export-label">Exportar resultados filtrados</p>
       <button class="btn btn-success btn-export" onclick="exportarCSV()"
               aria-label="Exportar resultados para CSV">
-        <span aria-hidden="true">&#8659;</span> CSV
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        CSV
       </button>
       <button class="btn btn-accent btn-export" onclick="exportarXLSX()"
               aria-label="Exportar resultados para Excel XLSX">
-        <span aria-hidden="true">&#8659;</span> XLSX
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        XLSX
       </button>
     </div>
+
   </aside>
 
   <!-- ===== CONTEÚDO PRINCIPAL ===== -->
   <main class="main-content" id="main-content">
 
     <!-- Barra de progresso da busca -->
-    <div id="progress-container" class="progress-container" style="display:none" role="status" aria-live="polite">
+    <div id="progress-container" class="progress-container" style="display:none"
+         role="status" aria-live="polite">
       <div class="progress-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50">
         <div class="progress-fill" id="progress-fill"></div>
       </div>
@@ -317,9 +337,9 @@
 
     <!-- Empty state -->
     <div id="empty-state" class="empty-state" style="display:none" role="status">
-      <div class="empty-state-icon" aria-hidden="true">&#127970;</div>
+      <span class="empty-state-icon" aria-hidden="true">&#127970;</span>
       <p class="empty-state-title">Nenhuma empresa encontrada</p>
-      <p class="empty-state-desc">Tente ajustar os filtros ou ampliar a busca.</p>
+      <p class="empty-state-desc">Tente ajustar os filtros ou ampliar os critérios de busca.</p>
     </div>
 
   </main>
@@ -331,7 +351,10 @@
   <div class="modal-card" id="modal-card">
     <button class="modal-close" id="modal-close-btn" aria-label="Fechar detalhes da empresa">&times;</button>
     <div id="modal-content">
-      <div class="loading-overlay"><div class="spinner" role="status" aria-label="Carregando"></div><p>Carregando detalhes...</p></div>
+      <div class="loading-overlay">
+        <div class="spinner" role="status" aria-label="Carregando"></div>
+        <p>Carregando detalhes...</p>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="fecharModal()" aria-label="Fechar">Fechar</button>
@@ -344,7 +367,7 @@
   ProspectaEmpresa &mdash; Dados: Receita Federal do Brasil
 </footer>
 
-<!-- Municípios pré-carregados pelo servidor (sem fetch assíncrono) -->
+<!-- Municípios pré-carregados pelo servidor -->
 <script>
   var MUNICIPIOS_DATA = {{ municipios_json | safe }};
 </script>
