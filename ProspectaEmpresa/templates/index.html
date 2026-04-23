@@ -11,15 +11,15 @@
   <link rel="stylesheet" href="/static/style.css" />
   <!-- SheetJS para exportação XLSX -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.1/dist/xlsx.full.min.js"></script>
+  <!-- Lucide Icons — biblioteca moderna de ícones SVG -->
+  <script src="https://cdn.jsdelivr.net/npm/lucide@latest/dist/umd/lucide.js"></script>
 </head>
 <body>
 
 <!-- ===== BOTÃO HAMBÚRGUER (mobile) ===== -->
 <button class="hamburger-btn" id="hamburger-btn" onclick="toggleSidebar()"
         aria-label="Abrir/fechar painel de filtros" aria-expanded="false" aria-controls="sidebar">
-  <span class="hamburger-icon"></span>
-  <span class="hamburger-icon"></span>
-  <span class="hamburger-icon"></span>
+  <i data-lucide="menu" class="icon-hamburger" aria-hidden="true"></i>
 </button>
 
 <!-- ===== OVERLAY MOBILE SIDEBAR ===== -->
@@ -28,7 +28,9 @@
 <!-- ===== HEADER ===== -->
 <header class="header">
   <div class="header-title">
-    <span class="header-icon" aria-hidden="true">&#127970;</span>
+    <span class="header-icon" aria-hidden="true">
+      <i data-lucide="building-2" class="icon-header"></i>
+    </span>
     <div>
       <h1>ProspectaEmpresa</h1>
       <p class="header-subtitle">Prospecção Inteligente · Dados Receita Federal</p>
@@ -38,26 +40,31 @@
   <div class="kpi-grid" role="list" aria-label="Indicadores de resultado">
 
     <div class="kpi-card" role="listitem">
+      <i data-lucide="target" class="kpi-icon" aria-hidden="true"></i>
       <span class="kpi-label" id="label-kpi-total">Total</span>
       <span class="kpi-value" id="kpi-total" aria-labelledby="label-kpi-total">—</span>
     </div>
 
     <div class="kpi-card kpi-success" role="listitem">
+      <i data-lucide="mail" class="kpi-icon" aria-hidden="true"></i>
       <span class="kpi-label" id="label-kpi-email">Com Email</span>
       <span class="kpi-value" id="kpi-email" aria-labelledby="label-kpi-email">—</span>
     </div>
 
     <div class="kpi-card kpi-accent" role="listitem">
+      <i data-lucide="phone" class="kpi-icon" aria-hidden="true"></i>
       <span class="kpi-label" id="label-kpi-telefone">Com Telefone</span>
       <span class="kpi-value" id="kpi-telefone" aria-labelledby="label-kpi-telefone">—</span>
     </div>
 
     <div class="kpi-card kpi-success" role="listitem">
+      <i data-lucide="check-circle" class="kpi-icon" aria-hidden="true"></i>
       <span class="kpi-label" id="label-kpi-ativas">Ativas</span>
       <span class="kpi-value" id="kpi-ativas" aria-labelledby="label-kpi-ativas">—</span>
     </div>
 
     <div class="kpi-card" role="listitem">
+      <i data-lucide="wallet" class="kpi-icon" aria-hidden="true"></i>
       <span class="kpi-label" id="label-kpi-capital">Capital Total</span>
       <span class="kpi-value kpi-value-sm" id="kpi-capital" aria-labelledby="label-kpi-capital">—</span>
     </div>
@@ -72,7 +79,8 @@
   <aside class="sidebar" id="sidebar" aria-label="Painel de filtros">
 
     <div class="sidebar-header">
-      <span aria-hidden="true">&#9672;</span> Filtros de Busca
+      <i data-lucide="sliders-horizontal" class="icon-sidebar-header" aria-hidden="true"></i>
+      <span>Filtros de Busca</span>
     </div>
 
     <!-- Razão Social -->
@@ -216,12 +224,12 @@
     <div class="filter-actions">
       <button class="btn btn-primary btn-full" onclick="iniciarBusca()"
               aria-label="Iniciar busca de empresas com os filtros selecionados">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <i data-lucide="search" class="icon-btn" aria-hidden="true"></i>
         Buscar Empresas
       </button>
       <button class="btn btn-ghost btn-full" onclick="limparTudo()"
               aria-label="Limpar todos os filtros e resultados">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        <i data-lucide="refresh-ccw" class="icon-btn icon-btn-sm" aria-hidden="true"></i>
         Limpar Filtros
       </button>
     </div>
@@ -231,12 +239,12 @@
       <p class="filter-label export-label">Exportar resultados filtrados</p>
       <button class="btn btn-success btn-export" onclick="exportarCSV()"
               aria-label="Exportar resultados para CSV">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <i data-lucide="download" class="icon-btn icon-btn-sm" aria-hidden="true"></i>
         CSV
       </button>
       <button class="btn btn-accent btn-export" onclick="exportarXLSX()"
               aria-label="Exportar resultados para Excel XLSX">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <i data-lucide="file-spreadsheet" class="icon-btn icon-btn-sm" aria-hidden="true"></i>
         XLSX
       </button>
     </div>
@@ -287,37 +295,37 @@
           <tr>
             <th class="sortable" data-col="razao_social" onclick="ordenarPor('razao_social')"
                 aria-sort="none" scope="col">
-              Razão Social <span class="sort-icon" aria-hidden="true">&#8597;</span>
+              <span class="th-inner">Razão Social <i data-lucide="arrow-up-down" class="sort-icon" aria-hidden="true"></i></span>
             </th>
             <th class="sortable" data-col="cnpj" onclick="ordenarPor('cnpj')"
                 aria-sort="none" scope="col">
-              CNPJ <span class="sort-icon" aria-hidden="true">&#8597;</span>
+              <span class="th-inner">CNPJ <i data-lucide="arrow-up-down" class="sort-icon" aria-hidden="true"></i></span>
             </th>
             <th class="sortable" data-col="municipio" onclick="ordenarPor('municipio')"
                 aria-sort="none" scope="col">
-              Cidade/UF <span class="sort-icon" aria-hidden="true">&#8597;</span>
+              <span class="th-inner">Cidade/UF <i data-lucide="arrow-up-down" class="sort-icon" aria-hidden="true"></i></span>
             </th>
             <th class="sortable" data-col="cnae_descricao" onclick="ordenarPor('cnae_descricao')"
                 aria-sort="none" scope="col">
-              Segmento (CNAE) <span class="sort-icon" aria-hidden="true">&#8597;</span>
+              <span class="th-inner">Segmento (CNAE) <i data-lucide="arrow-up-down" class="sort-icon" aria-hidden="true"></i></span>
             </th>
             <th class="sortable" data-col="situacao_cadastral" onclick="ordenarPor('situacao_cadastral')"
                 aria-sort="none" scope="col">
-              Situação <span class="sort-icon" aria-hidden="true">&#8597;</span>
+              <span class="th-inner">Situação <i data-lucide="arrow-up-down" class="sort-icon" aria-hidden="true"></i></span>
             </th>
             <th class="sortable" data-col="porte" onclick="ordenarPor('porte')"
                 aria-sort="none" scope="col">
-              Porte <span class="sort-icon" aria-hidden="true">&#8597;</span>
+              <span class="th-inner">Porte <i data-lucide="arrow-up-down" class="sort-icon" aria-hidden="true"></i></span>
             </th>
             <th scope="col">Telefone</th>
             <th scope="col">Email</th>
             <th class="sortable num-col" data-col="capital_social" onclick="ordenarPor('capital_social')"
                 aria-sort="none" scope="col">
-              Capital Social <span class="sort-icon" aria-hidden="true">&#8597;</span>
+              <span class="th-inner">Capital Social <i data-lucide="arrow-up-down" class="sort-icon" aria-hidden="true"></i></span>
             </th>
             <th class="sortable" data-col="data_abertura" onclick="ordenarPor('data_abertura')"
                 aria-sort="none" scope="col">
-              Abertura <span class="sort-icon" aria-hidden="true">&#8597;</span>
+              <span class="th-inner">Abertura <i data-lucide="arrow-up-down" class="sort-icon" aria-hidden="true"></i></span>
             </th>
           </tr>
         </thead>
@@ -329,15 +337,23 @@
     <!-- Paginação -->
     <nav class="pagination" id="pagination" style="display:none" aria-label="Navegação entre páginas">
       <button class="btn btn-ghost" onclick="irParaPagina(paginaAtual - 1)" id="btn-prev"
-              aria-label="Página anterior">&#8249; Anterior</button>
+              aria-label="Página anterior">
+        <i data-lucide="chevron-left" class="icon-btn icon-btn-sm" aria-hidden="true"></i>
+        Anterior
+      </button>
       <div id="page-numbers" class="page-numbers" role="list"></div>
       <button class="btn btn-ghost" onclick="irParaPagina(paginaAtual + 1)" id="btn-next"
-              aria-label="Próxima página">Próximo &#8250;</button>
+              aria-label="Próxima página">
+        Próximo
+        <i data-lucide="chevron-right" class="icon-btn icon-btn-sm" aria-hidden="true"></i>
+      </button>
     </nav>
 
     <!-- Empty state -->
     <div id="empty-state" class="empty-state" style="display:none" role="status">
-      <span class="empty-state-icon" aria-hidden="true">&#127970;</span>
+      <span class="empty-state-icon" aria-hidden="true">
+        <i data-lucide="search-x"></i>
+      </span>
       <p class="empty-state-title">Nenhuma empresa encontrada</p>
       <p class="empty-state-desc">Tente ajustar os filtros ou ampliar os critérios de busca.</p>
     </div>
@@ -349,7 +365,9 @@
 <div class="modal-overlay" id="modal-overlay" role="dialog" aria-modal="true"
      aria-labelledby="modal-title-label">
   <div class="modal-card" id="modal-card">
-    <button class="modal-close" id="modal-close-btn" aria-label="Fechar detalhes da empresa">&times;</button>
+    <button class="modal-close" id="modal-close-btn" aria-label="Fechar detalhes da empresa">
+      <i data-lucide="x" class="icon-modal-close" aria-hidden="true"></i>
+    </button>
     <div id="modal-content">
       <div class="loading-overlay">
         <div class="spinner" role="status" aria-label="Carregando"></div>
@@ -372,5 +390,125 @@
   var MUNICIPIOS_DATA = {{ municipios_json | safe }};
 </script>
 <script src="/static/app.js?v=7"></script>
+
+<!-- ===== LUCIDE — renderização inicial e re-renderização dinâmica ===== -->
+<script>
+  // Renderiza todos os ícones Lucide presentes no DOM
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
+
+  // Mapa emoji -> nome do ícone Lucide (para modal de detalhes renderizado por app.js)
+  const EMOJI_TO_LUCIDE = {
+    '\uD83D\uDCC4': 'file-text',   // 📄 Identificação
+    '\uD83D\uDCCD': 'map-pin',     // 📍 Localização / Ver no Maps
+    '\uD83D\uDCDE': 'phone',       // 📞 Contato
+    '\uD83D\uDCB0': 'wallet',      // 💰 Financeiro
+    '\uD83D\uDC64': 'users',       // 👤 Sócios (QSA)
+    '\u2713':       'check',       // ✓ Simples / MEI
+    '\u2193':       'arrow-down',  // ↓ Carregar mais
+    '\u27F3':       'refresh-cw',  // ⟳ Carregando...
+  };
+
+  // Substitui emojis em textos por ícones Lucide inline.
+  // Rastreia containers já processados para evitar loops infinitos do observer.
+  const _processedNodes = new WeakSet();
+
+  function substituirEmojisEmContainer(container) {
+    if (!container || _processedNodes.has(container)) return;
+
+    // Coleta todos os nós de texto que contêm algum emoji mapeado
+    const walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null);
+    const nodesToProcess = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      for (const emoji of Object.keys(EMOJI_TO_LUCIDE)) {
+        if (node.nodeValue && node.nodeValue.indexOf(emoji) !== -1) {
+          nodesToProcess.push(node);
+          break;
+        }
+      }
+    }
+
+    nodesToProcess.forEach(textNode => {
+      const parent = textNode.parentNode;
+      if (!parent) return;
+      let value = textNode.nodeValue;
+      const frag = document.createDocumentFragment();
+      let i = 0;
+      while (i < value.length) {
+        let matched = false;
+        for (const [emoji, iconName] of Object.entries(EMOJI_TO_LUCIDE)) {
+          if (value.substr(i, emoji.length) === emoji) {
+            const span = document.createElement('i');
+            span.setAttribute('data-lucide', iconName);
+            span.className = 'icon-inline modal-section-icon';
+            frag.appendChild(span);
+            i += emoji.length;
+            matched = true;
+            break;
+          }
+        }
+        if (!matched) {
+          // Acumula caracteres comuns até o próximo emoji
+          let text = '';
+          while (i < value.length) {
+            let isEmoji = false;
+            for (const emoji of Object.keys(EMOJI_TO_LUCIDE)) {
+              if (value.substr(i, emoji.length) === emoji) { isEmoji = true; break; }
+            }
+            if (isEmoji) break;
+            text += value[i];
+            i++;
+          }
+          if (text) frag.appendChild(document.createTextNode(text));
+        }
+      }
+      parent.replaceChild(frag, textNode);
+    });
+
+    _processedNodes.add(container);
+  }
+
+  // MutationObserver — re-renderiza ícones quando o app.js injeta conteúdo dinâmico
+  // (modal de detalhes, linhas de tabela, botão "Carregar mais", etc.)
+  (function setupLucideObserver() {
+    if (!window.lucide || !window.MutationObserver) return;
+
+    let rafPending = false;
+    const scheduleRender = () => {
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        // Substitui emojis dinâmicos (modal) por ícones Lucide
+        try {
+          const modalContent = document.getElementById('modal-content');
+          if (modalContent) substituirEmojisEmContainer(modalContent);
+          const btnCarregarMais = document.getElementById('btn-carregar-mais');
+          if (btnCarregarMais) {
+            // Desprocessa para permitir re-processamento após clique (texto muda)
+            _processedNodes.delete(btnCarregarMais);
+            substituirEmojisEmContainer(btnCarregarMais);
+          }
+        } catch (e) { /* silent */ }
+        try { window.lucide.createIcons(); } catch (e) { /* silent */ }
+      });
+    };
+
+    const observer = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        // Qualquer mudança em conteúdo do modal/empresa é candidata
+        for (const node of m.addedNodes) {
+          if (node.nodeType !== 1) continue;
+          scheduleRender();
+          return;
+        }
+      }
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+  })();
+</script>
 </body>
 </html>

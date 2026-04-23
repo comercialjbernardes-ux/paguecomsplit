@@ -88,6 +88,138 @@ body {
   background-attachment: fixed;
 }
 
+/* ====== LUCIDE ICONS — base ======
+   Lucide injeta SVGs no lugar de <i data-lucide="...">.
+   Por padrão o SVG herda currentColor; usamos width/height para controlar tamanho.
+*/
+[data-lucide],
+.lucide,
+svg.lucide {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  stroke-width: 2;
+}
+
+/* Tamanhos base aplicados em todo SVG Lucide gerado */
+i[data-lucide] + svg,
+svg.lucide {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- Header principal (logo icon rosa->roxo->violeta) ---- */
+.icon-header,
+svg.lucide.icon-header,
+.header-icon svg {
+  width: 26px !important;
+  height: 26px !important;
+  color: #ffffff;
+  stroke-width: 2.25;
+}
+
+/* ---- Hamburguer ---- */
+.icon-hamburger,
+svg.lucide.icon-hamburger {
+  width: 26px !important;
+  height: 26px !important;
+  color: var(--text-secondary);
+  stroke-width: 2.25;
+}
+.hamburger-btn[aria-expanded="true"] .icon-hamburger,
+.hamburger-btn[aria-expanded="true"] svg.lucide { color: #fff; }
+
+/* ---- Sidebar header ---- */
+.icon-sidebar-header,
+svg.lucide.icon-sidebar-header {
+  width: 16px !important;
+  height: 16px !important;
+  color: var(--purple);
+  stroke-width: 2.25;
+}
+
+/* ---- Ícones dentro de botões ---- */
+.icon-btn,
+svg.lucide.icon-btn {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 2.25;
+}
+.icon-btn-sm,
+svg.lucide.icon-btn-sm {
+  width: 15px !important;
+  height: 15px !important;
+}
+
+/* ---- KPI cards — ícone no canto superior direito ---- */
+.kpi-icon,
+svg.lucide.kpi-icon {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  width: 22px !important;
+  height: 22px !important;
+  color: var(--purple);
+  opacity: 0.85;
+  stroke-width: 2;
+  z-index: 1;
+}
+/* Cores por variante de KPI (alinhadas ao gradient correspondente) */
+.kpi-card .kpi-icon { color: #ff6b9d; }               /* Total — pink */
+.kpi-card.kpi-success .kpi-icon { color: #00d9a3; }   /* Verde */
+.kpi-card.kpi-accent  .kpi-icon { color: #ffa751; }   /* Laranja */
+.kpi-card:nth-child(5) .kpi-icon { color: #c56cf0; }  /* Capital — roxo */
+
+/* ---- Ícones de ordenação nas colunas ---- */
+.sort-icon,
+svg.lucide.sort-icon {
+  width: 12px !important;
+  height: 12px !important;
+  opacity: 0.5;
+  margin-left: 4px;
+  color: currentColor;
+  stroke-width: 2.5;
+  vertical-align: middle;
+}
+.data-table th.sortable:hover .sort-icon { opacity: 1; }
+.data-table th.sort-asc .sort-icon,
+.data-table th.sort-desc .sort-icon {
+  opacity: 1;
+  color: var(--purple);
+}
+.th-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ---- Close do modal ---- */
+.icon-modal-close,
+svg.lucide.icon-modal-close {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 2.5;
+}
+
+/* ---- Ícones em títulos de seção do modal ---- */
+.modal-section-icon,
+svg.lucide.modal-section-icon {
+  width: 16px !important;
+  height: 16px !important;
+  color: var(--purple);
+  stroke-width: 2.25;
+}
+
+/* ---- Ícones em links inline (Ver no Maps, etc) ---- */
+.icon-inline,
+svg.lucide.icon-inline {
+  width: 14px !important;
+  height: 14px !important;
+  stroke-width: 2.25;
+  vertical-align: middle;
+  margin-right: 2px;
+}
+
 /* ====== SCROLLBAR ====== */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -109,8 +241,8 @@ body {
   border-radius: var(--r-input);
   padding: 10px 12px;
   cursor: pointer;
-  flex-direction: column;
-  gap: 5px;
+  align-items: center;
+  justify-content: center;
   transition: all var(--t-fast);
   box-shadow: var(--shadow-card);
 }
@@ -123,15 +255,6 @@ body {
   background: var(--grad-primary);
   border-color: transparent;
 }
-.hamburger-icon {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: var(--text-secondary);
-  border-radius: var(--r-pill);
-  transition: all var(--t-fast);
-}
-.hamburger-btn[aria-expanded="true"] .hamburger-icon { background: #fff; }
 
 .sidebar-overlay {
   display: none;
@@ -175,9 +298,9 @@ body {
   justify-content: center;
   background: var(--grad-primary);
   border-radius: var(--r-base);
-  font-size: 1.3rem;
   box-shadow: var(--shadow-btn);
   flex-shrink: 0;
+  color: #ffffff;
 }
 
 .header-title h1 {
@@ -222,21 +345,6 @@ body {
   overflow: hidden;
 }
 
-/* Ícone emoji sutil no canto superior direito */
-.kpi-card::after {
-  content: '📊';
-  position: absolute;
-  top: 12px;
-  right: 14px;
-  font-size: 0.85rem;
-  opacity: 0.35;
-}
-.kpi-card:nth-child(1)::after { content: '🏢'; }
-.kpi-card:nth-child(2)::after { content: '✉️'; }
-.kpi-card:nth-child(3)::after { content: '📞'; }
-.kpi-card:nth-child(4)::after { content: '✨'; }
-.kpi-card:nth-child(5)::after { content: '💰'; }
-
 .kpi-card:hover {
   border-color: rgba(197, 108, 240, 0.35);
   box-shadow: var(--shadow-card-hover);
@@ -249,6 +357,7 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   font-weight: 600;
+  padding-right: 30px; /* espaço para o ícone absoluto */
 }
 
 .kpi-value {
@@ -637,24 +746,9 @@ select.filter-input {
   transition: color var(--t-fast);
 }
 .data-table th.sortable:hover { color: var(--text); }
+/* Variação do ícone de ordenação (Lucide arrow-up/arrow-down trocado via classe) */
 .data-table th.sort-asc .sort-icon,
-.data-table th.sort-desc .sort-icon { font-size: 0; }
-.data-table th.sort-asc .sort-icon::after {
-  content: '▲';
-  font-size: 0.6rem;
-  background: var(--grad-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.data-table th.sort-desc .sort-icon::after {
-  content: '▼';
-  font-size: 0.6rem;
-  background: var(--grad-primary);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+.data-table th.sort-desc .sort-icon { color: var(--purple); opacity: 1; }
 
 .data-table tbody tr {
   transition: all var(--t-fast);
@@ -874,11 +968,21 @@ select.filter-input {
 }
 
 .empty-state-icon {
-  font-size: 3.5rem;
   margin-bottom: 20px;
-  display: block;
-  filter: grayscale(0.2);
-  opacity: 0.5;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(197, 108, 240, 0.10);
+  border: 1px solid rgba(197, 108, 240, 0.25);
+}
+.empty-state-icon svg.lucide {
+  width: 36px !important;
+  height: 36px !important;
+  color: var(--purple);
+  stroke-width: 1.75;
 }
 
 .empty-state-title {
@@ -934,7 +1038,6 @@ select.filter-input {
   background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  font-size: 1.3rem;
   cursor: pointer;
   line-height: 1;
   width: 36px;
@@ -945,6 +1048,7 @@ select.filter-input {
   border-radius: var(--r-pill);
   transition: all var(--t-fast);
   z-index: 2;
+  padding: 0;
 }
 .modal-close:hover {
   background: var(--grad-primary);
@@ -1112,11 +1216,12 @@ select.filter-input {
 
   .header-title h1  { font-size: 1.1rem; }
   .header-subtitle  { display: none; }
-  .header-icon { width: 38px; height: 38px; font-size: 1.1rem; }
+  .header-icon { width: 38px; height: 38px; }
+  .header-icon svg.lucide.icon-header { width: 22px !important; height: 22px !important; }
 
   .kpi-grid { gap: 8px; }
   .kpi-card { min-width: 90px; padding: 10px 12px; }
-  .kpi-card::after { display: none; }
+  .kpi-card .kpi-icon { top: 10px; right: 12px; width: 18px !important; height: 18px !important; }
   .kpi-value    { font-size: 1.15rem; }
   .kpi-value-sm { font-size: 0.8rem; }
   .kpi-label    { font-size: 0.6rem; }
