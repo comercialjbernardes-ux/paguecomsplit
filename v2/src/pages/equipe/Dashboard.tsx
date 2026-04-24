@@ -22,6 +22,7 @@ import { NOME_EMPRESA, PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 import { LoadingState } from '../../components/LoadingState'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { formatCurrency, formatCurrencyShort } from '../../utils/format'
+import { calcCustosMensalEfetivo } from '../../utils/custos'
 import {
   getECsSemReceita,
   getOportunidadesContaDigital, getMarkupDistribution,
@@ -88,12 +89,12 @@ export function EquipeDashboard() {
     return idx > 0 ? fechamentos[idx - 1] : null
   }, [fechamentos, fechamentoAtual])
 
-  // Custo mensal
+  // Custo mensal efetivo — inclui mensais, prorate trimestral/anual, únicos do período atual
   const totalCustos = useMemo(() => {
-    const op = custos.filter((c) => c.recorrencia === 'mensal').reduce((s, c) => s + c.valor, 0)
+    const op = calcCustosMensalEfetivo(custos, fechamentoAtual?.periodo)
     const eq = equipamentos.reduce((s, eq) => (eq.numeroParcelas - eq.parcelasPagas) > 0 ? s + eq.valorParcela : s, 0)
     return op + eq
-  }, [custos, equipamentos])
+  }, [custos, equipamentos, fechamentoAtual?.periodo])
 
   // KPIs e variações
   const kpis = useMemo(() => {

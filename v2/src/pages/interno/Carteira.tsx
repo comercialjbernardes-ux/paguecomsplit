@@ -17,6 +17,7 @@ import { LoadingState } from '../../components/LoadingState'
 import {
   formatCurrency, formatNumber, getStatusBadgeClass, getChartColor,
 } from '../../utils/format'
+import { calcCustosMensalSemUnico } from '../../utils/custos'
 import {
   calcHealthScore, getHealthStatus, calcMargemReal,
   getECsSemReceita, getOportunidadesContaDigital, getTopByMarkup, getMarkupDistribution,
@@ -161,13 +162,12 @@ export function InternoCarteira() {
 
   // MELHORIA 06: lucro estimado por cliente (custo proporcional por volume)
   const rankingLucratividade = useMemo(() => {
-    const custoMensalTotal = [
-      ...custos.filter((c) => c.recorrencia === 'mensal').map((c) => c.valor),
-      ...equipamentos.map((eq) => {
+    const custoMensalTotal =
+      calcCustosMensalSemUnico(custos) +
+      equipamentos.reduce((s, eq) => {
         const restantes = eq.numeroParcelas - eq.parcelasPagas
-        return restantes > 0 ? eq.valorParcela : 0
-      }),
-    ].reduce((s, v) => s + v, 0)
+        return s + (restantes > 0 ? eq.valorParcela : 0)
+      }, 0)
 
     const volumeTotal = filtrados.reduce((s, c) => s + c.volumeTotal, 0)
 

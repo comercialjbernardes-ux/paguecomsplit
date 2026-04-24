@@ -16,6 +16,7 @@ import { useInternoData } from '../hooks/useInternoData'
 import { useDataContext } from '../contexts/dataContextValue'
 import { LoadingState } from '../components/LoadingState'
 import { formatCurrency, formatCurrencyShort } from '../utils/format'
+import { calcCustosMensalEfetivo } from '../utils/custos'
 import type { DadosFechamento } from '../types'
 import { PRECO_CONTA_DIGITAL } from '../constants/empresa'
 
@@ -220,15 +221,15 @@ export function RelatorioExecutivoPage() {
   const { fechamentos, fechamentoAtual, clientes, lancamentos, isLoading } = useInternoData()
   const { custos, equipamentos } = useDataContext()
 
-  // Custo mensal total (operacional + equipamentos)
+  // Custo mensal total (operacional + equipamentos) — inclui prorate trimestral/anual/único
   const totalCustosMensal = useMemo(() => {
-    const op = custos.filter((c) => c.recorrencia === 'mensal').reduce((s, c) => s + c.valor, 0)
+    const op = calcCustosMensalEfetivo(custos, fechamentoAtual?.periodo)
     const eq = equipamentos.reduce((s, eq) => {
       const r = eq.numeroParcelas - eq.parcelasPagas
       return s + (r > 0 ? eq.valorParcela : 0)
     }, 0)
     return op + eq
-  }, [custos, equipamentos])
+  }, [custos, equipamentos, fechamentoAtual?.periodo])
 
   // Periodo anterior — usando indexOf para garantir ordem correta independente do array
   const periodoAnterior = useMemo(() => {
@@ -453,14 +454,14 @@ export function RelatorioExecutivoPage() {
                 Ver detalhamento completo →
               </a>
             </div>
-            {custos.filter((c) => c.recorrencia === 'mensal').slice(0, 5).map((c) => (
+            {custos.slice(0, 5).map((c) => (
               <div key={c.id} className="flex justify-between text-sm">
                 <span className="text-gray-600">{c.descricao}</span>
                 <span className="font-medium text-red-700">- {formatCurrency(c.valor)}</span>
               </div>
             ))}
-            {custos.filter((c) => c.recorrencia === 'mensal').length > 5 && (
-              <p className="text-xs text-gray-400">+ {custos.filter((c) => c.recorrencia === 'mensal').length - 5} outros</p>
+            {custos.length > 5 && (
+              <p className="text-xs text-gray-400">+ {custos.length - 5} outros</p>
             )}
             <div className="border-t border-gray-200 pt-2 flex justify-between font-bold text-sm">
               <span>Total Custos Mensais</span>

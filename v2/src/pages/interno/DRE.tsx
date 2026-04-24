@@ -15,6 +15,7 @@ import { useInternoData } from '../../hooks/useInternoData'
 import { useDataContext } from '../../contexts/dataContextValue'
 import { LoadingState } from '../../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../../utils/format'
+import { calcCustosMensalEfetivo } from '../../utils/custos'
 import type { DadosFechamento } from '../../types'
 import { PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 
@@ -51,10 +52,8 @@ export function InternoDRE() {
       return s + (restantes > 0 ? eq.valorParcela : 0)
     }, 0)
 
-    // Custos operacionais mensais (Aluguel, Folha, Internet, etc.)
-    const totalCustosOperacionais = custos
-      .filter((c) => c.recorrencia === 'mensal')
-      .reduce((s, c) => s + c.valor, 0)
+    // Custos operacionais — mensal integral + trimestral/3 + anual/12 + único no período
+    const totalCustosOperacionais = calcCustosMensalEfetivo(custos, f.periodo)
 
     // Receitas: planilha + manuais
     const receitas: { id: string; descricao: string; valor: number; isLocal?: boolean }[] = [

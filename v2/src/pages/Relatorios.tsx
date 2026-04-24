@@ -21,6 +21,7 @@ import { NOME_EMPRESA, PRECO_CONTA_DIGITAL } from '../constants/empresa'
 import { LoadingState } from '../components/LoadingState'
 import { exportElementToPDF } from '../services/exportService'
 import { formatCurrency, formatCurrencyShort, getChartColor } from '../utils/format'
+import { calcCustosMensalEfetivo } from '../utils/custos'
 import {
   calcHealthScore, calcMargemReal,
   getECsSemReceita, getOportunidadesContaDigital, getTopByMarkup,
@@ -163,15 +164,18 @@ export function RelatoriosPage() {
   const [periodoSelecionado, setPeriodoSelecionado] = useState<string>('ultimo')
   const reportRef = useRef<HTMLDivElement>(null)
 
-  // Custo mensal total
+  // Custo mensal total — inclui prorate trimestral/anual/único no período selecionado
   const totalCustos = useMemo(() => {
-    const op = custos.filter((c) => c.recorrencia === 'mensal').reduce((s, c) => s + c.valor, 0)
+    const periodo = periodoSelecionado === 'ultimo'
+      ? fechamentos[fechamentos.length - 1]?.periodo
+      : fechamentos.find((f) => f.periodo === periodoSelecionado)?.periodo
+    const op = calcCustosMensalEfetivo(custos, periodo)
     const eq = equipamentos.reduce((s, eq) => {
       const r = eq.numeroParcelas - eq.parcelasPagas
       return r > 0 ? s + eq.valorParcela : s
     }, 0)
     return op + eq
-  }, [custos, equipamentos])
+  }, [custos, equipamentos, periodoSelecionado, fechamentos])
 
   // Período selecionado
   const periodoAtual = useMemo<DadosFechamento | null>(() => {

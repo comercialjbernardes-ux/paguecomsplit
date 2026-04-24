@@ -10,6 +10,7 @@ import {
 import { Wrench, Plus, Trash2, Package, ChevronDown, ChevronUp } from 'lucide-react'
 import { useDataContext } from '../../contexts/dataContextValue'
 import { formatCurrency, getChartColor } from '../../utils/format'
+import { calcCustosMensalEfetivo, labelRecorrencia } from '../../utils/custos'
 import type { CustoOperacional, Equipamento } from '../../types'
 
 const CATEGORIAS: CustoOperacional['categoria'][] = ['Fixo', 'Variavel', 'Financeiro', 'Fornecedor']
@@ -53,9 +54,8 @@ export function InternoGestaoCustos() {
     value: custos.filter((c) => c.categoria === cat).reduce((s, c) => s + c.valor, 0),
   })).filter((d) => d.value > 0)
 
-  const totalCustosMensal = custos
-    .filter((c) => c.recorrencia === 'mensal')
-    .reduce((s, c) => s + c.valor, 0)
+  // Custo mensal efetivo = mensais + prorate trimestral/anual (sem filtro de período para visão geral)
+  const totalCustosMensal = calcCustosMensalEfetivo(custos)
   const totalCustosTodos = custos.reduce((s, c) => s + c.valor, 0)
 
   // Equipamentos: parcelas restantes e custo mensal
@@ -101,9 +101,9 @@ export function InternoGestaoCustos() {
       {/* KPIs */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card-hover">
-          <p className="text-sm text-gray-500">Custos Mensais Recorrentes</p>
+          <p className="text-sm text-gray-500">Impacto Mensal Efetivo</p>
           <p className="text-2xl font-bold text-red-700 mt-1">{formatCurrency(totalCustosMensal)}</p>
-          <p className="text-xs text-gray-400 mt-1">{custos.filter((c) => c.recorrencia === 'mensal').length} lancamentos mensais</p>
+          <p className="text-xs text-gray-400 mt-1">{custos.length} custo(s) — mensais + prorate trimestral/anual</p>
         </div>
         <div className="card-hover">
           <p className="text-sm text-gray-500">Total Custos Cadastrados</p>
@@ -256,7 +256,7 @@ export function InternoGestaoCustos() {
                               : 'bg-gray-100 text-gray-700'
                             }`}>{c.categoria}</span>
                           </td>
-                          <td className="py-2 px-3 text-gray-500 capitalize">{c.recorrencia}</td>
+                          <td className="py-2 px-3 text-gray-500 text-xs">{labelRecorrencia(c.recorrencia)}</td>
                           <td className="py-2 px-3 text-right font-medium text-red-700">
                             - {formatCurrency(c.valor)}
                           </td>

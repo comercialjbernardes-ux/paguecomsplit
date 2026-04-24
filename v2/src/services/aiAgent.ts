@@ -119,11 +119,21 @@ export function buildBusinessContext(snap: BusinessSnapshot): string {
     return `- ${f.periodo}: TPV=R$${f.tpvTotal.toFixed(0)} | Markup=R$${f.markupPos.toFixed(0)} | Comissao=R$${f.comissaoRede.toFixed(0)} | Repasse=R$${f.repasse.toFixed(0)} | FaturaDigital=R$${f.faturaDigital.toFixed(0)} | Descontos=R$${f.descontos.toFixed(0)} | Liquido=R$${f.valorLiquido.toFixed(0)} | ECs=${f.ecsAtivos} | Margem=${margem}%`
   }).join('\n')
 
-  // Custos operacionais mensais
-  const custosMensais = custos.filter((c) => c.recorrencia === 'mensal')
-  const totalCustosMensal = custosMensais.reduce((s, c) => s + c.valor, 0)
-  const custosLinhas = custosMensais.length > 0
-    ? custosMensais.map((c) => `- ${c.descricao} (${c.categoria}): R$${c.valor.toFixed(0)}/mes`).join('\n')
+  // Custos operacionais — todos os tipos com prorate correto
+  const totalCustosMensal = custos.reduce((s, c) => {
+    if (c.recorrencia === 'mensal') return s + c.valor
+    if (c.recorrencia === 'trimestral') return s + c.valor / 3
+    if (c.recorrencia === 'anual') return s + c.valor / 12
+    if (c.recorrencia === 'unico') return s + c.valor
+    return s
+  }, 0)
+  const custosLinhas = custos.length > 0
+    ? custos.map((c) => {
+        const efetivo = c.recorrencia === 'trimestral' ? c.valor / 3
+          : c.recorrencia === 'anual' ? c.valor / 12
+          : c.valor
+        return `- ${c.descricao} (${c.categoria}, ${c.recorrencia}): R$${efetivo.toFixed(0)}/mes`
+      }).join('\n')
     : '- (nenhum custo operacional cadastrado)'
 
   // Equipamentos com parcelas ativas
