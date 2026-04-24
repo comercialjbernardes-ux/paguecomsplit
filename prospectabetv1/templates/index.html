@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<!-- DESIGN SYSTEM v2 — Prospector Bets -->
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prospector Bets — Dashboard</title>
+
+  <!-- Google Fonts: Plus Jakarta Sans + Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/static/style.css" />
+
+  <!-- Chart.js 4.4.0 -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- SheetJS para exportação XLSX -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.20.1/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<!-- ===== FUNDO: MAPA RODOVIÁRIO SVG ===== -->
+<div class="bg-texture" aria-hidden="true">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900"
+       preserveAspectRatio="xMidYMid slice" width="100%" height="100%">
+    <!-- Linhas de rota curvas -->
+    <g stroke="#39FF87" stroke-width="1.2" fill="none" opacity="0.13">
+      <path d="M-80 190 C 180 150, 360 270, 560 210 S 880 110, 1080 240 S 1340 190, 1520 205"/>
+      <path d="M-80 440 C 120 390, 420 490, 640 420 S 960 360, 1160 455 S 1400 415, 1520 435"/>
+      <path d="M-80 680 C 230 645, 520 730, 740 665 S 1040 598, 1240 680 S 1410 648, 1520 665"/>
+      <path d="M380 -40 C 400 160, 360 370, 385 545 S 430 740, 385 940"/>
+      <path d="M920 -40 C 898 210, 944 420, 905 605 S 920 775, 945 940"/>
+      <path d="M80 -40 C 200 120, 340 60, 380 190"/>
+      <path d="M620 210 C 720 320, 780 400, 920 440"/>
+      <path d="M1160 455 C 1270 530, 1370 505, 1520 575"/>
+      <path d="M560 210 C 580 360, 540 480, 385 545"/>
+      <path d="M1080 240 C 1050 380, 960 420, 920 440"/>
+    </g>
+    <!-- Nós de interseção -->
+    <g fill="#39FF87">
+      <circle cx="380" cy="190" r="2.8" opacity="0.55"/>
+      <circle cx="560" cy="210" r="2.2" opacity="0.42"/>
+      <circle cx="920" cy="440" r="2.8" opacity="0.55"/>
+      <circle cx="640" cy="420" r="2.2" opacity="0.42"/>
+      <circle cx="1160" cy="455" r="2.8" opacity="0.55"/>
+      <circle cx="740" cy="665" r="2.2" opacity="0.42"/>
+      <circle cx="905" cy="605" r="2.8" opacity="0.55"/>
+      <circle cx="385" cy="545" r="2.2" opacity="0.42"/>
+      <circle cx="1240" cy="680" r="2.8" opacity="0.55"/>
+    </g>
+    <!-- Labels cartográficos -->
+    <g fill="#39FF87" font-family="monospace" font-size="8.5" opacity="0.32">
+      <text x="392" y="183">B3-7</text>
+      <text x="572" y="203">A1-2</text>
+      <text x="932" y="432">C5-4</text>
+      <text x="652" y="412">D2-9</text>
+      <text x="1172" y="447">E8-1</text>
+      <text x="752" y="657">F4-6</text>
+      <text x="917" y="597">G7-3</text>
+    </g>
+  </svg>
+</div>
+
+<!-- ===== SHELL ===== -->
+<div class="shell">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="sidebar">
+    <!-- Logo -->
+    <div class="sidebar-logo">
+      <div class="logo-icon">&#127922;</div>
+      <div class="logo-text">
+        <span class="logo-name">Prospector</span>
+        <span class="logo-sub">Bets Analytics</span>
+      </div>
+    </div>
+
+    <!-- Nav -->
+    <nav class="sidebar-nav">
+      <span class="nav-section-label">Geral</span>
+      <a class="nav-item nav-item-active" onclick="scrollToSection('section-kpi')">
+        <span class="nav-icon">&#128202;</span> Dashboard
+      </a>
+      <a class="nav-item" onclick="scrollToSection('section-table')">
+        <span class="nav-icon">&#128193;</span> Apostas
+      </a>
+      <a class="nav-item" onclick="scrollToSection('section-analytics')">
+        <span class="nav-icon">&#128200;</span> Análise
+      </a>
+    </nav>
+
+    <!-- Rodapé sidebar -->
+    <div class="sidebar-footer">
+      Dados: Min. da Fazenda<br>Secretaria de Prêmios e Apostas
+    </div>
+  </aside>
+
+  <!-- ===== ÁREA PRINCIPAL ===== -->
+  <div class="main">
+
+    <!-- ===== TOPBAR ===== -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <h1 class="topbar-title">Dashboard</h1>
+        <span class="topbar-breadcrumb">Prospector Bets &rsaquo; Visão Geral</span>
+      </div>
+      <div class="topbar-right">
+        <!-- Badge de sincronização -->
+        <span class="sync-indicator" id="sync-indicator"
+              title="Última sincronização com o CSV oficial do gov.br">
+          <span class="sync-pulse-dot"></span>
+          CSV: <span id="sync-status">—</span>
+        </span>
+        <!-- Ações -->
+        <button class="btn btn-ghost" onclick="forcarSyncCsv()"
+                title="Força sincronização imediata com o CSV do gov.br">
+          &#8635; Sincronizar CSV
+        </button>
+        <button class="btn btn-ghost" onclick="recarregarDados()"
+                title="Recarregar dados do servidor">
+          &#8635; Recarregar
+        </button>
+        <!-- Notificação -->
+        <button class="notif-btn" title="Notificações">
+          &#128276;
+          <span class="notif-dot"></span>
+        </button>
+        <!-- Chip de usuário -->
+        <div class="user-chip">
+          <div class="user-avatar">PB</div>
+          <span class="user-name">Analytics</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- ===== CONTEÚDO SCROLLÁVEL ===== -->
+    <div class="content main-content">
+
+      <!-- ========================================================
+           KPI SECTION — topo da página
+           ======================================================== -->
+      <section id="section-kpi" class="kpi-section">
+
+        <div class="kpi-grid">
+
+          <!-- Total de Bets -->
+          <div class="kpi-card anim-in" style="--delay:0.04s; --glow-color: var(--green)">
+            <div class="kpi-icon kpi-icon-green">&#127919;</div>
+            <span class="kpi-label">Total de Bets</span>
+            <span class="kpi-value" id="kpi-total">—</span>
+            <span class="kpi-trend kpi-trend-up">&#8679; Regulamentadas</span>
+            <canvas class="sparkline" id="spark-total" width="80" height="32"></canvas>
+          </div>
+
+          <!-- Com Email -->
+          <div class="kpi-card anim-in" style="--delay:0.09s; --glow-color: var(--green)">
+            <div class="kpi-icon kpi-icon-green">&#9993;</div>
+            <span class="kpi-label">Com Email</span>
+            <span class="kpi-value kpi-val-green" id="kpi-email">—</span>
+            <span class="kpi-trend kpi-trend-up">&#8679; Encontrados</span>
+            <canvas class="sparkline" id="spark-email" width="80" height="32"></canvas>
+          </div>
+
+          <!-- Sem Email -->
+          <div class="kpi-card anim-in" style="--delay:0.14s; --glow-color: var(--red)">
+            <div class="kpi-icon kpi-icon-red">&#128683;</div>
+            <span class="kpi-label">Sem Email</span>
+            <span class="kpi-value kpi-val-red" id="kpi-sem-email">—</span>
+            <span class="kpi-trend kpi-trend-down">&#8681; Não localizados</span>
+            <canvas class="sparkline" id="spark-sem-email" width="80" height="32"></canvas>
+          </div>
+
+          <!-- Com Afiliados -->
+          <div class="kpi-card anim-in" style="--delay:0.19s; --glow-color: var(--blue)">
+            <div class="kpi-icon kpi-icon-blue">&#128279;</div>
+            <span class="kpi-label">Com Afiliados</span>
+            <span class="kpi-value kpi-val-blue" id="kpi-afiliados">—</span>
+            <span class="kpi-trend kpi-trend-up">&#8679; Detectados</span>
+            <canvas class="sparkline" id="spark-afiliados" width="80" height="32"></canvas>
+          </div>
+
+          <!-- URLs Ativas -->
+          <div class="kpi-card anim-in" style="--delay:0.24s; --glow-color: var(--green)">
+            <div class="kpi-icon kpi-icon-green">&#127758;</div>
+            <span class="kpi-label">URLs Ativas</span>
+            <span class="kpi-value kpi-val-green" id="kpi-urls-ativas">—</span>
+            <span class="kpi-trend kpi-trend-up">&#8679; Online agora</span>
+            <canvas class="sparkline" id="spark-ativas" width="80" height="32"></canvas>
+          </div>
+
+          <!-- URLs Inativas -->
+          <div class="kpi-card anim-in" style="--delay:0.29s; --glow-color: var(--red)">
+            <div class="kpi-icon kpi-icon-red">&#128683;</div>
+            <span class="kpi-label">URLs Inativas</span>
+            <span class="kpi-value kpi-val-red" id="kpi-urls-inativas">—</span>
+            <span class="kpi-trend kpi-trend-down">&#8681; Inacessíveis</span>
+            <canvas class="sparkline" id="spark-inativas" width="80" height="32"></canvas>
+          </div>
+
+          <!-- Editados Manualmente -->
+          <div class="kpi-card anim-in" style="--delay:0.34s; --glow-color: var(--amber)">
+            <div class="kpi-icon kpi-icon-amber">&#9998;</div>
+            <span class="kpi-label">Editados</span>
+            <span class="kpi-value kpi-val-amber" id="kpi-editados">—</span>
+            <span class="kpi-trend kpi-trend-neutral">&#8729; Manual override</span>
+            <canvas class="sparkline" id="spark-editados" width="80" height="32"></canvas>
+          </div>
+
+          <!-- Última Atualização -->
+          <div class="kpi-card anim-in" style="--delay:0.39s; --glow-color: var(--blue)">
+            <div class="kpi-icon kpi-icon-blue">&#128337;</div>
+            <span class="kpi-label">Última Atualização</span>
+            <span class="kpi-value kpi-value-sm" id="kpi-atualizacao">—</span>
+            <span class="kpi-trend kpi-trend-neutral">&#8729; Data de coleta</span>
+            <canvas class="sparkline" id="spark-atualizacao" width="80" height="32"></canvas>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- ========================================================
+           TABLE SECTION
+           ======================================================== -->
+      <section id="section-table" class="table-section">
+
+        <!-- Filter strip horizontal -->
+        <div class="filter-strip">
+
+          <input type="text" id="f-marca" class="filter-input" placeholder="&#128269; Buscar marca..." />
+
+          <select id="f-status" class="filter-input">
+            <option value="">Status email</option>
+            <option value="com_email">Com email</option>
+            <option value="sem_email">Sem email</option>
+            <option value="falhou">Falhou</option>
+          </select>
+
+          <select id="f-afiliados" class="filter-input">
+            <option value="">Afiliados</option>
+            <option value="com">&#128994; Detectado</option>
+            <option value="sem">&#128308; Não detectado</option>
+          </select>
+
+          <select id="f-saude-url" class="filter-input">
+            <option value="">Saúde da URL</option>
+            <option value="ativa">&#128994; Ativas</option>
+            <option value="redirect">&#128993; Redirect</option>
+            <option value="erro">&#128308; Com erro</option>
+            <option value="desconhecido">&#9898; Não checadas</option>
+          </select>
+
+          <select id="f-porte" class="filter-input">
+            <option value="">Porte</option>
+          </select>
+
+          <select id="f-situacao" class="filter-input">
+            <option value="">Situação</option>
+          </select>
+
+          <select id="f-uf" class="filter-input" onchange="atualizarMunicipios()">
+            <option value="">UF</option>
+          </select>
+
+          <select id="f-municipio" class="filter-input">
+            <option value="">Município</option>
+          </select>
+
+          <input type="date" id="f-data-inicio" class="filter-input" title="De" />
+          <input type="date" id="f-data-fim" class="filter-input" title="Até" />
+
+          <div class="filter-strip-actions">
+            <button class="btn btn-primary" onclick="aplicarFiltros()">Aplicar</button>
+            <button class="btn btn-ghost" onclick="limparFiltros()">Limpar</button>
+            <button class="btn btn-export" onclick="exportarCSV()">&#8659; CSV</button>
+            <button class="btn btn-export" onclick="exportarXLSX()">&#8659; XLSX</button>
+          </div>
+        </div>
+
+        <!-- Barra de status da tabela -->
+        <div class="table-statusbar">
+          <span id="table-count">Carregando...</span>
+          <div class="pagination-size">
+            Exibir
+            <select id="page-size" class="filter-input"
+                    style="width:66px;padding:3px 6px"
+                    onchange="mudarTamanhoPagina()">
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            por página
+          </div>
+        </div>
+
+        <!-- Spinner de carregamento -->
+        <div id="loading" class="loading-overlay">
+          <div class="spinner"></div>
+          <p>Carregando dados...</p>
+        </div>
+
+        <!-- Tabela principal -->
+        <div class="table-wrapper" id="table-wrapper" style="display:none">
+          <table class="data-table" id="data-table">
+            <thead>
+              <tr>
+                <th class="sortable" data-col="marca" onclick="ordenarPor('marca')">Marca <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="razao_social" onclick="ordenarPor('razao_social')">Razão Social <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="cnpj" onclick="ordenarPor('cnpj')">CNPJ <span class="sort-icon">&#8597;</span></th>
+                <th>URL</th>
+                <th>Email</th>
+                <th>Afiliado</th>
+                <th class="sortable" data-col="uf" onclick="ordenarPor('uf')">UF <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="municipio" onclick="ordenarPor('municipio')">Município <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="status" onclick="ordenarPor('status')">Status <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable num-col" data-col="capital_social" onclick="ordenarPor('capital_social')">Capital Social <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="data_abertura" onclick="ordenarPor('data_abertura')">Abertura <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="data_coleta" onclick="ordenarPor('data_coleta')">Coleta <span class="sort-icon">&#8597;</span></th>
+                <th>Observação</th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Paginação -->
+        <div class="pagination" id="pagination" style="display:none">
+          <button class="btn btn-ghost" onclick="irParaPagina(paginaAtual - 1)" id="btn-prev">&#8249; Anterior</button>
+          <div id="page-numbers" class="page-numbers"></div>
+          <button class="btn btn-ghost" onclick="irParaPagina(paginaAtual + 1)" id="btn-next">Próximo &#8250;</button>
+        </div>
+
+      </section>
+
+      <!-- ========================================================
+           ANALYTICS SECTION
+           ======================================================== -->
+      <section id="section-analytics" class="analytics-section">
+        <div class="section-header">
+          <h2 class="section-title">&#128200; Análise</h2>
+          <p class="section-sub">Visualizações — refletem os filtros aplicados</p>
+        </div>
+
+        <!-- Linha 1: Trend + Gauge -->
+        <div class="analytics-row">
+
+          <!-- Gráfico de linha -->
+          <div class="chart-card chart-card-trend">
+            <div class="chart-card-header">
+              <span class="chart-card-title">Evolução por Status de Email</span>
+              <div class="chart-legend-custom">
+                <span class="legend-item">
+                  <span class="legend-dot" style="background:#39FF87"></span>Com email
+                </span>
+                <span class="legend-item">
+                  <span class="legend-dot" style="background:#4F9EFF"></span>Sem email
+                </span>
+              </div>
+            </div>
+            <div class="chart-container" style="height:200px">
+              <canvas id="chart-trend"></canvas>
+            </div>
+          </div>
+
+          <!-- Gauge + barras de progresso -->
+          <div class="chart-card chart-card-gauge">
+            <span class="chart-card-title">Taxa de Emails</span>
+            <div class="gauge-wrapper">
+              <canvas id="gauge-canvas" width="180" height="110"></canvas>
+            </div>
+            <div id="progress-bars" class="progress-bars"></div>
+          </div>
+
+        </div>
+
+        <!-- Linha 2: Charts originais restyled -->
+        <div class="charts-grid">
+          <div class="chart-card">
+            <h3 class="chart-title">Porte da Empresa</h3>
+            <div class="chart-container">
+              <canvas id="chart-porte"></canvas>
+            </div>
+          </div>
+          <div class="chart-card">
+            <h3 class="chart-title">Status de Email</h3>
+            <div class="chart-container">
+              <canvas id="chart-status"></canvas>
+            </div>
+          </div>
+          <div class="chart-card chart-card-wide">
+            <h3 class="chart-title">Bets por UF</h3>
+            <div class="chart-container chart-container-bar">
+              <canvas id="chart-uf"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- .content -->
+
+    <!-- Footer dentro do main para scrollar junto -->
+    <footer class="footer">
+      Prospector Bets &mdash; Dados: Ministério da Fazenda / Secretaria de Prêmios e Apostas
+    </footer>
+
+  </div><!-- .main -->
+</div><!-- .shell -->
+
+<script src="/static/app.js"></script>
+
+<!-- Scroll suave para seções do sidebar -->
+<script>
+function scrollToSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+// Nav item activo ao clicar
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', function() {
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('nav-item-active'));
+    this.classList.add('nav-item-active');
+  });
+});
+</script>
+
+</body>
+</html>

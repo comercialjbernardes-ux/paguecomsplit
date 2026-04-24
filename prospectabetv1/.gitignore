@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+*.log
+dados/bets_enriquecidas.json
+dados/afiliados_health.json
+dados/url_health.json
+dados/csv_sync_status.json
+checkpoint.json
+.venv/
+venv/
