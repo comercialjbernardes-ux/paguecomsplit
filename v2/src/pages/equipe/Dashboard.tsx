@@ -22,7 +22,7 @@ import { NOME_EMPRESA, PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 import { LoadingState } from '../../components/LoadingState'
 import { ErrorBanner } from '../../components/ErrorBanner'
 import { formatCurrency, formatCurrencyShort } from '../../utils/format'
-import { calcCustosMensalEfetivo } from '../../utils/custos'
+import { calcCustosMensalEfetivo, dataPertenceAoPeriodo } from '../../utils/custos'
 import {
   getECsSemReceita,
   getOportunidadesContaDigital, getMarkupDistribution,
@@ -38,6 +38,7 @@ function gerarInsights(
   ant: DadosFechamento | null,
   ecsSemReceita: number,
   oportunidades: number,
+  descontosEfetivos?: number,
 ): Insight[] {
   const ins: Insight[] = []
   const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
@@ -64,7 +65,7 @@ function gerarInsights(
 
   if (varEcs !== null && varEcs < -5) ins.push({ nivel: 'atencao', titulo: `Base de ECs reduziu ${Math.abs(varEcs).toFixed(0)}%`, texto: `${ant?.ecsAtivos} → ${f.ecsAtivos} estabelecimentos. Cada EC vale ~${formatCurrency(f.markupPos / Math.max(f.ecsAtivos, 1))}/mês.` })
 
-  const pctDesc = f.markupPos > 0 ? (f.descontos / f.markupPos) * 100 : 0
+  const pctDesc = f.markupPos > 0 ? ((descontosEfetivos ?? f.descontos) / f.markupPos) * 100 : 0
   if (pctDesc > 15) ins.push({ nivel: 'atencao', titulo: `Descontos em ${pctDesc.toFixed(1)}% do Markup`, texto: `${formatCurrency(f.descontos)} em descontos concedidos no período. Revisar política de descontos.` })
 
   return ins.slice(0, 4)
@@ -74,7 +75,7 @@ function gerarInsights(
 
 export function EquipeDashboard() {
   const { vendedores, isLoading, error } = useEquipeData()
-  const { fechamentos, clientes, getLocaisPorPeriodo } = useInternoData()
+  const { fechamentos, clientes, getLocaisPorPeriodo, lancamentos } = useInternoData()
   const { custos, equipamentos } = useDataContext()
   const [periodoSel, setPeriodoSel] = useState<string>('ultimo')
 
@@ -108,11 +109,19 @@ export function EquipeDashboard() {
     const locaisPeriodo = getLocaisPorPeriodo(f.periodo)
     const recLocais  = locaisPeriodo.receitas
     const despLocais = locaisPeriodo.despesas
+    // Descontos: usar agregado do Resumo se disponivel; caso contrario somar lancamentos
+    // source:'sheets' da aba Descontos para evitar que f.descontos=0 subestime deducoes.
+    const sheetsDescontos = f.descontos === 0
+      ? lancamentos
+          .filter((l) => l.source === 'sheets' && l.conta === 'Descontos' && dataPertenceAoPeriodo(l.data, f.periodo))
+          .reduce((s, l) => s + Math.abs(l.valor), 0)
+      : 0
+    const descontosEfetivos = f.descontos > 0 ? f.descontos : sheetsDescontos
     // Valor liquido ajustado inclui receitas/despesas manuais + custos operacionais + equipamentos
     const valorLiquidoAjustado = f.valorLiquido + recLocais - despLocais - totalCustos
     const lucroOp = valorLiquidoAjustado
     const receitaBruta = f.markupPos + f.comissaoRede + f.repasse + recLocais
-    const totalDeducoes = f.faturaDigital + f.descontos + despLocais + totalCustos
+    const totalDeducoes = f.faturaDigital + descontosEfetivos + despLocais + totalCustos
     const pctDeducoes = receitaBruta > 0 ? (totalDeducoes / receitaBruta) * 100 : 0
     const var_ = (campo: keyof DadosFechamento) =>
       ant && (ant[campo] as number) > 0 ? (((f[campo] as number) - (ant[campo] as number)) / (ant[campo] as number)) * 100 : null
@@ -122,7 +131,7 @@ export function EquipeDashboard() {
     // aplicados ao período anterior sem recalcular para aquele período)
     const valorLiquidoAjustadoAnt = ant ? ant.valorLiquido : null
     return { f, ant, margem, ticketMedio, lucroOp, receitaBruta, totalDeducoes, pctDeducoes, saude,
-      valorLiquidoAjustado,
+      valorLiquidoAjustado, descontosEfetivos,
       varTpv: var_('tpvTotal'), varMarkup: var_('markupPos'),
       varLiquido: valorLiquidoAjustadoAnt && valorLiquidoAjustadoAnt !== 0
         ? ((valorLiquidoAjustado - valorLiquidoAjustadoAnt) / Math.abs(valorLiquidoAjustadoAnt)) * 100
@@ -131,7 +140,7 @@ export function EquipeDashboard() {
       // M-04: guard para ant.markupPos undefined — evita NaN pp
       varMargem: (ant?.tpvTotal && ant.markupPos != null) ? margem - (ant.markupPos / ant.tpvTotal * 100) : null,
     }
-  }, [fechamentoAtual, fechamentoAnt, totalCustos, getLocaisPorPeriodo])
+  }, [fechamentoAtual, fechamentoAnt, totalCustos, getLocaisPorPeriodo, lancamentos])
 
   // Análise de carteira
   const carteira = useMemo(() => {
@@ -151,8 +160,8 @@ export function EquipeDashboard() {
   // Insights
   const insights = useMemo(() => {
     if (!fechamentoAtual) return []
-    return gerarInsights(fechamentoAtual, fechamentoAnt, carteira?.semReceita.length ?? 0, carteira?.oportunidades.length ?? 0)
-  }, [fechamentoAtual, fechamentoAnt, carteira])
+    return gerarInsights(fechamentoAtual, fechamentoAnt, carteira?.semReceita.length ?? 0, carteira?.oportunidades.length ?? 0, kpis?.descontosEfetivos)
+  }, [fechamentoAtual, fechamentoAnt, carteira, kpis])
 
   // Vendedores ordenados
   const rankingVend = useMemo(() => [...vendedores].sort((a, b) => b.faturamentoMensal - a.faturamentoMensal), [vendedores])

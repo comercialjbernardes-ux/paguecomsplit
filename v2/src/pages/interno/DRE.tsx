@@ -43,6 +43,17 @@ export function InternoDRE() {
       (l) => l.source === 'local' && dataPertenceAoPeriodo(l.data, f.periodo)
     )
 
+    // Descontos efetivos: usar campo agregado do fechamento (Resumo) se disponivel.
+    // Caso o Resumo nao tenha label reconhecivel e f.descontos retorne 0,
+    // soma os lancamentos individuais source:'sheets' da aba Descontos como fallback.
+    // Evita dupla contagem: quando f.descontos > 0, os lancamentos ja estao no agregado.
+    const sheetsDescontosPeriodo = f.descontos === 0
+      ? lancamentos
+          .filter((l) => l.source === 'sheets' && l.conta === 'Descontos' && dataPertenceAoPeriodo(l.data, f.periodo))
+          .reduce((s, l) => s + Math.abs(l.valor), 0)
+      : 0
+    const descontosEfetivos = f.descontos > 0 ? f.descontos : sheetsDescontosPeriodo
+
     // Math.abs garante valor positivo mesmo se o usuário salvou a entrada
     // com sinal negativo — consistente com o bloco de exibição abaixo.
     const totalReceitasLocais = localNoPeriodo
@@ -76,7 +87,7 @@ export function InternoDRE() {
 
     const deducoes: { id: string; descricao: string; valor: number; isLocal?: boolean; isEquip?: boolean; isCustoOp?: boolean }[] = [
       { id: 'fatura', descricao: 'Cobranca Conta Digital', valor: f.faturaDigital },
-      { id: 'descontos', descricao: 'Descontos do Periodo', valor: f.descontos },
+      { id: 'descontos', descricao: 'Descontos do Periodo', valor: descontosEfetivos },
     ]
     if (totalEquipMensal > 0) {
       deducoes.push({ id: 'equip', descricao: 'Ded. Equipamentos/Maquinas', valor: totalEquipMensal, isEquip: true })
@@ -88,7 +99,7 @@ export function InternoDRE() {
       deducoes.push({ id: 'local', descricao: 'Deducoes Lancadas', valor: totalDeducoesLocais, isLocal: true })
     }
 
-    const totalDeducoes = f.faturaDigital + f.descontos + totalEquipMensal + totalCustosOperacionais + totalDeducoesLocais
+    const totalDeducoes = f.faturaDigital + descontosEfetivos + totalEquipMensal + totalCustosOperacionais + totalDeducoesLocais
 
     return {
       receitas,
@@ -108,6 +119,7 @@ export function InternoDRE() {
       totalCustosOperacionais,
       totalReceitasLocais,
       totalDeducoesLocais,
+      descontosEfetivos,
     }
   }, [fechamentoAtual, lancamentos, equipamentos, custos])
 
@@ -125,7 +137,7 @@ export function InternoDRE() {
     }
     entries.push(
       { name: 'Conta Digital', valor: -f.faturaDigital, tipo: 'negativo' },
-      { name: 'Descontos', valor: -f.descontos, tipo: 'negativo' },
+      { name: 'Descontos', valor: -dreData.descontosEfetivos, tipo: 'negativo' },
     )
     if (dreData.temEquip) {
       entries.push({ name: 'Equipamentos', valor: -dreData.totalEquipMensal, tipo: 'negativo' })
