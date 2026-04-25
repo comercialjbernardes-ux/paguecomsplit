@@ -181,6 +181,18 @@ _PORTE_MAPA = {
 }
 
 
+def _extrair_texto_ou_str(valor) -> str:
+    """
+    Extrai texto de um campo que pode ser string ou dict com chave 'descricao'/'text'.
+    Evita que dicts Python sejam serializados como "{'codigo': ..., 'descricao': ...}".
+    """
+    if valor is None:
+        return ""
+    if isinstance(valor, dict):
+        return str(valor.get("descricao") or valor.get("text") or "").strip()
+    return str(valor).strip()
+
+
 def _normalizar_empresa(emp: dict) -> dict:
     """
     Normaliza um registro vindo da Minha Receita para o formato interno.
@@ -218,7 +230,8 @@ def _normalizar_empresa(emp: dict) -> dict:
         "cnae_principal":        str(emp.get("cnae_fiscal") or "").strip(),
         "cnae_descricao":        str(emp.get("cnae_fiscal_descricao") or "").strip(),
         "cnaes_secundarios":     emp.get("cnaes_secundarios") or [],
-        "natureza_juridica":     str(emp.get("natureza_juridica") or "").strip(),
+        # C2: Minha Receita pode retornar natureza_juridica como dict {"codigo":..., "descricao":...}
+        "natureza_juridica":     _extrair_texto_ou_str(emp.get("natureza_juridica")),
         "municipio":             str(emp.get("municipio") or "").strip(),
         "uf":                    str(emp.get("uf") or "").strip().upper(),
         "cep":                   str(emp.get("cep") or "").strip(),
@@ -263,6 +276,24 @@ def _formatar_telefone(tel: str) -> str:
 # ---------------------------------------------------------------------------
 # Enriquecimento por CNPJ — CNPJá → BrasilAPI → ReceitaWS
 # ---------------------------------------------------------------------------
+
+def _parse_capital_cnpja(valor) -> float:
+    """
+    Converte o campo equity da CNPJa para float.
+    Trata None, inteiro, float e strings numericas/nao-numericas com segurança.
+    """
+    try:
+        if valor is None:
+            return 0.0
+        if isinstance(valor, (int, float)):
+            return float(valor)
+        # String: remove R$, espacos, separadores de milhar e troca virgula por ponto
+        limpo = str(valor).replace("R$", "").replace("R ", "").strip()
+        limpo = limpo.replace(".", "").replace(",", ".")
+        return float(limpo)
+    except (ValueError, TypeError):
+        return 0.0
+
 
 def _enriquecer_cnpja(cnpj_raw: str) -> dict | None:
     """
@@ -343,7 +374,8 @@ def _enriquecer_cnpja(cnpj_raw: str) -> dict | None:
         "endereco":           endereco,
         "telefone":           telefone,
         "email":              email.lower() if email else "",
-        "capital_social":     float(company.get("equity") or 0),
+        # C1: equity pode vir como string nao-numerica ("N/A", "-") em alguns registros CNPJa
+        "capital_social":     _parse_capital_cnpja(company.get("equity")),
         "porte":              size.get("text") or size.get("id") or "",
         "qsa":                qsa,
         "opcao_pelo_simples": simples.get("simples"),
@@ -720,8 +752,9 @@ def api_municipios(uf: str):
             )
             _cache_municipios[uf] = municipios
             return jsonify(municipios)
-    except Exception:
-        pass
+    except Exception as e:
+        # C3: log para diagnostico em producao — sem isso falhas de rede sao invisiveis
+        print(f"[municipios] Erro ao buscar municípios da UF {uf}: {e}")
 
     return jsonify([])
 
@@ -1014,23 +1047,27 @@ def _parse_float(valor: str | None) -> float | None:
 def _normalizar_data_iso(data: str) -> str:
     """
     Converte datas em formatos variados para YYYY-MM-DD.
-    Aceita: DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY.
+    Aceita: DD/MM/YYYY, YYYY-MM-DD, DD-MM-YYYY, ISO 8601 com hora.
+    C4: formatos nao reconhecidos retornam "" para evitar comparacoes incorretas.
     """
     s = str(data).strip()
     if not s:
         return ""
-    # Já está em ISO
-    if len(s) == 10 and s[4] == "-":
+    # ISO 8601 com hora: "2020-01-15T00:00:00Z" ou "2020-01-15T03:00:00-03:00"
+    if len(s) >= 10 and s[4] == "-" and (len(s) == 10 or s[10] in ("T", " ")):
         return s[:10]
     # DD/MM/YYYY
     if len(s) == 10 and s[2] == "/":
         partes = s.split("/")
-        return f"{partes[2]}-{partes[1]}-{partes[0]}"
-    # DD-MM-YYYY
-    if len(s) == 10 and s[2] == "-":
+        if len(partes) == 3:
+            return f"{partes[2]}-{partes[1]}-{partes[0]}"
+    # DD-MM-YYYY (distingue de YYYY-MM-DD pelo indice 2)
+    if len(s) == 10 and s[2] == "-" and s[5] == "-":
         partes = s.split("-")
-        return f"{partes[2]}-{partes[1]}-{partes[0]}"
-    return s
+        if len(partes) == 3 and len(partes[2]) == 4:
+            return f"{partes[2]}-{partes[1]}-{partes[0]}"
+    # C4: formato nao reconhecido — retorna "" para nao contaminar filtros de data
+    return ""
 
 
 # ---------------------------------------------------------------------------
