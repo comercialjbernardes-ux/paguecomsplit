@@ -101,15 +101,22 @@ export function InternoDRE() {
 
     const totalDeducoes = f.faturaDigital + descontosEfetivos + totalEquipMensal + totalCustosOperacionais + totalDeducoesLocais
 
+    // valorLiquidoAjustado: reconstruido a partir dos componentes mapeados (totalReceitas - totalDeducoes).
+    // Quando f.descontos=0 (label nao encontrado no Resumo), f.valorLiquido pode divergir de calculado
+    // porque o Resumo ja embute os descontos reais enquanto f.descontos=0 no mapper.
+    // Usar calculado garante consistencia matematica da tabela (Receita Bruta - Total Deducoes = Valor Liquido).
+    // f.valorLiquido e mantido como referencia de conferencia mas nao e o valor exibido.
+    const valorLiquidoCalculado = totalReceitas - totalDeducoes
+
     return {
       receitas,
       deducoes,
       totalReceitas,
       totalDeducoes,
       valorLiquido: f.valorLiquido,
-      // Liquido ajustado inclui receitas E despesas manuais + equipamentos + custos operacionais
-      valorLiquidoAjustado: f.valorLiquido + totalReceitasLocais - totalDeducoesLocais - totalEquipMensal - totalCustosOperacionais,
-      calculado: totalReceitas - totalDeducoes,
+      // Resultado reconstruido: garante que Receita Bruta - Total Deducoes = Valor Liquido na tabela
+      valorLiquidoAjustado: valorLiquidoCalculado,
+      calculado: valorLiquidoCalculado,
       margemCalculada,
       temReceitasLocais: totalReceitasLocais > 0,
       temDeducoesLocais: totalDeducoesLocais > 0,

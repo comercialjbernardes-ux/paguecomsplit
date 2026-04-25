@@ -66,7 +66,7 @@ function gerarInsights(
   if (varEcs !== null && varEcs < -5) ins.push({ nivel: 'atencao', titulo: `Base de ECs reduziu ${Math.abs(varEcs).toFixed(0)}%`, texto: `${ant?.ecsAtivos} → ${f.ecsAtivos} estabelecimentos. Cada EC vale ~${formatCurrency(f.markupPos / Math.max(f.ecsAtivos, 1))}/mês.` })
 
   const pctDesc = f.markupPos > 0 ? ((descontosEfetivos ?? f.descontos) / f.markupPos) * 100 : 0
-  if (pctDesc > 15) ins.push({ nivel: 'atencao', titulo: `Descontos em ${pctDesc.toFixed(1)}% do Markup`, texto: `${formatCurrency(f.descontos)} em descontos concedidos no período. Revisar política de descontos.` })
+  if (pctDesc > 15) ins.push({ nivel: 'atencao', titulo: `Descontos em ${pctDesc.toFixed(1)}% do Markup`, texto: `${formatCurrency(descontosEfetivos ?? f.descontos)} em descontos concedidos no período. Revisar política de descontos.` })
 
   return ins.slice(0, 4)
 }
@@ -240,7 +240,7 @@ export function EquipeDashboard() {
           <MiniKPI label="Conta Digital" value={formatCurrencyShort(kpis.f.faturaDigital)}
             icon={<Wallet className="w-3.5 h-3.5" />} color="teal"
             sub={kpis.f.faturaDigital > 0 ? `~${Math.round(kpis.f.faturaDigital / PRECO_CONTA_DIGITAL)} ECs` : 'Nenhum'} />
-          <MiniKPI label="Descontos" value={formatCurrencyShort(kpis.f.descontos)}
+          <MiniKPI label="Descontos" value={formatCurrencyShort(kpis.descontosEfetivos)}
             icon={<ShieldAlert className="w-3.5 h-3.5" />}
             color={kpis.pctDeducoes > 15 ? 'red' : 'slate'}
             sub={kpis.pctDeducoes > 0 ? `${kpis.pctDeducoes.toFixed(1)}% da receita bruta` : '—'} />
