@@ -28,6 +28,7 @@ from flask import Flask, jsonify, render_template, request
 import url_health
 import csv_sync
 import afiliados_health
+import enriquecer_base
 
 app = Flask(__name__)
 
@@ -327,6 +328,45 @@ def api_recarregar():
     return jsonify({"ok": True, "total": len(_dados)})
 
 
+@app.route("/api/enriquecer", methods=["POST"])
+def api_enriquecer():
+    """
+    Dispara enriquecimento de CNPJ em background para registros sem uf/municipio.
+
+    Query params:
+        force=1  — reenriquece mesmo quem já tem uf/municipio
+    """
+    force = request.args.get("force", "0") in ("1", "true", "yes")
+
+    def _run():
+        try:
+            resultado = enriquecer_base.enriquecer_registros_pendentes(force=force)
+            # Recarrega dados em memória após enriquecimento concluir
+            recarregar_dados()
+            print(
+                f"[app] enriquecimento concluído — "
+                f"atualizados: {resultado['atualizados']} / "
+                f"processados: {resultado['processados']}"
+            )
+        except Exception as e:
+            print(f"[app] erro no enriquecimento: {e}")
+
+    import threading
+    t = threading.Thread(target=_run, name="cnpj-enrich-api", daemon=True)
+    t.start()
+
+    # Conta quantos registros estão pendentes para informar ao cliente
+    pendentes = sum(1 for r in _dados if not r.get("uf"))
+    cnpjs_unicos = len({r.get("cnpj", "") for r in _dados if not r.get("uf") and r.get("cnpj")})
+    return jsonify({
+        "ok": True,
+        "mensagem": "Enriquecimento iniciado em background.",
+        "registros_pendentes": pendentes,
+        "cnpjs_unicos": cnpjs_unicos,
+        "force": force,
+    })
+
+
 @app.route("/api/editar", methods=["POST"])
 def api_editar():
     """
@@ -419,6 +459,28 @@ if _deve_iniciar_worker():
     url_health.iniciar_worker()
     afiliados_health.iniciar_worker()
     csv_sync.iniciar_worker()
+
+    # Enriquece registros sem uf/municipio em background na inicialização
+    def _enriquecer_startup():
+        import time as _time
+        _time.sleep(5)  # aguarda o servidor subir completamente
+        pendentes = sum(1 for r in _dados if not r.get("uf"))
+        if pendentes:
+            print(f"[app] {pendentes} registros sem UF — iniciando enriquecimento automático...")
+            try:
+                resultado = enriquecer_base.enriquecer_registros_pendentes()
+                recarregar_dados()
+                print(
+                    f"[app] enriquecimento startup concluído — "
+                    f"atualizados: {resultado['atualizados']} / "
+                    f"processados: {resultado['processados']}"
+                )
+            except Exception as e:
+                print(f"[app] erro no enriquecimento startup: {e}")
+
+    import threading as _threading
+    _t_enrich = _threading.Thread(target=_enriquecer_startup, name="enrich-startup", daemon=True)
+    _t_enrich.start()
 
 # ---------------------------------------------------------------------------
 # Ponto de entrada

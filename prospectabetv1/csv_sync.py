@@ -397,7 +397,30 @@ def sincronizar_uma_vez() -> dict:
         f"-{len(info['removidas'])} ~{len(info['url_atualizada'])} "
         f"(total CSV: {info['total_csv']})"
     )
+
+    # Enriquece novos registros em background (popula uf, municipio, porte, etc.)
+    if info["adicionadas"]:
+        _disparar_enriquecimento()
+
     return info
+
+
+def _disparar_enriquecimento() -> None:
+    """Lança thread daemon para enriquecer registros sem uf/municipio."""
+    def _run():
+        try:
+            import enriquecer_base
+            resultado = enriquecer_base.enriquecer_registros_pendentes()
+            print(
+                f"[csv_sync] enriquecimento concluído — "
+                f"atualizados: {resultado['atualizados']} / "
+                f"processados: {resultado['processados']}"
+            )
+        except Exception as e:
+            print(f"[csv_sync] erro no enriquecimento automático: {e}")
+
+    t = threading.Thread(target=_run, name="cnpj-enrich-worker", daemon=True)
+    t.start()
 
 
 def _loop() -> None:

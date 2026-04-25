@@ -181,6 +181,29 @@ async function forcarSyncCsv() {
   }
 }
 
+async function enriquecerCnpj() {
+  const btn = event?.target;
+  if (btn) { btn.disabled = true; btn.textContent = '⟳ Consultando APIs…'; }
+  try {
+    const resp = await fetch('/api/enriquecer', { method: 'POST' });
+    const r = await resp.json();
+    if (r.ok) {
+      const msg = `Enriquecimento iniciado em background.\n` +
+        `Registros pendentes: ${r.registros_pendentes}\n` +
+        `CNPJs únicos a consultar: ${r.cnpjs_unicos}\n\n` +
+        `Os filtros de UF e Município serão preenchidos automaticamente\n` +
+        `após a consulta concluir. Clique em "Recarregar" em ~1 minuto.`;
+      alert(msg);
+    } else {
+      alert('Erro: ' + (r.erro || 'erro desconhecido'));
+    }
+  } catch (e) {
+    alert('Erro: ' + e.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '📌 Enriquecer CNPJ'; }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Preenchimento dos dropdowns de filtro
 // ---------------------------------------------------------------------------
