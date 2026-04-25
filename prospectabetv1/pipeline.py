@@ -203,9 +203,11 @@ def enriquecer_cnpj_paralelo(registros: list[dict]) -> list[dict]:
             except Exception as e:
                 logger.error(f"Erro no worker de CNPJ: {e}")
 
-    # Mantém ordem original por marca
-    ordem = {r["url"]: i for i, r in enumerate(registros)}
-    enriquecidos.sort(key=lambda r: ordem.get(r.get("url", ""), 9999))
+    # Mantém ordem original — chave composta URL|CNPJ para tolerar marcas com
+    # mesmo URL ou mesmo CNPJ (ex: empresa com múltiplas marcas no mesmo domínio)
+    _ord = lambda r: f"{r.get('url', '')}|{r.get('cnpj', '')}"
+    ordem = {_ord(r): i for i, r in enumerate(registros)}
+    enriquecidos.sort(key=lambda r: ordem.get(_ord(r), 9999))
     return enriquecidos
 
 
@@ -276,9 +278,11 @@ def coletar_afiliados_paralelo(registros: list[dict]) -> list[dict]:
             except Exception as e:
                 logger.error(f"Erro no worker de afiliados: {e}")
 
-    # Mantém ordem original
-    ordem = {r.get("cnpj", ""): i for i, r in enumerate(registros)}
-    resultados.sort(key=lambda r: ordem.get(r.get("cnpj", ""), 9999))
+    # Mantém ordem original — chave composta CNPJ|URL para tolerar mesmo CNPJ
+    # com múltiplas marcas/URLs (ex: empresa com 3 marcas distintas)
+    _ord = lambda r: f"{r.get('cnpj', '')}|{r.get('url', '')}"
+    ordem = {_ord(r): i for i, r in enumerate(registros)}
+    resultados.sort(key=lambda r: ordem.get(_ord(r), 9999))
     return resultados
 
 

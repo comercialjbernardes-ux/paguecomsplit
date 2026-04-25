@@ -76,6 +76,8 @@ export interface DataContextType {
 
   // ─ Overrides de segmento de clientes ────────────────────────
   saveSegmentOverride: (override: SegmentOverride) => void
+  /** Remove override e restaura inferência automática de segmento para o cliente */
+  removeSegmentOverride: (clienteId: number) => void
 
   // ─ CRUD de Custos Operacionais ───────────────────────────────
   custos: CustoOperacional[]

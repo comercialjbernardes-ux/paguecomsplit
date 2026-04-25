@@ -3,7 +3,7 @@ app.py — Dashboard Flask para visualização de bets regulamentadas
 ================================================================
 Uso:
     python app.py
-    Acesse: http://localhost:5000
+    Acesse: http://localhost:5001
 
 Os dados são carregados de dados/bets_enriquecidas.json (gerado pelo pipeline.py).
 Fallback: bets_com_emails.csv se o JSON ainda não existir.
@@ -279,9 +279,11 @@ def api_stats():
 @app.route("/api/municipios/<uf>")
 def api_municipios(uf: str):
     """Retorna municípios disponíveis para a UF selecionada (cascata de filtros)."""
+    with _lock_dados:
+        snapshot = list(_dados)
     municipios = sorted({
         r.get("municipio", "")
-        for r in _dados
+        for r in snapshot
         if r.get("uf", "").upper() == uf.upper() and r.get("municipio")
     })
     return jsonify(municipios)
@@ -421,5 +423,5 @@ if __name__ == "__main__":
     print(f"\nDashboard iniciado — {len(_dados)} registros carregados ({fonte})")
     if n_ov:
         print(f"  {n_ov} registro(s) com edições manuais aplicadas")
-    print("Acesse: http://localhost:5000\n")
-    app.run(debug=True, port=5000)
+    print("Acesse: http://localhost:5001\n")
+    app.run(debug=True, port=5001)

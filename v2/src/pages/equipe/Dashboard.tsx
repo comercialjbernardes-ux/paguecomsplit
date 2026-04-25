@@ -40,13 +40,15 @@ function gerarInsights(
   oportunidades: number,
 ): Insight[] {
   const ins: Insight[] = []
-  const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : 0
+  const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
+  const semDadosTPV = f.tpvTotal === 0 && (f.taxaMargem ?? 0) === 0
   // Diferencia "sem periodo anterior" (null) de "periodo anterior com markup zero"
   // Quando o anterior e > 0, calcula % normalmente. Quando e 0, nao ha base para %.
   const varMarkup = ant && ant.markupPos > 0 ? ((f.markupPos - ant.markupPos) / ant.markupPos) * 100 : null
   const varEcs = ant && ant.ecsAtivos > 0 ? ((f.ecsAtivos - ant.ecsAtivos) / ant.ecsAtivos) * 100 : null
 
-  if (margem < 1) ins.push({ nivel: 'critico', titulo: 'Margem crítica', texto: `${margem.toFixed(2)}% — abaixo do mínimo viável. Renegociar taxas com a rede adquirente.` })
+  if (semDadosTPV) ins.push({ nivel: 'info', titulo: 'Sem dados de TPV', texto: 'TPV e taxa de margem não disponíveis para este período. Verifique se a planilha foi importada corretamente.' })
+  else if (margem < 1) ins.push({ nivel: 'critico', titulo: 'Margem crítica', texto: `${margem.toFixed(2)}% — abaixo do mínimo viável. Renegociar taxas com a rede adquirente.` })
   else if (margem < 1.5) ins.push({ nivel: 'atencao', titulo: `Margem em atenção (${margem.toFixed(2)}%)`, texto: 'Viável, mas sensível a quedas de volume. Priorizar crescimento de TPV.' })
   else ins.push({ nivel: 'positivo', titulo: `Margem saudável (${margem.toFixed(2)}%)`, texto: `A cada R$ 1.000 processados, a empresa gera R$ ${(margem * 10).toFixed(2)} de receita.` })
 
@@ -72,7 +74,7 @@ function gerarInsights(
 
 export function EquipeDashboard() {
   const { vendedores, isLoading, error } = useEquipeData()
-  const { fechamentos, clientes, totalReceitasLocais, totalDespesasLocais } = useInternoData()
+  const { fechamentos, clientes, getLocaisPorPeriodo } = useInternoData()
   const { custos, equipamentos } = useDataContext()
   const [periodoSel, setPeriodoSel] = useState<string>('ultimo')
 
@@ -102,24 +104,26 @@ export function EquipeDashboard() {
     if (!f) return null
     const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
     const ticketMedio = f.ecsAtivos > 0 ? f.markupPos / f.ecsAtivos : 0
+    // Usar lançamentos locais específicos do período selecionado (não do último período global)
+    const locaisPeriodo = getLocaisPorPeriodo(f.periodo)
+    const recLocais  = locaisPeriodo.receitas
+    const despLocais = locaisPeriodo.despesas
     // Valor liquido ajustado inclui receitas/despesas manuais + custos operacionais + equipamentos
-    // (mesma logica do DRE Gerencial para consistencia)
-    const valorLiquidoAjustado = f.valorLiquido + totalReceitasLocais - totalDespesasLocais - totalCustos
+    const valorLiquidoAjustado = f.valorLiquido + recLocais - despLocais - totalCustos
     const lucroOp = valorLiquidoAjustado
-    const receitaBruta = f.markupPos + f.comissaoRede + f.repasse + totalReceitasLocais
-    const totalDeducoes = f.faturaDigital + f.descontos + totalDespesasLocais + totalCustos
+    const receitaBruta = f.markupPos + f.comissaoRede + f.repasse + recLocais
+    const totalDeducoes = f.faturaDigital + f.descontos + despLocais + totalCustos
     const pctDeducoes = receitaBruta > 0 ? (totalDeducoes / receitaBruta) * 100 : 0
     const var_ = (campo: keyof DadosFechamento) =>
       ant && (ant[campo] as number) > 0 ? (((f[campo] as number) - (ant[campo] as number)) / (ant[campo] as number)) * 100 : null
     const saude: 'CRITICA' | 'ATENCAO' | 'SAUDAVEL' = margem < 1 ? 'CRITICA' : margem < 1.5 ? 'ATENCAO' : 'SAUDAVEL'
-    // M-03: comparar varLiquido contra o valor ajustado do período anterior (não o bruto)
-    const valorLiquidoAjustadoAnt = ant
-      ? ant.valorLiquido + totalReceitasLocais - totalDespesasLocais - totalCustos
-      : null
+    // Comparar valor ajustado atual contra valor líquido bruto do anterior
+    // (os lançamentos locais são período-específicos e não podem ser retroativamente
+    // aplicados ao período anterior sem recalcular para aquele período)
+    const valorLiquidoAjustadoAnt = ant ? ant.valorLiquido : null
     return { f, ant, margem, ticketMedio, lucroOp, receitaBruta, totalDeducoes, pctDeducoes, saude,
       valorLiquidoAjustado,
       varTpv: var_('tpvTotal'), varMarkup: var_('markupPos'),
-      // M-03: variação % sobre o valor ajustado (não o campo bruto valorLiquido)
       varLiquido: valorLiquidoAjustadoAnt && valorLiquidoAjustadoAnt !== 0
         ? ((valorLiquidoAjustado - valorLiquidoAjustadoAnt) / Math.abs(valorLiquidoAjustadoAnt)) * 100
         : null,
@@ -127,7 +131,7 @@ export function EquipeDashboard() {
       // M-04: guard para ant.markupPos undefined — evita NaN pp
       varMargem: (ant?.tpvTotal && ant.markupPos != null) ? margem - (ant.markupPos / ant.tpvTotal * 100) : null,
     }
-  }, [fechamentoAtual, fechamentoAnt, totalCustos, totalReceitasLocais, totalDespesasLocais])
+  }, [fechamentoAtual, fechamentoAnt, totalCustos, getLocaisPorPeriodo])
 
   // Análise de carteira
   const carteira = useMemo(() => {
@@ -446,17 +450,9 @@ function MiniKPI({ label, value, var_, icon, color, sub, isPercent }: {
           {var_ >= 0 ? '+' : ''}{isPercent ? `${var_.toFixed(2)}pp` : `${var_.toFixed(1)}%`}
         </span>
       )}
-      {sub && !var_ && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
+      {sub && var_ == null && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
     </div>
   )
 }
 
-function VarBadge({ val, suffix = '%' }: { val: number | null; suffix?: string }) {
-  if (val === null) return <span className="text-gray-200 text-xs">—</span>
-  return (
-    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold ${val >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-      {val >= 0 ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
-      {Math.abs(val).toFixed(1)}{suffix}
-    </span>
-  )
-}
+// VarBadge removed (unused)

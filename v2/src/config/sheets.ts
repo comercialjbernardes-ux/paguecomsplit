@@ -5,10 +5,13 @@
 
 /**
  * Padrao regex para identificar abas de fechamento mensal.
- * Aceita o formato classico "Fechamento_Mar2026" E o formato
- * real da planilha Comercial Bernardes ("Resumo").
+ * - `Fechamento[_\s-]` → captura "Fechamento_Mar2026", "Fechamento Mar2026",
+ *   "Fechamento-Mar2026", mas NAO "FechamentoXYZ" (sem separador).
+ * - `Resumo$` → captura EXATAMENTE "Resumo" (fim de string), mas NAO
+ *   "Resumo Anterior", "Resumos Mensais", etc.
+ * O flag `i` mantém a correspondencia case-insensitive.
  */
-export const SHEET_TAB_PATTERN = /^(Fechamento|Resumo)/i
+export const SHEET_TAB_PATTERN = /^(Fechamento[_\s-]|Resumo$)/i
 
 /** Nomes das abas (padrao + abas da planilha real Comercial Bernardes) */
 export const SHEET_TABS = {

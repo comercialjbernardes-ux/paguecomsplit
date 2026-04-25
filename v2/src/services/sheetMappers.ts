@@ -21,7 +21,6 @@ import {
   COL_MKP_POS,
   COL_REPASSES,
   COL_DESCONTOS,
-  COL_COBR_DIGITAL,
 } from '../config/sheets'
 import { periodoToDate } from '../utils/format'
 import type {
@@ -52,7 +51,10 @@ export function extractPeriodoFromTab(
   // Para aba "Resumo": extrai da linha 3, coluna B (indice 2 = row 3, col B = index 1)
   if (rows && rows.length > 2) {
     const row3 = String(rows[2]?.[1] || rows[2]?.[0] || '')
-    const match = row3.match(/(\w+)\/(\d{4})/u)
+    // Usa \p{L}+ (Unicode letter) em vez de \w+ para capturar meses com
+    // acentos/cedilha como "Março", "Fevereiro", "Outubro" corretamente.
+    // \w não reconhece ç/ã/etc, causando match parcial (ex: "o2026" em "Março/2026").
+    const match = row3.match(/(\p{L}+)\/(\d{4})/u)
     if (match) {
       const monthMap: Record<string, string> = {
         janeiro: 'Jan', fevereiro: 'Fev', março: 'Mar', abril: 'Abr',

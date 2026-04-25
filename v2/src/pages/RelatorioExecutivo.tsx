@@ -16,7 +16,7 @@ import { useInternoData } from '../hooks/useInternoData'
 import { useDataContext } from '../contexts/dataContextValue'
 import { LoadingState } from '../components/LoadingState'
 import { formatCurrency, formatCurrencyShort } from '../utils/format'
-import { calcCustosMensalEfetivo } from '../utils/custos'
+import { calcCustosMensalEfetivo, dataPertenceAoPeriodo } from '../utils/custos'
 import type { DadosFechamento } from '../types'
 import { PRECO_CONTA_DIGITAL } from '../constants/empresa'
 
@@ -249,10 +249,10 @@ export function RelatorioExecutivoPage() {
     const margemCalc = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
     const lucroOperacional = f.valorLiquido - totalCustosMensal
 
-    // Despesas manuais locais
+    // Despesas manuais locais — filtradas pelo período atual
     const despesasLocais = lancamentos
-      .filter((l) => l.tipo === 'despesa' && l.source === 'local')
-      .reduce((s, l) => s + l.valor, 0)
+      .filter((l) => l.tipo === 'despesa' && l.source === 'local' && dataPertenceAoPeriodo(l.data, f.periodo))
+      .reduce((s, l) => s + Math.abs(l.valor), 0)
 
     // Variacao vs anterior
     const varMarkup = ant && ant.markupPos > 0 ? ((f.markupPos - ant.markupPos) / ant.markupPos) * 100 : null

@@ -19,7 +19,6 @@ import {
   upsert,
   remove,
   clear,
-  hasData,
 } from '../services/localStorageService'
 import {
   mergeVendedores,
@@ -324,17 +323,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   // ─ Dados históricos computados ───────────────────────────────
 
-  /** Fechamentos de todos os meses históricos — merge + dedup + ordem cronológica */
+  /** Fechamentos de todos os meses históricos — merge + dedup + ordem cronológica.
+   *  Fonte exclusiva: Benchmark Anual. Planilha primária ignorada para exibição. */
   const allFechamentos = useMemo(() => {
-    const historical = Object.values(historicalDataMap).flatMap(d => d.fechamentos)
-    const all = [...sheets.fechamentos, ...historical]
+    const base = Object.values(historicalDataMap).flatMap(d => d.fechamentos)
     const seen = new Set<string>()
-    return sortFechamentos(all.filter(f => {
+    return sortFechamentos(base.filter(f => {
       if (seen.has(f.periodo)) return false
       seen.add(f.periodo)
       return true
     }))
-  }, [sheets.fechamentos, historicalDataMap])
+  }, [historicalDataMap])
 
   /**
    * Vendedores históricos: dedup por id, mês mais recente vence.
@@ -375,49 +374,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
     return latestKey ? historicalDataMap[latestKey].clientes : []
   }, [historicalDataMap])
 
-  // Fallback: soma de descontos dos lançamentos da aba "Descontos"
-  const descontosDosMeses = useMemo(() => {
-    const total = sheets.lancamentos
-      .filter((l) => l.conta === 'Descontos' && l.source === 'sheets')
-      .reduce((s, l) => s + l.valor, 0)
-    return total
-  }, [sheets.lancamentos])
-
-  // ─ Seed de vendedores do Sheets no first-run ─────────────────
-  useEffect(() => {
-    if (sheets.vendedores.length > 0 && !hasData('vdf_vendedores')) {
-      const seeded = sheets.vendedores.map((v) => ({ ...v, _seededFromSheets: true }))
-      localStorage.setItem('vdf_vendedores', JSON.stringify(seeded))
-      setLocalVendedores(seeded)
-    }
-  }, [sheets.vendedores])
-
   // ─ Dados mesclados ────────────────────────────────────────────
 
   /**
-   * Vendedores: primary sheet > local; histórico serve de base quando primary vazio.
-   * Isso permite que o dashboard funcione mesmo sem a planilha principal conectada.
+   * Vendedores: fonte exclusiva é o Benchmark Anual (historicalVendedores) + edições locais.
+   * Planilha primária ignorada para exibição.
    */
   const vendedores = useMemo(() => {
-    const baseSheets = sheets.vendedores.length > 0 ? sheets.vendedores : historicalVendedores
-    return mergeVendedores(baseSheets, localVendedores)
-  }, [sheets.vendedores, localVendedores, historicalVendedores])
+    return mergeVendedores(historicalVendedores, localVendedores)
+  }, [localVendedores, historicalVendedores])
 
   /**
-   * Lancamentos: todos os meses históricos + primary + local.
-   * O DRE e Custos ganham visibilidade de todos os períodos cadastrados.
+   * Lancamentos: fonte exclusiva é o Benchmark Anual (historicalLancamentos) + lançamentos locais manuais.
+   * Planilha primária ignorada para exibição.
    */
   const lancamentos = useMemo(() => {
-    const allSheets = [...sheets.lancamentos, ...historicalLancamentos]
-    return mergeLancamentos(allSheets, localLancamentos)
-  }, [sheets.lancamentos, localLancamentos, historicalLancamentos])
+    return mergeLancamentos(historicalLancamentos, localLancamentos)
+  }, [localLancamentos, historicalLancamentos])
 
   /**
-   * Clientes: primary sheet > histórico mais recente.
-   * Mantém segmentOverrides e enriquecimento de contaDigitalAtiva.
+   * Clientes: fonte exclusiva é o snapshot mais recente do Benchmark Anual.
+   * Planilha primária ignorada para exibição.
    */
   const clientes = useMemo(() => {
-    const baseClientes = sheets.clientes.length > 0 ? sheets.clientes : historicalClientes
+    const baseClientes = historicalClientes
     const clientesBase = mergeSegmentOverrides(baseClientes, segmentOverrides)
     const nomesComDigital = new Set(
       lancamentos
@@ -430,13 +410,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       ...c,
       contaDigitalAtiva: nomesComDigital.has(c.nome.toLowerCase().trim()),
     }))
-  }, [sheets.clientes, historicalClientes, segmentOverrides, lancamentos])
+  }, [historicalClientes, segmentOverrides, lancamentos])
 
-  // ─ isOffline: apenas quando primary falhou E há dados locais manuais ──
-  // Dados históricos do Benchmark Anual são o modo normal — não é "offline".
-  const isOffline = !sheets.connectionStatus.connected && (
-    localVendedores.length > 0 || localLancamentos.length > 0
-  )
+  // isOffline: não aplicável no modelo Benchmark Anual — sempre false.
+  const isOffline = false
 
   // ─ CRUD Vendedores ───────────────────────────────────────────
   const saveVendedor = useCallback((vendedor: Vendedor) => {
@@ -507,32 +484,31 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSegmentOverrides(getAll<SegmentOverride>('vdf_segment_overrides'))
   }, [])
 
-  // Fechamentos com patch de descontos quando aplicável
-  const fechamentosPatched = useMemo(() => {
-    if (descontosDosMeses <= 0 || allFechamentos.length === 0) return allFechamentos
-    const lastIdx = allFechamentos.length - 1
-    return allFechamentos.map((f, i) =>
-      i === lastIdx && f.descontos === 0 ? { ...f, descontos: descontosDosMeses } : f,
-    )
-  }, [allFechamentos, descontosDosMeses])
+  const removeSegmentOverride = useCallback((clienteId: number) => {
+    remove('vdf_segment_overrides', clienteId)
+    setSegmentOverrides(getAll<SegmentOverride>('vdf_segment_overrides'))
+  }, [])
+
+  // Fechamentos em ordem cronológica — fonte exclusiva: Benchmark Anual
+  const fechamentosPatched = allFechamentos
 
   const periodoAtual = useMemo(
-    () => fechamentosPatched[fechamentosPatched.length - 1]?.periodo || sheets.fechamentos[0]?.periodo || '',
-    [fechamentosPatched, sheets.fechamentos],
+    () => allFechamentos[allFechamentos.length - 1]?.periodo ?? '',
+    [allFechamentos],
   )
 
   // Value memoizado — evita re-render de todos os consumidores quando
   // apenas uma parte do estado muda.
   const contextValue = useMemo(
     () => ({
-      connectionStatus: sheets.connectionStatus,
-      // Quando o Benchmark está ativo (historicalSheets.length > 0), a planilha
-      // principal não é a fonte de dados. Suprimimos seu erro e loading para que
-      // todas as páginas mostrem os dados históricos sem bloqueios.
-      isLoading: historicalSheets.length > 0
-        ? isLoadingHistorical
-        : (sheets.isLoading || isLoadingHistorical),
-      error: historicalSheets.length > 0 ? null : sheets.error,
+      // connectionStatus reflete o estado do Benchmark Anual, não da planilha primária.
+      connectionStatus: {
+        ...sheets.connectionStatus,
+        connected: Object.keys(historicalDataMap).length > 0,
+        title: 'Benchmark Anual',
+      },
+      isLoading: isLoadingHistorical,
+      error: null,
       isOffline,
       periodo: periodoAtual,
       fechamentos: fechamentosPatched,
@@ -555,6 +531,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       metas,
       saveMeta,
       saveSegmentOverride,
+      removeSegmentOverride,
       custos,
       saveCusto,
       deleteCusto,
@@ -564,13 +541,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }),
     [
       sheets.connectionStatus,
-      sheets.isLoading,
-      sheets.error,
       sheets.allTabs,
       sheets.refetch,
       sheets.setSheetId,
       sheets.currentSheetId,
-      isOffline,
+      historicalDataMap,
       periodoAtual,
       fechamentosPatched,
       historicalSheets,
@@ -588,6 +563,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       metas,
       saveMeta,
       saveSegmentOverride,
+      removeSegmentOverride,
       custos,
       saveCusto,
       deleteCusto,

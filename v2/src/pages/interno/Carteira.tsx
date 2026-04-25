@@ -18,6 +18,7 @@ import {
   formatCurrency, formatNumber, getStatusBadgeClass, getChartColor,
 } from '../../utils/format'
 import { calcCustosMensalSemUnico } from '../../utils/custos'
+import { PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 import {
   calcHealthScore, getHealthStatus, calcMargemReal,
   getECsSemReceita, getOportunidadesContaDigital, getTopByMarkup, getMarkupDistribution,
@@ -26,8 +27,8 @@ import {
 const SEGMENTOS_FIXOS = ['Alimentacao', 'Comercio', 'Saude', 'Servicos', 'Hospedagem & Lazer', 'Outros']
 
 export function InternoCarteira() {
-  const { clientes, segmentos, isLoading, lancamentos } = useInternoData()
-  const { saveSegmentOverride, custos, equipamentos } = useDataContext()
+  const { clientes, segmentos, isLoading } = useInternoData()
+  const { saveSegmentOverride, removeSegmentOverride, custos, equipamentos } = useDataContext()
   const [filtroSegmento, setFiltroSegmento] = useState('todos')
   const [filtroVendedor, setFiltroVendedor] = useState('todos')
   const [filtroStatus, setFiltroStatus] = useState('todos')
@@ -175,8 +176,10 @@ export function InternoCarteira() {
       // Custo proporcional ponderado pelo volume do cliente
       const proporcao = volumeTotal > 0 ? c.volumeTotal / volumeTotal : 1 / Math.max(filtrados.length, 1)
       const custoCliente = custoMensalTotal * proporcao
-      const lucroEstimado = c.ticketMedio - custoCliente
-      return { ...c, custoCliente, lucroEstimado }
+      // ECs com Conta Digital ativa têm custo fixo adicional de R$29,90/mês
+      const custoContaDigital = c.contaDigitalAtiva ? PRECO_CONTA_DIGITAL : 0
+      const lucroEstimado = c.ticketMedio - custoCliente - custoContaDigital
+      return { ...c, custoCliente: custoCliente + custoContaDigital, lucroEstimado }
     }).sort((a, b) => b.lucroEstimado - a.lucroEstimado)
   }, [filtrados, custos, equipamentos])
 
@@ -508,18 +511,27 @@ export function InternoCarteira() {
                     <td className="py-3 px-3 font-medium text-gray-900">{c.nome}</td>
                     <td className="py-3 px-3">
                       {/* Select inline para override de segmento */}
-                      <select
-                        value={c.segmento || 'Outros'}
-                        onChange={(e) =>
-                          saveSegmentOverride({ clienteId: c.id, segmento: e.target.value })
-                        }
-                        className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 hover:border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-300 w-full max-w-[160px]"
-                        title="Alterar segmento"
-                      >
-                        {SEGMENTOS_FIXOS.map((s) => (
-                          <option key={s} value={s}>{s}</option>
-                        ))}
-                      </select>
+                      <div className="flex items-center gap-1">
+                        <select
+                          value={c.segmento || 'Outros'}
+                          onChange={(e) =>
+                            saveSegmentOverride({ clienteId: c.id, segmento: e.target.value })
+                          }
+                          className="text-sm border border-gray-200 rounded-lg px-2 py-1 bg-white text-gray-700 hover:border-blue-300 focus:outline-none focus:ring-1 focus:ring-blue-300 w-full max-w-[140px]"
+                          title="Alterar segmento"
+                        >
+                          {SEGMENTOS_FIXOS.map((s) => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                        </select>
+                        <button
+                          onClick={() => removeSegmentOverride(c.id)}
+                          className="p-1 text-gray-300 hover:text-amber-500 transition-colors flex-shrink-0"
+                          title="Restaurar segmento automático"
+                        >
+                          ↺
+                        </button>
+                      </div>
                     </td>
                     <td className="py-3 px-3 text-gray-500">{c.vendedor}</td>
                     <td className="py-3 px-3 text-right font-medium">{formatCurrency(c.volumeTotal)}</td>
@@ -698,7 +710,7 @@ export function InternoCarteira() {
                   <XAxis type="number" tickFormatter={(v: number) => `R$${v.toFixed(0)}`} tick={{ fontSize: 10 }} />
                   <YAxis type="category" dataKey="nome" tick={{ fontSize: 10 }} width={80} />
                   <Tooltip
-                    formatter={(v: number) => [formatCurrency(v), 'Markup']}
+                    formatter={(v) => [formatCurrency(Number(v)), 'Markup']}
                     labelFormatter={(label) => {
                       // B-05: usar === para evitar mapeamento errado em nomes ambiguos
                       const ec = topByMarkup.find((c) => c.nome.split(' ')[0] === label)

@@ -313,13 +313,69 @@ def sincronizar_uma_vez() -> dict:
                     existente.pop("_removido_do_csv", None)
                     existente.pop("_removido_em", None)
 
+        # URL atualizada: mesma marca+CNPJ aparece em removidas E adicionadas →
+        # a bet não foi removida/adicionada, apenas mudou seu domínio no CSV.
+        # Desfaz as marcações add/remove e atualiza o registro in-place.
+        _rem_por_marca = {
+            ((r["cnpj"] or "").strip(), (r.get("marca") or "").strip().lower()): r
+            for r in info["removidas"]
+        }
+        _add_por_marca = {
+            ((r["cnpj"] or "").strip(), (r.get("marca") or "").strip().lower()): r
+            for r in info["adicionadas"]
+        }
+        mudancas_url = set(_rem_por_marca) & set(_add_por_marca)
+
+        for chave in mudancas_url:
+            r_ant = _rem_por_marca[chave]
+            r_nov = _add_por_marca[chave]
+            cnpj_ch, marca_ch = chave
+            # Atualiza URL no registro existente e desfaz _removido_do_csv
+            for r in base:
+                if ((r.get("cnpj") or "").strip() == cnpj_ch
+                        and (r.get("marca") or "").strip().lower() == marca_ch
+                        and r.get("_removido_do_csv")):
+                    r["url"] = r_nov["url"]
+                    r.pop("_removido_do_csv", None)
+                    r.pop("_removido_em", None)
+                    break
+            # Remove o registro bare que foi criado pelo passo "adicionadas"
+            base[:] = [
+                r for r in base
+                if not (
+                    (r.get("cnpj") or "").strip() == cnpj_ch
+                    and (r.get("marca") or "").strip().lower() == marca_ch
+                    and r.get("_origem") == "csv_sync"
+                    and (r.get("url") or "") == r_nov["url"]
+                )
+            ]
+            info["url_atualizada"].append({
+                "cnpj": r_ant["cnpj"],
+                "marca": r_ant.get("marca", ""),
+                "url_antiga": r_ant["url"],
+                "url_nova": r_nov["url"],
+            })
+
+        # Retira das listas add/remove as entradas promovidas para url_atualizada
+        if mudancas_url:
+            info["adicionadas"] = [
+                r for r in info["adicionadas"]
+                if ((r["cnpj"] or "").strip(), (r.get("marca") or "").strip().lower())
+                not in mudancas_url
+            ]
+            info["removidas"] = [
+                r for r in info["removidas"]
+                if ((r["cnpj"] or "").strip(), (r.get("marca") or "").strip().lower())
+                not in mudancas_url
+            ]
+
         # Só grava se houve mudanças
         if info["adicionadas"] or info["removidas"] or info["url_atualizada"]:
             _salvar_base(base)
 
     info["sucesso"] = True
     info["total_csv"] = len(novos_idx)
-    info["total_base"] = len(base_idx) + len(info["adicionadas"])
+    info["total_base"] = len(base)  # estado real após todas as adições/remoções/atualizações
     info["finalizado_em"] = datetime.now().isoformat(timespec="seconds")
     _salvar_status(info)
 

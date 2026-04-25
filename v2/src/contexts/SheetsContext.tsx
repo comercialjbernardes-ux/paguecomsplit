@@ -8,7 +8,6 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
   type ReactNode,
 } from 'react'
@@ -117,6 +116,24 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
       }
       setFechamentos(fechamentoData)
 
+      // Usa o período do fechamento com a data mais recente
+      // (sort local garante estabilidade mesmo se fechamentoData tiver múltiplas abas)
+      const periodoAtualDaPlanilha = (() => {
+        if (fechamentoData.length === 0) return 'atual'
+        const mesMap: Record<string, number> = {
+          jan:0,fev:1,mar:2,abr:3,mai:4,jun:5,jul:6,ago:7,set:8,out:9,nov:10,dez:11
+        }
+        const sorted = [...fechamentoData].sort((a, b) => {
+          const parse = (p: string) => {
+            const m = p.toLowerCase().match(/^([a-z]{3})(\d{4})/)
+            if (!m) return 0
+            return parseInt(m[2]) * 12 + (mesMap[m[1]] ?? 0)
+          }
+          return parse(b.periodo) - parse(a.periodo) // desc: mais recente primeiro
+        })
+        return sorted[0].periodo
+      })()
+
       // ── 3. Vendedores ─────────────────────────────────────────
       const vendedoresTab = findTab(metadata.sheets, SHEET_TABS.VENDEDORES)
       if (vendedoresTab) {
@@ -144,8 +161,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
       } else if (mkpPosTab) {
         try {
           const rows = await readRange(`'${SHEET_TABS.MKP_POS}'!A:F`, id)
-          const periodo = fechamentoData[0]?.periodo || 'atual'
-          setClientes(mapRowsMKPdePOS(rows as (string | number)[][], periodo))
+          setClientes(mapRowsMKPdePOS(rows as (string | number)[][], periodoAtualDaPlanilha))
           console.info(`[Sheets] Clientes carregados da aba "${SHEET_TABS.MKP_POS}"`)
         } catch {
           console.warn('[Sheets] Erro ao ler aba MKP de POS')
@@ -183,7 +199,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
         if (descontosTab) {
           try {
             const rows = await readRange(`'${SHEET_TABS.DESCONTOS}'!A:E`, id)
-            const descontos = mapRowsDescontos(rows as (string | number)[][], fechamentoData[0]?.periodo || 'atual')
+            const descontos = mapRowsDescontos(rows as (string | number)[][], periodoAtualDaPlanilha)
             combined.push(...descontos)
             console.info(`[Sheets] ${descontos.length} descontos carregados`)
           } catch {
@@ -195,7 +211,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
         if (cobrTab) {
           try {
             const rows = await readRange(`'${SHEET_TABS.COBR_DIGITAL}'!A:E`, id)
-            const cobr = mapRowsCobrDigital(rows as (string | number)[][], fechamentoData[0]?.periodo || 'atual')
+            const cobr = mapRowsCobrDigital(rows as (string | number)[][], periodoAtualDaPlanilha)
             combined.push(...cobr)
             console.info(`[Sheets] ${cobr.length} cobranças digitais carregadas`)
           } catch {
@@ -251,12 +267,8 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
     await refetch()
   }, [currentSheetId, refetch])
 
-  // Auto-connect quando API Key estiver configurada
-  useEffect(() => {
-    if (ENV.GOOGLE_API_KEY && currentSheetId) {
-      connect(currentSheetId)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  // Auto-connect desativado: dados vêm exclusivamente do Benchmark Anual (DataContext).
+  // A conexão manual (connect) ainda é usada pelo DataContext quando necessário.
 
   return (
     <SheetsContext.Provider

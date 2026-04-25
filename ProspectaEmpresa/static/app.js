@@ -401,9 +401,11 @@ function aplicarFiltrosLocais() {
     }
     // Garante que apenas empresas com o CNAE como atividade PRINCIPAL passam.
     // Evita falsos positivos vindos de CNAEs secundários.
+    // Guard: empresas sem CNAE cadastrado (principal vazio) nunca passam o filtro
+    // (sem o guard, cnae.startsWith('') seria sempre true e elas passariam).
     if (cnae) {
       const principal = (r.cnae_principal || '').replace(/\D/g, '');
-      if (!principal.startsWith(cnae) && !cnae.startsWith(principal)) return false;
+      if (!principal || (!principal.startsWith(cnae) && !cnae.startsWith(principal))) return false;
     }
     return true;
   });
@@ -424,10 +426,13 @@ function limparTudo() {
   ['f-uf', 'f-municipio', 'f-cnae', 'f-situacao', 'f-porte', 'f-natureza']
     .forEach(id => { const el = document.getElementById(id); if (el) el.selectedIndex = 0; });
 
-  // Limpa dados
+  // Limpa dados e variáveis de paginação
   todosOsDados = [];
   dadosFiltrados = [];
   paginaAtual = 1;
+  cursorProximo = null;
+  temMais = false;
+  parametrosUltimaBusca = null;
   pararPolling();
 
   // Reseta UI
@@ -438,6 +443,9 @@ function limparTudo() {
   document.getElementById('progress-container').style.display = 'none';
   document.getElementById('table-count').textContent =
     'Nenhuma busca realizada. Use os filtros ao lado.';
+  // Oculta o botão "Carregar mais" que fica fora do table-wrapper
+  const btnMais = document.getElementById('btn-carregar-mais');
+  if (btnMais) btnMais.style.display = 'none';
 
   // Reseta KPIs
   ['kpi-total', 'kpi-email', 'kpi-telefone', 'kpi-ativas', 'kpi-capital']

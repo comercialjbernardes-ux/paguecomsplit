@@ -15,7 +15,7 @@ import { useInternoData } from '../../hooks/useInternoData'
 import { useDataContext } from '../../contexts/dataContextValue'
 import { LoadingState } from '../../components/LoadingState'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../../utils/format'
-import { calcCustosMensalEfetivo } from '../../utils/custos'
+import { calcCustosMensalEfetivo, dataPertenceAoPeriodo } from '../../utils/custos'
 import type { DadosFechamento } from '../../types'
 import { PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 
@@ -37,13 +37,18 @@ export function InternoDRE() {
       ? (f.markupPos / f.tpvTotal) * 100
       : (f.taxaMargem ?? 0) * 100  // taxaMargem stored as decimal (0.01 = 1%)
 
-    // Lancamentos manuais (source === 'local')
-    const totalReceitasLocais = lancamentos
-      .filter((l) => l.tipo === 'receita' && l.source === 'local')
+    // Lancamentos manuais (source === 'local') filtrados pelo periodo atual
+    // Garante que lancamentos de outros meses nao contaminem o DRE deste periodo
+    const localNoPeriodo = lancamentos.filter(
+      (l) => l.source === 'local' && dataPertenceAoPeriodo(l.data, f.periodo)
+    )
+
+    const totalReceitasLocais = localNoPeriodo
+      .filter((l) => l.tipo === 'receita')
       .reduce((s, l) => s + l.valor, 0)
 
-    const totalDeducoesLocais = lancamentos
-      .filter((l) => l.tipo === 'despesa' && l.source === 'local')
+    const totalDeducoesLocais = localNoPeriodo
+      .filter((l) => l.tipo === 'despesa')
       .reduce((s, l) => s + l.valor, 0)
 
     // ERRO 02: deducoes de equipamentos com parcelas ativas
@@ -143,9 +148,13 @@ export function InternoDRE() {
   }, [fechamentos])
 
   // Lancamentos locais do periodo atual (fonte: localStorage via DataContext)
+  // Filtra pelo mesmo periodo de fechamentoAtual para exibir apenas entradas do mes corrente
   const lancamentosLocais = useMemo(() => {
-    return lancamentos.filter((l) => l.source === 'local')
-  }, [lancamentos])
+    if (!fechamentoAtual) return []
+    return lancamentos.filter(
+      (l) => l.source === 'local' && dataPertenceAoPeriodo(l.data, fechamentoAtual.periodo)
+    )
+  }, [lancamentos, fechamentoAtual])
 
   const receitasLocais = useMemo(() =>
     lancamentosLocais.filter((l) => l.tipo === 'receita'),
@@ -155,8 +164,8 @@ export function InternoDRE() {
     lancamentosLocais.filter((l) => l.tipo === 'despesa'),
   [lancamentosLocais])
 
-  const totalReceitasLocais = receitasLocais.reduce((s, l) => s + l.valor, 0)
-  const totalDespesasLocais = despesasLocais.reduce((s, l) => s + l.valor, 0)
+  const totalReceitasLocais = receitasLocais.reduce((s, l) => s + Math.abs(l.valor), 0)
+  const totalDespesasLocais = despesasLocais.reduce((s, l) => s + Math.abs(l.valor), 0)
 
   // Receita recorrente = ECs com conta digital ativa × R$29,90/mes
   const ecsComContaDigital = useMemo(() =>

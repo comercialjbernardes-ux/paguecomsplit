@@ -36,12 +36,13 @@ export function InternoCustos() {
 
   // Totais — ERRO 01: separar receita bruta, custo conta digital e receita liquida
   const totais = useMemo(() => {
-    const receitaBruta = filtrados.filter((l) => l.tipo === 'receita').reduce((s, l) => s + l.valor, 0)
+    const receitaBruta = filtrados.filter((l) => l.tipo === 'receita').reduce((s, l) => s + Math.abs(l.valor), 0)
+    // Math.abs garante valor positivo mesmo se a planilha armazenou o custo como negativo
     const custoContaDigital = filtrados
       .filter((l) => l.categoria === 'Conta Digital' && l.tipo === 'despesa')
-      .reduce((s, l) => s + l.valor, 0)
+      .reduce((s, l) => s + Math.abs(l.valor), 0)
     const receitaLiquida = receitaBruta - custoContaDigital
-    const despesas = filtrados.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + l.valor, 0)
+    const despesas = filtrados.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + Math.abs(l.valor), 0)
     return { receitaBruta, custoContaDigital, receitaLiquida, despesas, saldo: receitaBruta - despesas }
   }, [filtrados])
 

@@ -13,7 +13,8 @@ Rotas:
 Uso:
     pip install flask requests
     python app.py
-    Acesse: http://localhost:5000
+    Acesse: http://localhost:5001  (dev direto)
+    Em produção o waitress/IIS serve na porta 5000.
 """
 
 import json
@@ -22,6 +23,9 @@ import uuid
 import threading
 from datetime import datetime
 from pathlib import Path
+
+# Tempo máximo que um job concluído/com erro fica em memória (segundos)
+_JOBS_TTL = 1800  # 30 minutos
 
 import requests
 from flask import Flask, jsonify, render_template, request
@@ -145,12 +149,15 @@ def _buscar_minha_receita(params_busca: dict) -> tuple[list[dict], str | None]:
     # Garante que apenas empresas com o CNAE como principal são retornadas.
     # A Minha Receita pode incluir resultados de CNAEs secundários dependendo
     # do parâmetro usado — este filtro elimina falsos positivos.
+    # Guard: principal vazio nunca satisfaz o filtro (cnae_ref.startswith("") seria
+    # sempre True, deixando passar empresas sem CNAE cadastrado).
     if params_busca.get("cnae"):
         cnae_ref = str(params_busca["cnae"]).replace(".", "").replace("-", "").replace("/", "")
         resultado = [
             r for r in resultado
-            if str(r.get("cnae_principal") or "").replace(".", "").replace("-", "").startswith(cnae_ref)
-            or cnae_ref.startswith(str(r.get("cnae_principal") or "").replace(".", "").replace("-", ""))
+            if (lambda p: bool(p) and (p.startswith(cnae_ref) or cnae_ref.startswith(p)))(
+                str(r.get("cnae_principal") or "").replace(".", "").replace("-", "")
+            )
         ]
 
     return resultado, proximo_cursor
@@ -278,7 +285,14 @@ def _enriquecer_cnpja(cnpj_raw: str) -> dict | None:
         area = str(ph.get("area") or "")
         numero = str(ph.get("number") or "")
         if area and numero:
-            telefone = f"({area}) {numero[:4]}-{numero[4:]}" if len(numero) == 8 else f"({area}) {numero}"
+            if len(numero) == 9:
+                # Celular: 9XXXX-XXXX
+                telefone = f"({area}) {numero[:5]}-{numero[5:]}"
+            elif len(numero) == 8:
+                # Fixo: XXXX-XXXX
+                telefone = f"({area}) {numero[:4]}-{numero[4:]}"
+            else:
+                telefone = f"({area}) {numero}"
             break
 
     # Extrai emails da lista emails[]
@@ -717,26 +731,31 @@ def api_stats():
     """
     Retorna KPIs calculados sobre os resultados em memória (_resultados).
     """
-    total = len(_resultados)
-    com_email = sum(1 for r in _resultados if r.get("email"))
-    com_telefone = sum(1 for r in _resultados if r.get("telefone"))
+    # Snapshot thread-safe: _executar_busca_async faz clear()+extend() sob _lock;
+    # sem snapshot poderíamos ler a lista vazia (entre clear e extend).
+    with _lock:
+        snapshot = list(_resultados)
+
+    total = len(snapshot)
+    com_email = sum(1 for r in snapshot if r.get("email"))
+    com_telefone = sum(1 for r in snapshot if r.get("telefone"))
     ativas = sum(
-        1 for r in _resultados
+        1 for r in snapshot
         if "ativa" in (r.get("situacao_cadastral") or "").lower()
     )
-    capital_total = sum(r.get("capital_social") or 0 for r in _resultados)
+    capital_total = sum(r.get("capital_social") or 0 for r in snapshot)
 
     # Distribuição por UF
     por_uf: dict[str, int] = {}
-    for r in _resultados:
+    for r in snapshot:
         uf = r.get("uf") or "N/A"
         por_uf[uf] = por_uf.get(uf, 0) + 1
 
     # Valores únicos para dropdowns
-    ufs = sorted({r.get("uf") or "" for r in _resultados if r.get("uf")})
-    portes = sorted({r.get("porte") or "" for r in _resultados if r.get("porte")})
-    situacoes = sorted({r.get("situacao_cadastral") or "" for r in _resultados if r.get("situacao_cadastral")})
-    naturezas = sorted({r.get("natureza_juridica") or "" for r in _resultados if r.get("natureza_juridica")})
+    ufs = sorted({r.get("uf") or "" for r in snapshot if r.get("uf")})
+    portes = sorted({r.get("porte") or "" for r in snapshot if r.get("porte")})
+    situacoes = sorted({r.get("situacao_cadastral") or "" for r in snapshot if r.get("situacao_cadastral")})
+    naturezas = sorted({r.get("natureza_juridica") or "" for r in snapshot if r.get("natureza_juridica")})
 
     return jsonify({
         "total":          total,
@@ -787,7 +806,20 @@ def api_buscar():
     # Busca por filtros (assíncrona)
     job_id = str(uuid.uuid4())
     with _lock:
-        _jobs[job_id] = {"status": "pending", "dados": [], "erro": None, "total": 0}
+        # Poda jobs antigos (done/error) para evitar acumulação ilimitada em memória
+        agora = time.time()
+        expirados = [
+            jid for jid, j in _jobs.items()
+            if j.get("status") in ("done", "error")
+            and agora - j.get("_criado_em", agora) > _JOBS_TTL
+        ]
+        for jid in expirados:
+            _jobs.pop(jid, None)
+
+        _jobs[job_id] = {
+            "status": "pending", "dados": [], "erro": None, "total": 0,
+            "_criado_em": agora,
+        }
 
     thread = threading.Thread(
         target=_executar_busca_async,
@@ -917,26 +949,31 @@ def _executar_busca_async(job_id: str, params: dict) -> None:
         with _lock:
             _resultados.clear()
             _resultados.extend(filtradas)
+            # Preserva _criado_em para que a poda por TTL (E02) funcione corretamente
+            _criado_em = _jobs.get(job_id, {}).get("_criado_em", time.time())
             _jobs[job_id] = {
-                "status":    "done",
-                "dados":     filtradas,
-                "total":     len(filtradas),
+                "status":     "done",
+                "dados":      filtradas,
+                "total":      len(filtradas),
                 # Envia cursor somente se ainda há mais páginas além do limite
-                "cursor":    cursor_atual if not ultima_pagina else None,
-                "has_more":  not ultima_pagina,
-                "erro":      None,
+                "cursor":     cursor_atual if not ultima_pagina else None,
+                "has_more":   not ultima_pagina,
+                "erro":       None,
+                "_criado_em": _criado_em,
             }
 
     except Exception as exc:
         print(f"[busca_async] Erro: {exc}")
         with _lock:
+            _criado_em = _jobs.get(job_id, {}).get("_criado_em", time.time())
             _jobs[job_id] = {
-                "status":   "error",
-                "dados":    [],
-                "total":    0,
-                "cursor":   None,
-                "has_more": False,
-                "erro":     str(exc),
+                "status":     "error",
+                "dados":      [],
+                "total":      0,
+                "cursor":     None,
+                "has_more":   False,
+                "erro":       str(exc),
+                "_criado_em": _criado_em,
             }
 
 

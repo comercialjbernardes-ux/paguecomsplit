@@ -11,7 +11,7 @@ import {
 } from 'recharts'
 import {
   Sparkles, KeyRound, Send, Loader2, AlertTriangle,
-  TrendingUp, Target, Lightbulb, ShieldAlert, CheckCircle2,
+  Target, Lightbulb, ShieldAlert, CheckCircle2,
   Eye, EyeOff, Trash2, RefreshCw, Brain, ArrowRight,
 } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'

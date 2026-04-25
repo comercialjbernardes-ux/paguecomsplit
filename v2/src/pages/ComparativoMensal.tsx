@@ -52,13 +52,16 @@ export function ComparativoMensalPage() {
       const ant = fechamentos[i - 1]
       const pct = (atual: number, anterior: number | undefined) =>
         anterior && anterior > 0 ? ((atual - anterior) / anterior) * 100 : null
+      // Margem calculada como markupPos/tpvTotal (mais confiável que taxaMargem raw)
+      const margemF   = f.tpvTotal > 0   ? f.markupPos   / f.tpvTotal   : (f.taxaMargem ?? 0)
+      const margemAnt = ant?.tpvTotal > 0 ? ant.markupPos / ant.tpvTotal : (ant?.taxaMargem ?? 0)
       return {
         ...f,
         varTPV:     pct(f.tpvTotal,    ant?.tpvTotal),
         varMarkup:  pct(f.markupPos,   ant?.markupPos),
         varLiquido: pct(f.valorLiquido, ant?.valorLiquido),
         varEcs:     pct(f.ecsAtivos,   ant?.ecsAtivos),
-        varMargem:  pct(f.taxaMargem,  ant?.taxaMargem),
+        varMargem:  pct(margemF,       ant ? margemAnt : undefined),
       }
     }).reverse()
   }, [fechamentos])

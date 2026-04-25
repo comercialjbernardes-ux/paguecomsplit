@@ -7,7 +7,7 @@ import { useState } from 'react'
 import {
   PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend,
 } from 'recharts'
-import { Wrench, Plus, Trash2, Package, ChevronDown, ChevronUp } from 'lucide-react'
+import { Wrench, Plus, Trash2, Package, ChevronDown, ChevronUp, Edit3 } from 'lucide-react'
 import { useDataContext } from '../../contexts/dataContextValue'
 import { formatCurrency, getChartColor } from '../../utils/format'
 import { calcCustosMensalEfetivo, labelRecorrencia } from '../../utils/custos'
@@ -68,7 +68,13 @@ export function InternoGestaoCustos() {
     return s + (restantes > 0 ? eq.valorParcela : 0)
   }, 0)
 
-  // Submit custo
+  // Abre formulario para editar um custo existente
+  function handleEditCusto(custo: CustoOperacional) {
+    setFormCusto({ ...custo })
+    setShowFormCusto(true)
+  }
+
+  // Submit custo (cria ou atualiza via upsert pelo mesmo id)
   function handleSaveCusto() {
     if (!formCusto || !formCusto.descricao || formCusto.valor <= 0) return
     saveCusto(formCusto)
@@ -172,6 +178,7 @@ export function InternoGestaoCustos() {
                 <button
                   onClick={() => { setFormCusto(novoCusto()); setShowFormCusto(true) }}
                   className="btn-primary flex items-center gap-1.5 text-sm"
+                  disabled={showFormCusto}
                 >
                   <Plus className="w-4 h-4" /> Novo Custo
                 </button>
@@ -180,6 +187,9 @@ export function InternoGestaoCustos() {
               {/* Formulario inline */}
               {showFormCusto && formCusto && (
                 <div className="card border border-blue-200 bg-blue-50/30 space-y-3">
+                  <p className="text-sm font-semibold text-blue-700">
+                    {custos.some(c => c.id === formCusto.id) ? '✏️ Editando custo' : '➕ Novo custo'}
+                  </p>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div>
                       <label className="text-xs font-medium text-gray-600 mb-1 block">Descricao</label>
@@ -261,9 +271,18 @@ export function InternoGestaoCustos() {
                             - {formatCurrency(c.valor)}
                           </td>
                           <td className="py-2 px-3 text-right">
-                            <button onClick={() => deleteCusto(c.id)} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                onClick={() => handleEditCusto(c)}
+                                className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+                                title="Editar custo"
+                              >
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => deleteCusto(c.id)} className="p-1 text-gray-400 hover:text-red-500 transition-colors" title="Excluir custo">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))

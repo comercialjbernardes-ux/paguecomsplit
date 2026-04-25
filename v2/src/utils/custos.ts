@@ -89,6 +89,24 @@ export function calcCustosMensalSemUnico(custos: CustoOperacional[]): number {
 }
 
 /**
+ * Verifica se uma data no formato "DD/MM/AAAA" pertence ao periodo "MesAAAA"
+ * (ex: "Mar2026"). Usado para filtrar lancamentos manuais no DRE por periodo.
+ *
+ * Retorna true  → data esta no mesmo mes/ano do periodo.
+ * Retorna false → data fora do periodo, ou formato invalido.
+ * Retorna true  → se o periodo nao puder ser parseado (nao filtrar).
+ */
+export function dataPertenceAoPeriodo(data: string, periodo: string): boolean {
+  const periodoData = parsePeriodo(periodo)
+  if (!periodoData) return true // periodo desconhecido → nao filtrar
+
+  const dataData = parseDataCusto(data)
+  if (!dataData) return false  // data invalida → excluir
+
+  return dataData.mes === periodoData.mes && dataData.ano === periodoData.ano
+}
+
+/**
  * Retorna o label de exibicao para a recorrencia de um custo.
  */
 export function labelRecorrencia(recorrencia: CustoOperacional['recorrencia']): string {

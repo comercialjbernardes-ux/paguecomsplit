@@ -16,7 +16,7 @@ interface EquipeData {
 }
 
 export function useEquipeData(): EquipeData {
-  const { vendedores, fechamentos, isLoading, error } = useDataContext()
+  const { vendedores, fechamentos, clientes, isLoading, error } = useDataContext()
 
   // Extrair lista de regioes unicas
   const regioes = useMemo(() => {
@@ -33,8 +33,24 @@ export function useEquipeData(): EquipeData {
     }))
   }, [fechamentos])
 
+  // Enriquecer vendedores com faturamentoMensal calculado a partir dos clientes
+  // Cada cliente.ticketMedio = markup CB gerado por esse EC no período atual
+  // Somando por vendedor obtemos o faturamento real de cada representante
+  const vendedoresEnriquecidos = useMemo((): Vendedor[] => {
+    if (clientes.length === 0) return vendedores
+    return vendedores.map((v) => {
+      // Normaliza para lowercase + trim para tolerar diferenças de capitalização
+      // entre o campo "Vendedor" da planilha e o campo "Nome" do cadastro
+      const nomeNorm = v.nome.trim().toLowerCase()
+      const faturamentoMensal = clientes
+        .filter((c) => c.vendedor.trim().toLowerCase() === nomeNorm)
+        .reduce((s, c) => s + (c.ticketMedio ?? 0), 0)
+      return { ...v, faturamentoMensal }
+    })
+  }, [vendedores, clientes])
+
   return {
-    vendedores,
+    vendedores: vendedoresEnriquecidos,
     dadosMensais,
     regioes,
     isLoading,

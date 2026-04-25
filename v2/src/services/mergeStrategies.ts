@@ -55,12 +55,15 @@ export function mergeLancamentos(
     ...sheetsRows.map((l) => ({ ...l, source: 'sheets' as const })),
   ]
 
-  // Deduplica por chave composta (data + descricao normalizada + valor).
-  // Normaliza espacos internos para evitar falsos positivos/negativos.
+  // Deduplica por chave composta (data + descricao normalizada + |valor| + tipo).
+  // - Math.abs(valor): evita duplicatas quando sheets armazena valor negativo
+  //   e local armazena positivo (mesmo lancamento, sinal diferente).
+  // - tipo na chave: evita falsos positivos entre receita e despesa de mesmo
+  //   valor no mesmo dia (ex: estorno idêntico ao original mas de tipo oposto).
   const seen = new Set<string>()
   return tagged.filter((l) => {
     const descNorm = l.descricao.trim().toLowerCase().replace(/\s+/g, ' ')
-    const key = `${l.data}|${descNorm}|${l.valor}`
+    const key = `${l.data}|${descNorm}|${Math.abs(l.valor)}|${l.tipo}`
     if (seen.has(key)) return false
     seen.add(key)
     return true

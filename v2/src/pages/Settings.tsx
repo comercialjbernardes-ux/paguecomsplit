@@ -247,8 +247,11 @@ export function SettingsPage() {
 
   const [activePreview, setActivePreview] = useState<string>('fechamentos')
 
-  // M-15: incluir lancamentos e clientes na verificação de dados disponíveis
-  const hasAnyData = fechamentos.length > 0 || vendedores.length > 0 || lancamentos.length > 0 || clientes.length > 0
+  // Preview só aparece quando há pelo menos um mês importado no Benchmark Anual.
+  // Dados da planilha primária (auto-connect) não devem poluir a visualização.
+  const hasAnyData = historicalSheets.length > 0 && (
+    fechamentos.length > 0 || vendedores.length > 0 || lancamentos.length > 0 || clientes.length > 0
+  )
 
   return (
     <div className="space-y-6">

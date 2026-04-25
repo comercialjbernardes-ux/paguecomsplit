@@ -6,11 +6,11 @@
 import { useState, useMemo, useRef } from 'react'
 import {
   AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Legend, PieChart, Pie, Cell,
+  ResponsiveContainer,
 } from 'recharts'
 import {
   FileBarChart, TrendingUp, TrendingDown,
-  DollarSign, Users, ArrowUpRight, ArrowDownRight,
+  DollarSign, Users, ArrowUpRight,
   Printer, CheckCircle, AlertTriangle, XCircle, AlertCircle,
   Target, Lightbulb, ShieldAlert, Activity, Calendar, Star,
 } from 'lucide-react'
@@ -20,10 +20,10 @@ import { useDataContext } from '../contexts/dataContextValue'
 import { NOME_EMPRESA, PRECO_CONTA_DIGITAL } from '../constants/empresa'
 import { LoadingState } from '../components/LoadingState'
 import { exportElementToPDF } from '../services/exportService'
-import { formatCurrency, formatCurrencyShort, getChartColor } from '../utils/format'
+import { formatCurrency, formatCurrencyShort } from '../utils/format'
 import { calcCustosMensalEfetivo } from '../utils/custos'
 import {
-  calcHealthScore, calcMargemReal,
+  calcMargemReal,
   getECsSemReceita, getOportunidadesContaDigital, getTopByMarkup,
 } from '../services/ecAnalysis'
 import type { DadosFechamento } from '../types'
@@ -45,11 +45,20 @@ function gerarInsights(
   totalCustos: number,
 ): Insight[] {
   const ins: Insight[] = []
-  const margem = atual.tpvTotal > 0 ? (atual.markupPos / atual.tpvTotal) * 100 : 0
+  const margem = atual.tpvTotal > 0
+    ? (atual.markupPos / atual.tpvTotal) * 100
+    : (atual.taxaMargem ?? 0) * 100
+  const semDadosTPV = atual.tpvTotal === 0 && (atual.taxaMargem ?? 0) === 0
   const pctDeducoes = atual.markupPos > 0 ? ((atual.descontos + atual.faturaDigital) / atual.markupPos) * 100 : 0
 
   // Saúde da margem
-  if (margem < 1) {
+  if (semDadosTPV) {
+    ins.push({
+      nivel: 'info',
+      titulo: 'Sem dados de TPV',
+      texto: 'TPV e taxa de margem não disponíveis para este período. Verifique se a planilha foi importada corretamente.',
+    })
+  } else if (margem < 1) {
     ins.push({
       nivel: 'critico',
       titulo: 'Margem crítica',
@@ -73,32 +82,33 @@ function gerarInsights(
 
   // Evolução vs anterior
   if (anterior) {
-    const varMarkup = anterior.markupPos > 0 ? ((atual.markupPos - anterior.markupPos) / anterior.markupPos) * 100 : 0
-    const varEcs = anterior.ecsAtivos > 0 ? ((atual.ecsAtivos - anterior.ecsAtivos) / anterior.ecsAtivos) * 100 : 0
+    // Retorna null (não 0) quando não há base anterior — distingue "sem dado" de "sem variação"
+    const varMarkup = anterior.markupPos > 0 ? ((atual.markupPos - anterior.markupPos) / anterior.markupPos) * 100 : null
+    const varEcs = anterior.ecsAtivos > 0 ? ((atual.ecsAtivos - anterior.ecsAtivos) / anterior.ecsAtivos) * 100 : null
 
-    if (varMarkup < -15) {
+    if (varMarkup !== null && varMarkup < -15) {
       ins.push({
         nivel: 'critico',
         titulo: `Receita caiu ${Math.abs(varMarkup).toFixed(1)}% vs período anterior`,
         texto: `Markup recuou ${formatCurrency(anterior.markupPos - atual.markupPos)}. Provável perda de EC âncora ou queda de TPV concentrada.`,
         acao: 'Identificar os ECs com maior queda de volume e contatar imediatamente.',
       })
-    } else if (varMarkup < -5) {
+    } else if (varMarkup !== null && varMarkup < -5) {
       ins.push({
         nivel: 'atencao',
         titulo: `Receita recuou ${Math.abs(varMarkup).toFixed(1)}% no período`,
         texto: `Queda de ${formatCurrency(anterior.markupPos - atual.markupPos)} em relação a ${anterior.periodo}. Monitorar ticket médio dos ECs ativos.`,
         acao: 'Verificar sazonalidade e reativar ECs com queda de volume.',
       })
-    } else if (varMarkup > 10) {
+    } else if (varMarkup !== null && varMarkup > 10) {
       ins.push({
         nivel: 'positivo',
         titulo: `Crescimento de ${varMarkup.toFixed(1)}% na receita`,
-        texto: `Markup cresceu ${formatCurrency(atual.markupPos - anterior.markupPos)} vs ${anterior.periodo}.${varEcs > 0 ? ` Base de ECs expandiu ${varEcs.toFixed(1)}%.` : ' Ticket médio por EC melhorou.'}`,
+        texto: `Markup cresceu ${formatCurrency(atual.markupPos - anterior.markupPos)} vs ${anterior.periodo}.${varEcs !== null && varEcs > 0 ? ` Base de ECs expandiu ${varEcs.toFixed(1)}%.` : ' Ticket médio por EC melhorou.'}`,
       })
     }
 
-    if (varEcs < -8) {
+    if (varEcs !== null && varEcs < -8) {
       ins.push({
         nivel: 'critico',
         titulo: `Base de ECs encolheu ${Math.abs(varEcs).toFixed(0)}%`,
@@ -158,8 +168,8 @@ function gerarInsights(
 // ─── Componente Principal ─────────────────────────────────────
 
 export function RelatoriosPage() {
-  const { fechamentos, clientes, lancamentos, isLoading } = useInternoData()
-  const { vendedores } = useEquipeData()
+  const { fechamentos, clientes, isLoading } = useInternoData()
+  useEquipeData()
   const { custos, equipamentos } = useDataContext()
   const [periodoSelecionado, setPeriodoSelecionado] = useState<string>('ultimo')
   const reportRef = useRef<HTMLDivElement>(null)
@@ -201,10 +211,10 @@ export function RelatoriosPage() {
     const totalDeducoes = f.faturaDigital + f.descontos
     const lucroOp = f.valorLiquido - totalCustos
 
-    const varMarkup = ant?.markupPos > 0 ? ((f.markupPos - ant.markupPos) / ant.markupPos) * 100 : null
-    const varTpv = ant?.tpvTotal > 0 ? ((f.tpvTotal - ant.tpvTotal) / ant.tpvTotal) * 100 : null
-    const varLiquido = ant?.valorLiquido > 0 ? ((f.valorLiquido - ant.valorLiquido) / ant.valorLiquido) * 100 : null
-    const varEcs = ant?.ecsAtivos > 0 ? ((f.ecsAtivos - ant.ecsAtivos) / ant.ecsAtivos) * 100 : null
+    const varMarkup = ant && ant.markupPos > 0 ? ((f.markupPos - ant.markupPos) / ant.markupPos) * 100 : null
+    const varTpv = ant && ant.tpvTotal > 0 ? ((f.tpvTotal - ant.tpvTotal) / ant.tpvTotal) * 100 : null
+    const varLiquido = ant && ant.valorLiquido > 0 ? ((f.valorLiquido - ant.valorLiquido) / ant.valorLiquido) * 100 : null
+    const varEcs = ant && ant.ecsAtivos > 0 ? ((f.ecsAtivos - ant.ecsAtivos) / ant.ecsAtivos) * 100 : null
 
     const saude: 'CRITICA' | 'ATENCAO' | 'SAUDAVEL' =
       margem < 1 || lucroOp < -1000 ? 'CRITICA'

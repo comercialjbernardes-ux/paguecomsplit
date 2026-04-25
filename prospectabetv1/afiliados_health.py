@@ -149,14 +149,14 @@ def _selecionar_fatia(urls: list[str], afiliados: dict, n: int) -> list[str]:
 # ---------------------------------------------------------------------------
 
 
-def _tick() -> int:
+def _tick() -> tuple[int, int]:
     urls = _listar_urls()
     with _lock:
         afiliados = _carregar_afiliados()
 
     fatia = _selecionar_fatia(urls, afiliados, URLS_POR_TICK)
     if not fatia:
-        return 0
+        return 0, 0
 
     with ThreadPoolExecutor(max_workers=WORKERS) as pool:
         resultados = list(zip(fatia, pool.map(_detectar_afiliados, fatia)))
@@ -181,8 +181,7 @@ def _loop() -> None:
           f"fatia={URLS_POR_TICK} · workers={WORKERS}")
     while True:
         try:
-            resultado = _tick()
-            n, det = resultado if isinstance(resultado, tuple) else (resultado, 0)
+            n, det = _tick()
             if n:
                 print(f"[afiliados_health] tick: {n} bets checadas, {det} com afiliados")
         except Exception as e:

@@ -13,4 +13,9 @@ export default defineConfig({
     port: 5173,
     strictPort: true,
   },
+  build: {
+    rollupOptions: {
+      external: ['canvg', 'html2canvas-pro', 'dompurify'],
+    },
+  },
 })
