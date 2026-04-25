@@ -183,7 +183,8 @@ def _validar_url(url: str) -> dict:
             "checado_em": datetime.now().isoformat(timespec="seconds"),
             "latencia_ms": _latencia(),
         }
-    except requests.exceptions.ConnectTimeout:
+    except requests.exceptions.Timeout:
+        # Captura ConnectTimeout E ReadTimeout
         return {
             "status": "timeout",
             "http_code": 0,

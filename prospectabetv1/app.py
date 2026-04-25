@@ -18,6 +18,7 @@ Edição manual:
 import csv
 import json
 import os
+import re
 from datetime import datetime
 from pathlib import Path
 from threading import Lock
@@ -120,8 +121,12 @@ def _carregar_dados() -> list[dict]:
     Fallback: CSV básico se o JSON ainda não existir.
     """
     if ARQUIVO_JSON.exists():
-        with open(ARQUIVO_JSON, encoding="utf-8") as f:
-            dados = json.load(f)
+        try:
+            with open(ARQUIVO_JSON, encoding="utf-8") as f:
+                dados = json.load(f)
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"[app] Aviso: não foi possível carregar {ARQUIVO_JSON} — {e}")
+            dados = []
         for r in dados:
             try:
                 r["capital_social"] = float(r.get("capital_social") or 0)
@@ -341,6 +346,10 @@ def api_editar():
 
     if not cnpj:
         return jsonify({"ok": False, "erro": "CNPJ ausente."}), 400
+    # Valida formato básico do CNPJ (apenas dígitos, 14 chars após limpeza)
+    cnpj_digits = re.sub(r"[^\d]", "", cnpj)
+    if len(cnpj_digits) != 14:
+        return jsonify({"ok": False, "erro": "CNPJ deve ter 14 dígitos."}), 400
     if campo not in CAMPOS_EDITAVEIS:
         return jsonify({
             "ok": False,

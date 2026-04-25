@@ -173,21 +173,35 @@ def _normalizar_brasilapi(dados: dict) -> dict:
 
     regime, confirmado = inferir_regime(opcao_simples, opcao_mei, capital, porte)
 
+    # natureza_juridica pode vir como dict {"codigo":..., "descricao":...} na BrasilAPI
+    nat_jur_raw = dados.get("natureza_juridica", "")
+    if isinstance(nat_jur_raw, dict):
+        nat_jur = nat_jur_raw.get("descricao") or str(nat_jur_raw)
+    else:
+        nat_jur = str(nat_jur_raw or "")
+
+    # descricao_situacao_cadastral pode vir como dict em algumas respostas
+    sit_cad_raw = dados.get("descricao_situacao_cadastral", "")
+    if isinstance(sit_cad_raw, dict):
+        sit_cad = sit_cad_raw.get("descricao") or str(sit_cad_raw)
+    else:
+        sit_cad = str(sit_cad_raw or "")
+
     return {
-        "logradouro": dados.get("logradouro", ""),
-        "numero": dados.get("numero", ""),
-        "complemento": dados.get("complemento", ""),
-        "bairro": dados.get("bairro", ""),
-        "municipio": dados.get("municipio", ""),
-        "uf": dados.get("uf", ""),
-        "cep": str(dados.get("cep", "") or "").replace("-", ""),
-        "pais": dados.get("descricao_pais", "BRASIL") or "BRASIL",
+        "logradouro": str(dados.get("logradouro") or ""),
+        "numero": str(dados.get("numero") or ""),
+        "complemento": str(dados.get("complemento") or ""),
+        "bairro": str(dados.get("bairro") or ""),
+        "municipio": str(dados.get("municipio") or ""),
+        "uf": str(dados.get("uf") or ""),
+        "cep": str(dados.get("cep") or "").replace("-", ""),
+        "pais": str(dados.get("descricao_pais") or "BRASIL") or "BRASIL",
         "regime_tributario": regime,
         "porte_empresa": porte,
-        "situacao_cadastral": dados.get("descricao_situacao_cadastral", ""),
+        "situacao_cadastral": sit_cad,
         "capital_social": capital,
-        "natureza_juridica": dados.get("natureza_juridica", ""),
-        "data_abertura": dados.get("data_inicio_atividade", ""),
+        "natureza_juridica": nat_jur,
+        "data_abertura": str(dados.get("data_inicio_atividade") or ""),
         "fonte_regime": "brasilapi" if confirmado else "inferido",
         "confiabilidade_dado": "alta" if confirmado else "media",
     }
@@ -213,7 +227,11 @@ def consultar_receitaws(cnpj: str) -> dict | None:
             time.sleep(20 + random.uniform(0, 5))  # respeita rate limit
             resp = requests.get(url, headers=_headers(), timeout=TIMEOUT)
             if resp.status_code == 200:
-                dados = resp.json()
+                try:
+                    dados = resp.json()
+                except ValueError:
+                    logger.debug(f"ReceitaWS: resposta não-JSON para CNPJ {cnpj}")
+                    return None
                 if dados.get("status") == "ERROR":
                     logger.debug(f"ReceitaWS: CNPJ {cnpj} retornou erro: {dados.get('message')}")
                     return None
@@ -222,6 +240,11 @@ def consultar_receitaws(cnpj: str) -> dict | None:
                 logger.debug(f"ReceitaWS 429 — aguardando 30s (CNPJ {cnpj})")
                 time.sleep(30)
                 continue
+            if resp.status_code in (404, 400):
+                logger.debug(f"ReceitaWS: CNPJ {cnpj} não encontrado (HTTP {resp.status_code})")
+                return None
+            logger.debug(f"ReceitaWS HTTP {resp.status_code} para CNPJ {cnpj}")
+            return None
         except Exception as e:
             logger.debug(f"ReceitaWS erro (tentativa {tentativa + 1}) para {cnpj}: {e}")
     return None
@@ -238,7 +261,10 @@ def _parse_capital_receitaws(valor: str | float | None) -> float:
         if isinstance(valor, (int, float)):
             return float(valor)
         # Remove 'R$', espaços, pontos de milhar; troca vírgula por ponto
-        limpo = re.sub(r"[R$\s]", "", str(valor))
+        # ATENÇÃO: [R$\s] em regex trata '$' como literal, não âncora — OK em conjunto []
+        # mas para evitar ambiguidade usamos substituição literal de "R$" antes do regex
+        limpo = str(valor).replace("R$", "").replace("R ", "")
+        limpo = re.sub(r"\s", "", limpo)       # remove espaços restantes
         limpo = limpo.replace(".", "").replace(",", ".")
         return float(limpo)
     except (ValueError, TypeError):
@@ -258,21 +284,28 @@ def _normalizar_receitaws(dados: dict) -> dict:
 
     regime, confirmado = inferir_regime(opcao_simples, opcao_mei, capital, porte)
 
+    # natureza_juridica pode vir como dict ou string dependendo da fonte
+    nat_jur_raw_rws = dados.get("natureza_juridica", "")
+    if isinstance(nat_jur_raw_rws, dict):
+        nat_jur_rws = nat_jur_raw_rws.get("descricao") or str(nat_jur_raw_rws)
+    else:
+        nat_jur_rws = str(nat_jur_raw_rws or "")
+
     return {
-        "logradouro": dados.get("logradouro", ""),
-        "numero": dados.get("numero", ""),
-        "complemento": dados.get("complemento", ""),
-        "bairro": dados.get("bairro", ""),
-        "municipio": dados.get("municipio", ""),
-        "uf": dados.get("uf", ""),
-        "cep": str(dados.get("cep", "") or "").replace(".", "").replace("-", ""),
+        "logradouro": str(dados.get("logradouro") or ""),
+        "numero": str(dados.get("numero") or ""),
+        "complemento": str(dados.get("complemento") or ""),
+        "bairro": str(dados.get("bairro") or ""),
+        "municipio": str(dados.get("municipio") or ""),
+        "uf": str(dados.get("uf") or ""),
+        "cep": str(dados.get("cep") or "").replace(".", "").replace("-", ""),
         "pais": "BRASIL",
         "regime_tributario": regime,
         "porte_empresa": porte,
-        "situacao_cadastral": dados.get("situacao", ""),
+        "situacao_cadastral": str(dados.get("situacao") or ""),
         "capital_social": capital,
-        "natureza_juridica": dados.get("natureza_juridica", ""),
-        "data_abertura": dados.get("abertura", ""),
+        "natureza_juridica": nat_jur_rws,
+        "data_abertura": str(dados.get("abertura") or ""),
         # "receitaws" quando a Receita confirmou explicitamente; "inferido" por heurística
         "fonte_regime": "receitaws" if confirmado else "inferido",
         "confiabilidade_dado": "alta" if confirmado else "media",

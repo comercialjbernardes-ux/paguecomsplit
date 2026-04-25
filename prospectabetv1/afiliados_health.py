@@ -94,11 +94,14 @@ def _listar_urls() -> list[str]:
 def _detectar_afiliados(url: str) -> dict:
     """
     Chama coletar_afiliados() e normaliza o resultado para o schema do worker.
+    Cria uma Session por chamada — cada worker thread tem a sua própria.
     """
     try:
         from coletar_afiliados import coletar_afiliados
-        sessao = requests.Session()
-        url_af, email_af, status = coletar_afiliados(url, sessao)
+        # Session não é thread-safe para compartilhamento entre threads
+        # mas é segura para uso exclusivo dentro de um único executor task
+        with requests.Session() as sessao:
+            url_af, email_af, status = coletar_afiliados(url, sessao)
     except Exception as e:
         return {
             "detectado": False,

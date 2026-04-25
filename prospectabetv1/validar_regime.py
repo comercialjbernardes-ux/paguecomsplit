@@ -53,7 +53,10 @@ def validar_regime(
         return regime, ""
 
     porte_upper = str(porte or "").upper()
-    capital = float(capital_social or 0)
+    try:
+        capital = float(capital_social or 0)
+    except (ValueError, TypeError):
+        capital = 0.0
 
     # Porte DEMAIS é incompatível com Simples Nacional
     # (empresas de grande porte excedem o limite de faturamento do Simples)
@@ -106,7 +109,10 @@ def calcular_confiabilidade(
     if fonte == "inferido":
         # Inferência com base em porte/capital bem definidos → média
         porte_upper = str(porte or "").upper()
-        capital = float(capital_social or 0)
+        try:
+            capital = float(capital_social or 0)
+        except (ValueError, TypeError):
+            capital = 0.0
         if porte_upper in ("ME", "EPP", "MICRO EMPRESA", "DEMAIS") or capital > 0:
             return "media"
         return "baixa"

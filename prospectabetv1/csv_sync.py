@@ -119,9 +119,19 @@ def baixar_e_parsear_csv(url: str) -> list[dict] | None:
         print(f"[csv_sync] falha ao baixar CSV: {e}")
         return None
 
+    # Tenta UTF-8-sig (BOM) primeiro; se falhar, tenta latin-1
+    for enc in ("utf-8-sig", "latin-1"):
+        try:
+            texto = resp.content.decode(enc)
+            break
+        except (UnicodeDecodeError, LookupError):
+            continue
+    else:
+        texto = resp.text  # fallback para o apparent_encoding já detectado
+
     try:
         df = pd.read_csv(
-            io.StringIO(resp.text),
+            io.StringIO(texto),
             sep=";",
             skiprows=1,
             dtype=str,
@@ -375,9 +385,12 @@ def sincronizar_uma_vez() -> dict:
 
     info["sucesso"] = True
     info["total_csv"] = len(novos_idx)
-    info["total_base"] = len(base)  # estado real após todas as adições/remoções/atualizações
+    # Captura o tamanho da base enquanto ainda temos referência coerente ao objeto
+    info["total_base"] = len(base)
     info["finalizado_em"] = datetime.now().isoformat(timespec="seconds")
     _salvar_status(info)
+    # Limpa referência local grande para ajudar o GC
+    base = None  # type: ignore[assignment]
 
     print(
         f"[csv_sync] OK · +{len(info['adicionadas'])} "

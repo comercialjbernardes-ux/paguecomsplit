@@ -442,10 +442,13 @@ logger = configurar_logging()
 def carregar_checkpoint() -> dict:
     """Carrega o progresso salvo anteriormente (se existir)."""
     if Path(ARQUIVO_CHECKPOINT).exists():
-        with open(ARQUIVO_CHECKPOINT, encoding="utf-8") as f:
-            dados = json.load(f)
-        logger.info(f"Checkpoint carregado — {len(dados)} registros já processados.")
-        return dados
+        try:
+            with open(ARQUIVO_CHECKPOINT, encoding="utf-8") as f:
+                dados = json.load(f)
+            logger.info(f"Checkpoint carregado — {len(dados)} registros já processados.")
+            return dados
+        except (json.JSONDecodeError, OSError) as e:
+            logger.warning(f"Checkpoint corrompido ou ilegível — ignorando ({e}).")
     return {}
 
 
@@ -1144,12 +1147,18 @@ def processar_lista(
             break
 
         url = row.url if hasattr(row, "url") else ""
-        cnpj = str(row.cnpj).strip() if hasattr(row, "cnpj") else str(i)
+        _cnpj_raw = str(row.cnpj).strip() if hasattr(row, "cnpj") else ""
+        # pandas converte NaN para string "nan" — normaliza para string vazia
+        cnpj = "" if _cnpj_raw.lower() in ("nan", "none", "") else _cnpj_raw
         marca = str(row.marca).strip() if hasattr(row, "marca") else ""
+        if marca.lower() in ("nan", "none"):
+            marca = ""
         razao_social = str(row.razao_social).strip() if hasattr(row, "razao_social") else ""
+        if razao_social.lower() in ("nan", "none"):
+            razao_social = ""
 
         # Chave de checkpoint baseada na URL (única por domínio)
-        chave = url or (cnpj if cnpj and cnpj != "nan" else str(i))
+        chave = url or (cnpj if cnpj else str(i))
 
         if chave in checkpoint:
             logger.info(f"[{i}/{total}] {marca} — pulando (já processado).")
@@ -1224,7 +1233,7 @@ def gerar_relatorio(resultados: list[dict], caminho: str = ARQUIVO_RELATORIO) ->
         "=" * 60,
         "",
         f"Total de empresas processadas : {total}",
-        f"Com email encontrado          : {encontrados} ({encontrados/total*100:.1f}%)" if total else "0",
+        f"Com email encontrado          : {encontrados} ({encontrados/total*100:.1f}%)" if total else "Com email encontrado          : 0",
         f"  └─ via HTML estático         : {encontrados_html}",
         f"  └─ via JS (Playwright)       : {encontrados_js}",
         f"Sem email (página rastreada)  : {nao_encontrados}",
