@@ -184,7 +184,9 @@ function scheduleTokenRefresh(expiresIn: number): void {
 
   refreshTimer = setTimeout(() => {
     if (tokenClient) {
-      tokenClient.requestAccessToken({ prompt: '' })
+      // prompt: 'none' suprime a tela de consentimento no refresh silencioso.
+      // String vazia '' pode abrir popup inesperado de login.
+      tokenClient.requestAccessToken({ prompt: 'none' })
     }
   }, refreshIn)
 }

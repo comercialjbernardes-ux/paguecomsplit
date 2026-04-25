@@ -43,13 +43,15 @@ export function InternoDRE() {
       (l) => l.source === 'local' && dataPertenceAoPeriodo(l.data, f.periodo)
     )
 
+    // Math.abs garante valor positivo mesmo se o usuário salvou a entrada
+    // com sinal negativo — consistente com o bloco de exibição abaixo.
     const totalReceitasLocais = localNoPeriodo
       .filter((l) => l.tipo === 'receita')
-      .reduce((s, l) => s + l.valor, 0)
+      .reduce((s, l) => s + Math.abs(l.valor), 0)
 
     const totalDeducoesLocais = localNoPeriodo
       .filter((l) => l.tipo === 'despesa')
-      .reduce((s, l) => s + l.valor, 0)
+      .reduce((s, l) => s + Math.abs(l.valor), 0)
 
     // ERRO 02: deducoes de equipamentos com parcelas ativas
     const totalEquipMensal = equipamentos.reduce((s, eq) => {

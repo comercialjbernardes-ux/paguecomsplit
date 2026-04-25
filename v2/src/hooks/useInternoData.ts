@@ -33,10 +33,14 @@ interface InternoData {
 export function useInternoData(): InternoData {
   const { fechamentos, lancamentos, clientes, isLoading, error } = useDataContext()
 
-  // B-02: ordenar por periodo antes de pegar o ultimo (garante "mais recente" mesmo com dados fora de ordem)
+  // DataContext.allFechamentos já entrega os fechamentos em ordem cronológica
+  // (sortFechamentos por YYYY*12+mes). Pegar o último elemento é suficiente e correto.
+  // NÃO usar localeCompare aqui — as abreviações PT ('Abr','Ago','Dez'...) têm
+  // ordem alfabética ≠ cronológica, o que resultaria em 'Set' como "mais recente"
+  // mesmo existindo 'Out', 'Nov' e 'Dez' posteriores.
   const fechamentoAtual = useMemo(() => {
     if (fechamentos.length === 0) return null
-    return [...fechamentos].sort((a, b) => a.periodo.localeCompare(b.periodo)).at(-1) ?? null
+    return fechamentos[fechamentos.length - 1] ?? null
   }, [fechamentos])
 
   // Categorias unicas dos lancamentos

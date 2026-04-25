@@ -182,7 +182,13 @@ export function mapRowsToFechamento(
 export function mapRowsToVendedores(rows: (string | number)[][]): Vendedor[] {
   if (rows.length <= 1) return []
 
-  return rows.slice(1).map((row, index) => ({
+  return rows.slice(1)
+    // Filtra linhas completamente em branco ou sem nome — evita Vendedores fantasma
+    .filter((row) => {
+      const nome = String(row[COL_VENDEDORES.NOME] || '').trim()
+      return nome.length > 0
+    })
+    .map((row, index) => ({
     id: Number(row[COL_VENDEDORES.ID]) || index + 1,
     nome: String(row[COL_VENDEDORES.NOME] || ''),
     regiao: String(row[COL_VENDEDORES.REGIAO] || ''),
@@ -429,7 +435,14 @@ export function mapRowsCobrDigital(rows: (string | number)[][], periodo = 'atual
 export function mapRowsToLancamentos(rows: (string | number)[][]): LancamentoCusto[] {
   if (rows.length <= 1) return []
 
-  return rows.slice(1).map((row, index) => ({
+  return rows.slice(1)
+    // Filtra linhas em branco — sem descrição E sem valor → descarta para não poluir DRE
+    .filter((row) => {
+      const descricao = String(row[COL_LANCAMENTOS.DESCRICAO] || '').trim()
+      const valor     = parseNumericValue(row[COL_LANCAMENTOS.VALOR])
+      return descricao.length > 0 || valor !== 0
+    })
+    .map((row, index) => ({
     id: String(row[COL_LANCAMENTOS.ID] || `lanc-${index + 1}`),
     data: String(row[COL_LANCAMENTOS.DATA] || ''),
     descricao: String(row[COL_LANCAMENTOS.DESCRICAO] || ''),
