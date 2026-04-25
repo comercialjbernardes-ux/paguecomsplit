@@ -233,45 +233,45 @@
 
           <input type="text" id="f-marca" class="filter-input" placeholder="&#128269; Buscar marca..." />
 
-          <select id="f-status" class="filter-input">
-            <option value="">Status email</option>
-            <option value="com_email">Com email</option>
-            <option value="sem_email">Sem email</option>
-            <option value="falhou">Falhou</option>
+          <select id="f-status" class="filter-input" title="Filtrar por status da coleta de e-mail">
+            <option value="">Status do E-mail</option>
+            <option value="com_email">✅ Com e-mail</option>
+            <option value="sem_email">❌ Sem e-mail</option>
+            <option value="falhou">⚠️ Falhou / Bloqueado</option>
           </select>
 
-          <select id="f-afiliados" class="filter-input">
-            <option value="">Afiliados</option>
-            <option value="com">&#128994; Detectado</option>
-            <option value="sem">&#128308; Não detectado</option>
+          <select id="f-afiliados" class="filter-input" title="Filtrar por detecção de programa de afiliados">
+            <option value="">Prog. Afiliados</option>
+            <option value="com">&#128994; Programa detectado</option>
+            <option value="sem">&#128308; Sem programa</option>
           </select>
 
-          <select id="f-saude-url" class="filter-input">
-            <option value="">Saúde da URL</option>
-            <option value="ativa">&#128994; Ativas</option>
-            <option value="redirect">&#128993; Redirect</option>
-            <option value="erro">&#128308; Com erro</option>
-            <option value="desconhecido">&#9898; Não checadas</option>
+          <select id="f-saude-url" class="filter-input" title="Filtrar pelo status de acesso ao site da bet">
+            <option value="">Saúde do Site</option>
+            <option value="ativa">&#128994; Online / Ativo</option>
+            <option value="redirect">&#128993; Redirecionamento</option>
+            <option value="erro">&#128308; Inacessível / Erro</option>
+            <option value="desconhecido">&#9898; Não verificado</option>
           </select>
 
-          <select id="f-porte" class="filter-input">
-            <option value="">Porte</option>
+          <select id="f-porte" class="filter-input" title="Filtrar pelo porte da empresa (Receita Federal)">
+            <option value="">Porte da Empresa</option>
           </select>
 
-          <select id="f-situacao" class="filter-input">
-            <option value="">Situação</option>
+          <select id="f-situacao" class="filter-input" title="Filtrar pela situação cadastral na Receita Federal">
+            <option value="">Situação Cadastral</option>
           </select>
 
-          <select id="f-uf" class="filter-input" onchange="atualizarMunicipios()">
-            <option value="">UF</option>
+          <select id="f-uf" class="filter-input" onchange="atualizarMunicipios()" title="Filtrar por estado (UF) de registro da empresa">
+            <option value="">UF / Estado</option>
           </select>
 
-          <select id="f-municipio" class="filter-input">
+          <select id="f-municipio" class="filter-input" title="Filtrar por município de registro — selecione um estado primeiro">
             <option value="">Município</option>
           </select>
 
-          <input type="date" id="f-data-inicio" class="filter-input" title="De" />
-          <input type="date" id="f-data-fim" class="filter-input" title="Até" />
+          <input type="date" id="f-data-inicio" class="filter-input" title="Coleta de e-mail: data inicial do período" placeholder="De" />
+          <input type="date" id="f-data-fim" class="filter-input" title="Coleta de e-mail: data final do período" placeholder="Até" />
 
           <div class="filter-strip-actions">
             <button class="btn btn-primary" onclick="aplicarFiltros()">Aplicar</button>
@@ -308,19 +308,19 @@
           <table class="data-table" id="data-table">
             <thead>
               <tr>
-                <th class="sortable" data-col="marca" onclick="ordenarPor('marca')">Marca <span class="sort-icon">&#8597;</span></th>
-                <th class="sortable" data-col="razao_social" onclick="ordenarPor('razao_social')">Razão Social <span class="sort-icon">&#8597;</span></th>
-                <th class="sortable" data-col="cnpj" onclick="ordenarPor('cnpj')">CNPJ <span class="sort-icon">&#8597;</span></th>
-                <th>URL</th>
-                <th>Email</th>
-                <th>Afiliado</th>
-                <th class="sortable" data-col="uf" onclick="ordenarPor('uf')">UF <span class="sort-icon">&#8597;</span></th>
-                <th class="sortable" data-col="municipio" onclick="ordenarPor('municipio')">Município <span class="sort-icon">&#8597;</span></th>
-                <th class="sortable" data-col="status" onclick="ordenarPor('status')">Status <span class="sort-icon">&#8597;</span></th>
-                <th class="sortable num-col" data-col="capital_social" onclick="ordenarPor('capital_social')">Capital Social <span class="sort-icon">&#8597;</span></th>
-                <th class="sortable" data-col="data_abertura" onclick="ordenarPor('data_abertura')">Abertura <span class="sort-icon">&#8597;</span></th>
-                <th class="sortable" data-col="data_coleta" onclick="ordenarPor('data_coleta')">Coleta <span class="sort-icon">&#8597;</span></th>
-                <th>Observação</th>
+                <th class="sortable" data-col="marca" onclick="ordenarPor('marca')" title="Nome da marca comercial da bet">Marca <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="razao_social" onclick="ordenarPor('razao_social')" title="Razão social registrada na Receita Federal">Razão Social <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="cnpj" onclick="ordenarPor('cnpj')" title="CNPJ da empresa operadora (com máscara)">CNPJ <span class="sort-icon">&#8597;</span></th>
+                <th title="Endereço do site da bet — ponto colorido indica saúde da URL (verde = online, laranja = redirect, vermelho = inacessível)">Site / URL</th>
+                <th title="E-mail de contato encontrado — clique para editar manualmente">E-mail Contato</th>
+                <th title="Programa de afiliados — verde: detectado automaticamente, vermelho: não encontrado, cinza: ainda não verificado">Prog. Afiliados</th>
+                <th class="sortable" data-col="uf" onclick="ordenarPor('uf')" title="UF (Unidade Federativa) — estado onde a empresa está registrada na Receita Federal">UF / Estado <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="municipio" onclick="ordenarPor('municipio')" title="Município onde a empresa está registrada na Receita Federal">Município <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="status" onclick="ordenarPor('status')" title="Status da coleta de e-mail — Com e-mail: encontrado | Sem e-mail: não localizado | Falhou: erro de acesso ou bloqueio">Status E-mail <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable num-col" data-col="capital_social" onclick="ordenarPor('capital_social')" title="Capital social declarado na Receita Federal (BRL)">Capital Social <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="data_abertura" onclick="ordenarPor('data_abertura')" title="Data de abertura / constituição da empresa na Receita Federal">Abertura Empresa <span class="sort-icon">&#8597;</span></th>
+                <th class="sortable" data-col="data_coleta" onclick="ordenarPor('data_coleta')" title="Data em que o e-mail de contato foi coletado ou o registro foi atualizado pela última vez">Coleta E-mail <span class="sort-icon">&#8597;</span></th>
+                <th title="Campo livre para anotações manuais — clique para editar">Observação</th>
               </tr>
             </thead>
             <tbody id="table-body">
