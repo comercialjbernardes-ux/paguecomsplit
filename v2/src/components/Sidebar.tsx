@@ -12,14 +12,12 @@ import {
   TrendingUp,
   Wallet,
   Users,
-  Receipt,
   ClipboardList,
   Settings,
   Sliders,
   LogOut,
   ChevronDown,
   ChevronRight,
-  Wrench,
   ScrollText,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -77,7 +75,7 @@ const sections: NavSection[] = [
         icon: <TrendingUp className="w-4 h-4" />,
       },
       {
-        label: 'Custos e Receitas',
+        label: 'Financeiro',
         path: '/interno/custos',
         icon: <Wallet className="w-4 h-4" />,
       },
@@ -85,16 +83,6 @@ const sections: NavSection[] = [
         label: 'Análise de Carteira',
         path: '/interno/carteira',
         icon: <Users className="w-4 h-4" />,
-      },
-      {
-        label: 'Lançamentos',
-        path: '/interno/transacoes',
-        icon: <Receipt className="w-4 h-4" />,
-      },
-      {
-        label: 'Gestão de Custos',
-        path: '/interno/gestao-custos',
-        icon: <Wrench className="w-4 h-4" />,
       },
     ],
   },

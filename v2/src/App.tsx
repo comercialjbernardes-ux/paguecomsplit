@@ -22,10 +22,8 @@ import { InternoDRE } from './pages/interno/DRE'
 import { InternoProjecao } from './pages/interno/Projecao'
 import { InternoCustos } from './pages/interno/Custos'
 import { InternoCarteira } from './pages/interno/Carteira'
-import { InternoTransacoes } from './pages/interno/Transacoes'
 import { RelatoriosPage } from './pages/Relatorios'
 import { ParametrizacaoPage } from './pages/config/Parametrizacao'
-import { InternoGestaoCustos } from './pages/interno/GestaoCustos'
 import { Logs } from './pages/Logs'
 
 export default function App() {
@@ -57,8 +55,8 @@ export default function App() {
           <Route path="interno/projecao" element={<InternoProjecao />} />
           <Route path="interno/custos" element={<InternoCustos />} />
           <Route path="interno/carteira" element={<InternoCarteira />} />
-          <Route path="interno/transacoes" element={<InternoTransacoes />} />
-          <Route path="interno/gestao-custos" element={<InternoGestaoCustos />} />
+          <Route path="interno/transacoes" element={<Navigate to="/interno/custos" replace />} />
+          <Route path="interno/gestao-custos" element={<Navigate to="/interno/custos" replace />} />
 
           {/* ── Relatorios ────────────────────────────────── */}
           <Route path="relatorios" element={<RelatoriosPage />} />
