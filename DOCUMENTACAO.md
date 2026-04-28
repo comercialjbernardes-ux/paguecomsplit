@@ -1040,6 +1040,39 @@ git push origin main
 
 > Registre aqui toda alteração relevante no sistema.
 
+### 2026-04-29 (v2 — parte 2)
+
+**fix(mappers): Correção crítica de leitura das planilhas Jan/Fev/Mar 2026**
+
+Análise comparativa das 3 planilhas reais revelou 5 bugs de mapeamento:
+
+| # | Bug | Arquivo | Impacto |
+|---|-----|---------|---------|
+| 1 | `COL_DESCONTOS.VALOR=4` apontava para coluna de texto → valor sempre R$ 0,00 | `sheets.ts` | Crítico |
+| 2 | `findValue('desconto')` colidia com cabeçalho de seção → `fechamento.descontos=0` | `sheetMappers.ts` | Crítico |
+| 3 | `mapRowsDescontos`: linha TOTAL não detectada no MAR (estava na col A, não D) | `sheetMappers.ts` | Médio |
+| 4 | Repasses: data M/DD/YYYY (JAN/FEV) vs DD/MM/YYYY (MAR) — inconsistente | `sheetMappers.ts` | Médio |
+| 5 | Repasses/MKP de POS: CNPJ com formatação (MAR) ou zeros faltando | `sheetMappers.ts` | Médio |
+
+Correções aplicadas:
+- `COL_DESCONTOS`: adicionado `TIPO=3`, corrigido `DESCRICAO=4`, `VALOR=5`
+- `mapRowsToFechamento`: busca `'descontos do'` (evita colisão com header de seção)
+- `mapRowsDescontos`: detecção de TOTAL em qualquer coluna; `hasValue` requer `row.length >= 6`
+- `mapRowsRepasses`: nova função `normalizeDate()` — converte M/DD/YYYY → DD/MM/YYYY
+- `mapRowsMKPdePOS`, `mapRowsRepasses`: nova função `normalizeCnpj()` — remove formatação e padeia para 14 dígitos
+
+Diferenças estruturais do MAR sem impacto funcional:
+- Resumo tem +1 linha vazia entre seções; cabeçalhos de seção em col B com espaços
+- Aba extra "Página1" (rascunho de cálculo, ignorada pelo app)
+- VALOR LÍQUIDO aparece 2× no Resumo (R21 col A + R23 col E) — `findValue` encontra o correto (R21)
+
+Planilhas analisadas:
+- JAN 2026: `1Hy3bWP47utYgyRbb6GLsIV1DTUM3wcwhog9xih2gm9c`
+- FEV 2026: `1fqJ6aBkpHZ5GxMMKbLUGj0PZPIMW6DJsm0vwp8XDQAI`
+- MAR 2026: `1QZGqu9beQitt1KbGt7EA8UIsvcMhyVvWBkgoW5iNOpY`
+
+---
+
 ### 2026-04-29
 
 **feat(v2): Sistema de Log de Erros**
