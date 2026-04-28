@@ -157,12 +157,16 @@ export function mapRowsToFechamento(
     comissaoRede: findValue('comiss') || findValue('rede'),
     repasse: findValue('repasse') || findValue('transfer'),
     faturaDigital: Math.abs(findValue('digital') || findValue('conta digital')),
+    // NOTA: busca por 'descontos do' em vez de 'desconto' para evitar colisão
+    // com o cabeçalho de seção "DESCONTOS & COBRANÇAS" que aparece antes dos dados.
+    // Todas as planilhas têm "Descontos do Período (ver aba Descontos)" em col B,
+    // enquanto o cabeçalho de seção não contém 'do'.
     descontos: Math.abs(
-      findValue('desconto') ||
-      findValue('abatimento') ||
+      findValue('descontos do') ||
       findValue('(-) desc') ||
       findValue('ajuste negativo') ||
       findValue('desc. concedido') ||
+      findValue('abatimento') ||
       findValue('deducao')
     ),
     valorLiquido: findValue('líquido') || findValue('liquido') || findValue('valor l'),
@@ -265,7 +269,7 @@ export function mapRowsMKPdePOS(rows: (string | number)[][], periodo = 'atual'):
 
       return {
         id: index + 1,
-        cnpj: String(row[CNPJi] || ''),
+        cnpj: normalizeCnpj(row[CNPJi]),
         nome: String(row[NOMEi] || ''),
         segmento: inferirSegmento(String(row[NOMEi] || '')),
         vendedor: 'Comercial Bernardes',
@@ -289,6 +293,13 @@ export function mapRowsMKPdePOS(rows: (string | number)[][], periodo = 'atual'):
  *
  * Estrutura: Row 1 = header, Rows 2+ = dados
  * Colunas: Data | CNPJ | Estabelecimento | Tipo de Ajuste | Valor
+ *
+ * DIFERENÇAS ENTRE PLANILHAS:
+ *  - JAN/FEV: data no formato americano M/DD/YYYY ("1/13/2026")
+ *  - MAR+:    data no formato brasileiro DD/MM/YYYY ("16/03/2026")
+ *  - JAN/FEV: CNPJ sem formatação ("55789698000168")
+ *  - MAR+:    CNPJ formatado ("59.813.357/0001-31")
+ * Ambos são normalizados aqui.
  */
 export function mapRowsRepasses(rows: (string | number)[][]): LancamentoCusto[] {
   if (rows.length <= 2) return []
@@ -304,12 +315,13 @@ export function mapRowsRepasses(rows: (string | number)[][]): LancamentoCusto[] 
       return Boolean(row[COL_REPASSES.VALOR])
     })
     .map((row, index) => {
-      const cnpj      = String(row[COL_REPASSES.CNPJ] || '')
+      const cnpjRaw   = String(row[COL_REPASSES.CNPJ] || '')
+      const cnpj      = normalizeCnpj(cnpjRaw)
       const nome      = String(row[COL_REPASSES.NOME] || '')
       const tipoAj    = String(row[COL_REPASSES.TIPO] || '')
-      const dataRow   = String(row[COL_REPASSES.DATA] || '')
+      const dataRow   = normalizeDate(String(row[COL_REPASSES.DATA] || ''))
       return {
-        id: `REP-${cnpj.replace(/\D/g, '').slice(-6) || index + 1}-${index}`,
+        id: `REP-${cnpj.slice(-6) || index + 1}-${index}`,
         data: dataRow,
         descricao: nome,                          // Estabelecimento como descrição principal
         categoria: 'Repasse',
@@ -330,27 +342,37 @@ export function mapRowsRepasses(rows: (string | number)[][]): LancamentoCusto[] 
 /**
  * Mapeia linhas da aba "Descontos" para LancamentoCusto[]
  *
- * Estrutura:
- *   Rows 1-5: cabecalho e headers
- *   Rows 6+: dados (blank | CNPJ | Parceiro | Descricao | Valor)
- *   Ultima linha: total (Col A contém "TOTAL")
+ * Estrutura confirmada (JAN/FEV/MAR):
+ *   Rows 1-5: cabeçalho (título, vazio, desc, vazio, header)
+ *   Rows 6+:  dados (vazio | CNPJ | Parceiro | Tipo | Origem/Descrição | Valor)
+ *   Última linha: total
+ *     - JAN/FEV: "TOTAL DESCONTOS" na col D (idx 3)
+ *     - MAR:     "TOTAL DESCONTOS" na col A (idx 0)
+ *
+ * CORREÇÃO: VALOR estava mapeado para idx 4 (texto de descrição) → sempre 0.
+ * Correto: TIPO=3, DESCRICAO=4, VALOR=5.
+ * Detecção do total: verifica "TOTAL" em qualquer célula da linha.
  */
 export function mapRowsDescontos(rows: (string | number)[][], periodo = 'atual'): LancamentoCusto[] {
   if (rows.length <= 5) return []
 
   return rows
-    .slice(5) // pula cabecalho
+    .slice(5) // pula cabeçalho
     .filter((row) => {
-      const colA = String(row[0] || '').toUpperCase()
-      const hasValue = row.length >= 5 && row[COL_DESCONTOS.VALOR]
-      const isTotal = colA.includes('TOTAL')
+      // Detecta linha de total em QUALQUER coluna (JAN/FEV: col D; MAR: col A)
+      const isTotal = row.some((cell) => String(cell || '').toUpperCase().includes('TOTAL'))
+      // Requer ao menos 6 colunas E valor numérico na col F (idx 5)
+      const hasValue = row.length >= 6 && Boolean(row[COL_DESCONTOS.VALOR])
       return hasValue && !isTotal
     })
     .map((row, index) => {
-      const descricao = String(row[COL_DESCONTOS.DESCRICAO] || 'Desconto')
-      const desc = descricao.toLowerCase()
-      const categoria = desc.includes('aluguel') ? 'Aluguel'
-        : desc.includes('tarifa') ? 'Infraestrutura'
+      const tipo      = String(row[COL_DESCONTOS.TIPO]      || '').toLowerCase()
+      const descricao = String(row[COL_DESCONTOS.DESCRICAO] || row[COL_DESCONTOS.TIPO] || 'Desconto')
+      const desc      = descricao.toLowerCase()
+      // Categorização baseada em tipo (col D) + descrição (col E)
+      const categoria = desc.includes('aluguel') || tipo.includes('aluguel') ? 'Aluguel'
+        : tipo === 'chip' || desc.includes('chip') || desc.includes('mensalidade') ? 'Infraestrutura'
+        : tipo === 'pos' ? 'Equipamentos'
         : 'Fornecedores'
       return {
         id: `DESC-${index + 1}`,
@@ -486,6 +508,52 @@ export function mapRowsToClientes(rows: (string | number)[][]): ClienteCarteira[
 }
 
 // ─── Helpers ──────────────────────────────────────────────────
+
+/**
+ * Normaliza CNPJ para 14 dígitos sem formatação.
+ * Remove pontos, barras e hifens; adiciona zeros à esquerda se necessário.
+ * Trata: "59.813.357/0001-31" → "59813357000131"
+ *        "55789698000168"     → "55789698000168"
+ *        "5866499000138"      → "05866499000138" (zero faltando)
+ */
+function normalizeCnpj(cnpj: string | number | undefined): string {
+  const digits = String(cnpj || '').replace(/\D/g, '')
+  if (!digits) return ''
+  return digits.padStart(14, '0')
+}
+
+/**
+ * Normaliza data para o formato DD/MM/YYYY.
+ *
+ * JAN/FEV usam formato americano M/DD/YYYY ("1/13/2026", "2/3/2026").
+ * MAR+    usam formato brasileiro DD/MM/YYYY ("16/03/2026").
+ *
+ * Regra de detecção (sem ambiguidade):
+ *  - Se o PRIMEIRO número > 12 → definitivamente DD/MM/YYYY (dia primeiro)
+ *  - Se o SEGUNDO número > 12 → definitivamente M/DD/YYYY (mês primeiro)
+ *  - Ambos ≤ 12 (ex: "2/12/2026") → assume M/DD/YYYY (padrão histórico JAN/FEV)
+ *    pois os dados de JAN e FEV usam consistentemente o formato americano.
+ */
+function normalizeDate(dateStr: string): string {
+  const d = dateStr.trim()
+  const parts = d.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/)
+  if (!parts) return d // formato desconhecido — preserva como está
+  const n1 = parseInt(parts[1], 10)
+  const n2 = parseInt(parts[2], 10)
+  const year = parts[3]
+  let day: number, month: number
+  if (n1 > 12) {
+    // Primeiro número > 12 → obrigatoriamente dia (BR: DD/MM/YYYY)
+    day = n1; month = n2
+  } else if (n2 > 12) {
+    // Segundo número > 12 → obrigatoriamente dia (US: M/DD/YYYY)
+    day = n2; month = n1
+  } else {
+    // Ambos ≤ 12: assume formato americano M/DD/YYYY (padrão JAN/FEV)
+    day = n2; month = n1
+  }
+  return `${String(day).padStart(2, '0')}/${String(month).padStart(2, '0')}/${year}`
+}
 
 /**
  * Converte valor da planilha para numero.

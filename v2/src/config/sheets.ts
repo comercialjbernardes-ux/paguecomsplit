@@ -122,12 +122,24 @@ export const COL_REPASSES = {
 /**
  * Colunas da aba "Descontos" (Comercial Bernardes)
  * Linhas 1-5: cabeçalho, Linhas 6+: dados
+ *
+ * Estrutura real confirmada (JAN/FEV/MAR):
+ *   Col A (0) = vazio
+ *   Col B (1) = CNPJ Parceiro
+ *   Col C (2) = Parceiro (Retenção)
+ *   Col D (3) = Tipo ("POS", "Chip")
+ *   Col E (4) = Origem do Desconto (descrição textual)
+ *   Col F (5) = Valor (R$)
+ *
+ * ATENÇÃO: antes havia DESCRICAO=3 e VALOR=4, o que lia "Tipo" como descrição
+ * e a descrição textual como valor → todos os descontos tinham valor=0.
  */
 export const COL_DESCONTOS = {
   CNPJ: 1,
   PARCEIRO: 2,
-  DESCRICAO: 3,
-  VALOR: 4,
+  TIPO: 3,
+  DESCRICAO: 4,
+  VALOR: 5,
 } as const
 
 /**
