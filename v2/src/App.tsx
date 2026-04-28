@@ -26,8 +26,6 @@ import { InternoTransacoes } from './pages/interno/Transacoes'
 import { RelatoriosPage } from './pages/Relatorios'
 import { ParametrizacaoPage } from './pages/config/Parametrizacao'
 import { InternoGestaoCustos } from './pages/interno/GestaoCustos'
-import { ComparativoMensalPage } from './pages/ComparativoMensal'
-import { RelatorioExecutivoPage } from './pages/RelatorioExecutivo'
 import { Logs } from './pages/Logs'
 
 export default function App() {
@@ -64,8 +62,6 @@ export default function App() {
 
           {/* ── Relatorios ────────────────────────────────── */}
           <Route path="relatorios" element={<RelatoriosPage />} />
-          <Route path="comparativo" element={<ComparativoMensalPage />} />
-          <Route path="relatorio-executivo" element={<RelatorioExecutivoPage />} />
 
           {/* ── Configuracao (laranja) ────────────────────── */}
           <Route path="parametrizacao" element={<ParametrizacaoPage />} />

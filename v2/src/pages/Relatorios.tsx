@@ -1,26 +1,29 @@
 // ═══════════════════════════════════════════════════════════════
-// Relatorios — Relatório Executivo para Apresentação ao Cliente
+// Relatorios — Relatório Unificado (Executivo + Comparativo + Projeção)
 // Layout profissional, secionado, com insights automáticos e PDF
 // ═══════════════════════════════════════════════════════════════
 
 import { useState, useMemo, useRef } from 'react'
 import {
-  AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  AreaChart, Area, BarChart, Bar, LineChart, Line,
+  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer,
 } from 'recharts'
 import {
   FileBarChart, TrendingUp, TrendingDown,
-  DollarSign, Users, ArrowUpRight,
+  DollarSign, Users, ArrowUpRight, ArrowDownRight, Minus,
   Printer, CheckCircle, AlertTriangle, XCircle, AlertCircle,
   Target, Lightbulb, ShieldAlert, Activity, Calendar, Star,
+  FileJson,
 } from 'lucide-react'
 import { useInternoData } from '../hooks/useInternoData'
 import { useEquipeData } from '../hooks/useEquipeData'
 import { useDataContext } from '../contexts/dataContextValue'
 import { NOME_EMPRESA, PRECO_CONTA_DIGITAL } from '../constants/empresa'
 import { LoadingState } from '../components/LoadingState'
+import { ExportMenu } from '../components/ExportMenu'
 import { exportElementToPDF } from '../services/exportService'
-import { formatCurrency, formatCurrencyShort } from '../utils/format'
+import { formatCurrency, formatCurrencyShort, formatPercent } from '../utils/format'
 import { calcCustosMensalEfetivo } from '../utils/custos'
 import {
   calcMargemReal,
@@ -82,7 +85,6 @@ function gerarInsights(
 
   // Evolução vs anterior
   if (anterior) {
-    // Retorna null (não 0) quando não há base anterior — distingue "sem dado" de "sem variação"
     const varMarkup = anterior.markupPos > 0 ? ((atual.markupPos - anterior.markupPos) / anterior.markupPos) * 100 : null
     const varEcs = anterior.ecsAtivos > 0 ? ((atual.ecsAtivos - anterior.ecsAtivos) / anterior.ecsAtivos) * 100 : null
 
@@ -165,10 +167,40 @@ function gerarInsights(
   return ins
 }
 
+// ─── Semáforo de variação ─────────────────────────────────────
+
+function Semaforo({ valor }: { valor: number | null }) {
+  if (valor === null) return <span className="text-gray-300 text-xs">—</span>
+  if (Math.abs(valor) < 0.5) return (
+    <span className="flex items-center gap-1 text-xs text-gray-500 font-medium">
+      <Minus className="w-3 h-3" /> estável
+    </span>
+  )
+  const positivo = valor > 0
+  return (
+    <span className={`flex items-center gap-1 text-xs font-semibold ${positivo ? 'text-emerald-600' : 'text-red-600'}`}>
+      {positivo ? <ArrowUpRight className="w-3.5 h-3.5" /> : <ArrowDownRight className="w-3.5 h-3.5" />}
+      {formatPercent(Math.abs(valor))}
+    </span>
+  )
+}
+
+// ─── Badge de status ──────────────────────────────────────────
+
+function Badge({ valor }: { valor: number | null }) {
+  if (valor === null) return null
+  const cor = valor >= 5 ? 'bg-emerald-100 text-emerald-700'
+    : valor >= 0 ? 'bg-blue-50 text-blue-700'
+    : valor >= -5 ? 'bg-yellow-100 text-yellow-700'
+    : 'bg-red-100 text-red-700'
+  const label = valor >= 5 ? 'Saudável' : valor >= 0 ? 'Estável' : valor >= -5 ? 'Atenção' : 'Crítico'
+  return <span className={`px-2 py-0.5 rounded text-xs font-semibold ${cor}`}>{label}</span>
+}
+
 // ─── Componente Principal ─────────────────────────────────────
 
 export function RelatoriosPage() {
-  const { fechamentos, clientes, isLoading } = useInternoData()
+  const { fechamentos, clientes, lancamentos, isLoading } = useInternoData()
   useEquipeData()
   const { custos, equipamentos } = useDataContext()
   const [periodoSelecionado, setPeriodoSelecionado] = useState<string>('ultimo')
@@ -200,7 +232,33 @@ export function RelatoriosPage() {
     return idx > 0 ? fechamentos[idx - 1] : null
   }, [fechamentos, periodoAtual])
 
-  // Dados calculados
+  // Variações por período para tabela comparativa (todos os períodos, mais recente primeiro)
+  const periodosComVar = useMemo(() => {
+    return fechamentos.map((f, i) => {
+      const ant = fechamentos[i - 1]
+      const pct = (atual: number, anterior: number | undefined) =>
+        anterior && anterior > 0 ? ((atual - anterior) / anterior) * 100 : null
+      return {
+        ...f,
+        varTPV:     pct(f.tpvTotal,     ant?.tpvTotal),
+        varMarkup:  pct(f.markupPos,    ant?.markupPos),
+        varLiquido: pct(f.valorLiquido, ant?.valorLiquido),
+        varEcs:     pct(f.ecsAtivos,    ant?.ecsAtivos),
+      }
+    }).reverse()
+  }, [fechamentos])
+
+  // Dados para gráficos de linhas/barras (todos os períodos)
+  const chartLinhas = useMemo(() => {
+    return [...fechamentos].map((f) => ({
+      periodo: f.periodo,
+      markup: f.markupPos,
+      liquido: f.valorLiquido,
+      tpv: f.tpvTotal,
+    }))
+  }, [fechamentos])
+
+  // Dados calculados principais
   const dados = useMemo(() => {
     if (!periodoAtual) return null
     const f = periodoAtual
@@ -222,8 +280,6 @@ export function RelatoriosPage() {
       : 'SAUDAVEL'
 
     // Análise da carteira
-    const mediaTpv = clientes.length > 0 ? clientes.reduce((s, c) => s + c.volumeTotal, 0) / clientes.length : 0
-    const mediaMarkup = clientes.length > 0 ? clientes.reduce((s, c) => s + c.ticketMedio, 0) / clientes.length : 0
     const ecsSemReceita = getECsSemReceita(clientes)
     const oportunidades = getOportunidadesContaDigital(clientes)
     const top10 = getTopByMarkup(clientes, 10)
@@ -244,7 +300,7 @@ export function RelatoriosPage() {
     const top5pct = totalVolume > 0
       ? Math.round(ordenados.slice(0, 5).reduce((s, c) => s + c.volumeTotal, 0) / totalVolume * 100) : 0
 
-    // Evolução (últimos 6 períodos ou todos)
+    // Evolução (últimos 8 períodos)
     const evolucao = fechamentos.slice(-8).map((fech) => ({
       periodo: fech.periodo,
       markup: fech.markupPos,
@@ -259,7 +315,7 @@ export function RelatoriosPage() {
       { label: 'Repasse', valor: f.repasse, tipo: 'receita' as const },
       { label: 'Receita Bruta', valor: receitaBruta, tipo: 'subtotal' as const },
       { label: '(-) Descontos', valor: -f.descontos, tipo: 'deducao' as const },
-      { label: '(-) Cobra Digital', valor: -f.faturaDigital, tipo: 'deducao' as const },
+      { label: '(-) Cobr. Conta Digital', valor: -f.faturaDigital, tipo: 'deducao' as const },
       { label: 'Valor Líquido', valor: f.valorLiquido, tipo: 'resultado' as const },
     ].filter((l) => l.valor !== 0)
 
@@ -272,19 +328,93 @@ export function RelatoriosPage() {
       .slice(0, 3)
       .map((i) => i.acao as string)
 
+    // Projeção 3 meses
+    const nomesMes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+    const taxaMedia = (() => {
+      if (fechamentos.length < 2) return 0
+      const taxas: number[] = []
+      for (let i = 1; i < fechamentos.length; i++) {
+        const prev = fechamentos[i - 1].markupPos
+        const curr = fechamentos[i].markupPos
+        if (prev > 0) taxas.push((curr - prev) / prev)
+      }
+      return taxas.length > 0 ? taxas.reduce((s, t) => s + t, 0) / taxas.length : 0
+    })()
+
+    const ultimoMarkup = f.markupPos
+    const ultimoPeriodoMatch = f.periodo.match(/^([A-Za-z]{3})(\d{4})$/)
+    const mesBaseRaw = ultimoPeriodoMatch
+      ? ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez']
+          .indexOf(ultimoPeriodoMatch[1].toLowerCase())
+      : -1
+    const mesBaseGlobal = mesBaseRaw === -1 ? new Date().getMonth() : mesBaseRaw
+    const anoBaseGlobal = ultimoPeriodoMatch ? parseInt(ultimoPeriodoMatch[2]) : new Date().getFullYear()
+    const projecao3meses = [1, 2, 3].map((n) => {
+      const mesAbs = mesBaseGlobal + n
+      const mesIdx = mesAbs % 12
+      const anoOffset = Math.floor(mesAbs / 12)
+      const label = `${nomesMes[mesIdx]}/${String(anoBaseGlobal + anoOffset).slice(-2)}`
+      return {
+        label,
+        valor: Math.round(ultimoMarkup * Math.pow(1 + taxaMedia, n)),
+      }
+    })
+
+    // Meta de margem
+    const margemAlvo = 2
+    const receitaMeta = totalCustos > 0
+      ? totalCustos / (margemAlvo / 100)
+      : receitaBruta * (1 + (margemAlvo - margem) / 100)
+
     return {
       f, ant, margem, receitaBruta, totalDeducoes, lucroOp,
       varMarkup, varTpv, varLiquido, varEcs,
       saude, ecsSemReceita, oportunidades, top10, ecsCom,
-      totalVolume, mediaTpv, mediaMarkup,
+      totalVolume,
       paretoData, top5pct, evolucao, dreLinhas, insights, acoes,
+      projecao3meses, taxaMedia, receitaMeta, margemAlvo,
     }
   }, [periodoAtual, periodoAnterior, clientes, fechamentos, totalCustos])
 
-  const handlePrint = async () => {
+  const handleExportPDF = async () => {
     if (reportRef.current) {
       await exportElementToPDF(reportRef.current, `relatorio-${dados?.f.periodo || 'venda-feita'}`)
     }
+  }
+
+  function handleExportJSON() {
+    if (!dados) return
+    const exportData = {
+      geradoEm: new Date().toISOString(),
+      periodo: dados.f.periodo,
+      periodosDisponiveis: fechamentos.map((f) => f.periodo),
+      kpis: {
+        tpvTotal: dados.f.tpvTotal,
+        markupPos: dados.f.markupPos,
+        margem: dados.margem,
+        ecsAtivos: dados.f.ecsAtivos,
+        valorLiquido: dados.f.valorLiquido,
+        resultadoOperacional: dados.lucroOp,
+      },
+      dre: dados.dreLinhas,
+      evolucao: dados.evolucao,
+      carteira: {
+        ecsCom: dados.ecsCom,
+        ecsSemReceita: dados.ecsSemReceita.length,
+        oportunidades: dados.oportunidades.length,
+        top10: dados.top10.map((ec) => ({ nome: ec.nome, markup: ec.ticketMedio })),
+      },
+      custos: totalCustos,
+      insights: dados.insights.map((i) => ({ nivel: i.nivel, titulo: i.titulo, acao: i.acao })),
+      acoes: dados.acoes,
+    }
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `relatorio-${dados.f.periodo}-${new Date().toISOString().slice(0, 10)}.json`
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   if (isLoading) return <LoadingState message="Carregando dados do relatório..." />
@@ -364,7 +494,7 @@ export function RelatoriosPage() {
               ))}
             </select>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <button
               onClick={() => window.print()}
               className="btn-outline flex items-center gap-2 text-sm"
@@ -373,12 +503,29 @@ export function RelatoriosPage() {
               Imprimir
             </button>
             <button
-              onClick={handlePrint}
+              onClick={handleExportPDF}
               className="btn-primary flex items-center gap-2 text-sm"
             >
               <FileBarChart className="w-4 h-4" />
               Exportar PDF
             </button>
+            <button
+              onClick={handleExportJSON}
+              className="btn-outline flex items-center gap-2 text-sm"
+            >
+              <FileJson className="w-4 h-4" />
+              JSON
+            </button>
+            <ExportMenu
+              data={{
+                fechamentos,
+                vendedores: [],
+                lancamentos,
+                clientes,
+              }}
+              defaultReportType="completo"
+              fileName={`relatorio-${dados.f.periodo}`}
+            />
           </div>
         </div>
 
@@ -458,7 +605,6 @@ export function RelatoriosPage() {
                 label="Margem Real"
                 value={`${margem.toFixed(2)}%`}
                 variacao={
-                  // M-14: guard explícito — ant.markupPos pode ser undefined → NaN pp
                   (ant?.tpvTotal ?? 0) > 0 && ant?.markupPos != null
                     ? margem - (ant.markupPos / ant.tpvTotal! * 100)
                     : null
@@ -555,61 +701,90 @@ export function RelatoriosPage() {
               </div>
             </div>
 
-            {/* Tabela histórica compacta */}
+            {/* Gráficos comparativos de todos os períodos */}
             {fechamentos.length > 1 && (
-              <div className="bg-white rounded-xl border border-gray-200 p-5 mt-4">
-                <h3 className="text-sm font-semibold text-gray-700 mb-4">Histórico de Períodos</h3>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b border-gray-100">
-                        <th className="text-left py-2 px-3 text-xs font-medium text-gray-500">Período</th>
-                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">ECs</th>
-                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">TPV</th>
-                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Markup</th>
-                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Margem</th>
-                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Val. Líquido</th>
-                        <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Var. Markup</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {[...fechamentos].reverse().slice(0, 8).map((fec, i, arr) => {
-                        const prev = arr[i + 1]
-                        const varM = prev?.markupPos > 0 ? ((fec.markupPos - prev.markupPos) / prev.markupPos) * 100 : null
-                        const marg = fec.tpvTotal > 0 ? (fec.markupPos / fec.tpvTotal) * 100 : (fec.taxaMargem ?? 0) * 100
-                        const isAtual = fec.periodo === f.periodo
-                        return (
-                          <tr key={fec.periodo} className={`border-b border-gray-50 ${isAtual ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-                            <td className={`py-2 px-3 font-medium ${isAtual ? 'text-blue-700' : ''}`}>
-                              {fec.periodo}{isAtual && <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">atual</span>}
-                            </td>
-                            <td className="py-2 px-3 text-right text-gray-600">{fec.ecsAtivos}</td>
-                            <td className="py-2 px-3 text-right text-gray-600">{formatCurrencyShort(fec.tpvTotal)}</td>
-                            <td className="py-2 px-3 text-right font-medium">{formatCurrencyShort(fec.markupPos)}</td>
-                            <td className={`py-2 px-3 text-right text-xs font-medium ${marg >= 1.5 ? 'text-emerald-600' : marg >= 1 ? 'text-amber-600' : 'text-red-600'}`}>
-                              {marg.toFixed(2)}%
-                            </td>
-                            <td className="py-2 px-3 text-right text-blue-700 font-medium">{formatCurrencyShort(fec.valorLiquido)}</td>
-                            <td className="py-2 px-3 text-right">
-                              {varM !== null ? (
-                                <span className={`text-xs font-medium ${varM >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
-                                  {varM >= 0 ? '+' : ''}{varM.toFixed(1)}%
-                                </span>
-                              ) : <span className="text-gray-300">—</span>}
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-4">Markup e Líquido — Evolução</h3>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <LineChart data={chartLinhas}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="periodo" tick={{ fontSize: 10 }} />
+                      <YAxis tickFormatter={(v: number) => formatCurrencyShort(v)} tick={{ fontSize: 10 }} />
+                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                      <Legend />
+                      <Line type="monotone" dataKey="markup" name="Markup POS" stroke="#059669" strokeWidth={2} dot={{ r: 3 }} />
+                      <Line type="monotone" dataKey="liquido" name="Valor Líquido" stroke="#3B82F6" strokeWidth={2} dot={{ r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="bg-white rounded-xl border border-gray-200 p-5">
+                  <h3 className="text-sm font-semibold text-gray-700 mb-4">TPV por Período</h3>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <BarChart data={chartLinhas}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                      <XAxis dataKey="periodo" tick={{ fontSize: 10 }} />
+                      <YAxis tickFormatter={(v: number) => formatCurrencyShort(v)} tick={{ fontSize: 10 }} />
+                      <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                      <Bar dataKey="tpv" name="TPV Total" fill="#6366F1" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
                 </div>
               </div>
             )}
           </div>
 
-          {/* ══ SEÇÃO 3 — CARTEIRA DE ECs ══ */}
+          {/* ══ SEÇÃO 3 — HISTÓRICO COMPARATIVO ══ */}
           <div className="report-section page-break">
-            <SectionTitle number="3" title="Análise da Carteira de Estabelecimentos" />
+            <SectionTitle number="3" title="Histórico Comparativo" />
+            <div className="bg-white rounded-xl border border-gray-200 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="text-left py-2 px-3 text-xs font-medium text-gray-500">Período</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">ECs</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">TPV</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Δ TPV</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Markup</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Δ Markup</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Margem</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Líquido</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Δ Líquido</th>
+                    <th className="text-right py-2 px-3 text-xs font-medium text-gray-500">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {periodosComVar.map((p) => {
+                    const marg = p.tpvTotal > 0 ? (p.markupPos / p.tpvTotal) * 100 : (p.taxaMargem ?? 0) * 100
+                    const isAtual = p.periodo === f.periodo
+                    return (
+                      <tr key={p.periodo} className={`border-b border-gray-50 ${isAtual ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+                        <td className={`py-2 px-3 font-medium ${isAtual ? 'text-blue-700' : ''}`}>
+                          {p.periodo}
+                          {isAtual && <span className="ml-2 text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded">atual</span>}
+                        </td>
+                        <td className="py-2 px-3 text-right text-gray-600">{p.ecsAtivos}</td>
+                        <td className="py-2 px-3 text-right text-gray-600">{formatCurrencyShort(p.tpvTotal)}</td>
+                        <td className="py-2 px-3 text-right"><Semaforo valor={p.varTPV} /></td>
+                        <td className="py-2 px-3 text-right font-medium">{formatCurrencyShort(p.markupPos)}</td>
+                        <td className="py-2 px-3 text-right"><Semaforo valor={p.varMarkup} /></td>
+                        <td className={`py-2 px-3 text-right text-xs font-medium ${marg >= 1.5 ? 'text-emerald-600' : marg >= 1 ? 'text-amber-600' : 'text-red-600'}`}>
+                          {marg.toFixed(2)}%
+                        </td>
+                        <td className="py-2 px-3 text-right text-blue-700 font-medium">{formatCurrencyShort(p.valorLiquido)}</td>
+                        <td className="py-2 px-3 text-right"><Semaforo valor={p.varLiquido} /></td>
+                        <td className="py-2 px-3 text-right"><Badge valor={p.varMarkup} /></td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ══ SEÇÃO 4 — CARTEIRA DE ECs ══ */}
+          <div className="report-section page-break">
+            <SectionTitle number="4" title="Análise da Carteira de Estabelecimentos" />
 
             {/* KPIs carteira */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
@@ -681,7 +856,7 @@ export function RelatoriosPage() {
                     </div>
                     {top5pct > 50 && (
                       <span className="text-xs bg-amber-100 text-amber-700 font-medium px-2 py-0.5 rounded-full flex-shrink-0">
-                        ⚠ Concentrado
+                        Concentrado
                       </span>
                     )}
                   </div>
@@ -730,9 +905,101 @@ export function RelatoriosPage() {
             )}
           </div>
 
-          {/* ══ SEÇÃO 4 — DIAGNÓSTICO & RECOMENDAÇÕES ══ */}
+          {/* ══ SEÇÃO 5 — PROJEÇÃO RÁPIDA ══ */}
           <div className="report-section page-break">
-            <SectionTitle number="4" title="Diagnóstico e Recomendações" />
+            <SectionTitle number="5" title="Projeção Rápida" />
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <h3 className="text-sm font-semibold text-gray-700 mb-1">Markup POS Projetado</h3>
+                <p className="text-xs text-gray-400 mb-3">
+                  Taxa de crescimento média: {dados.taxaMedia >= 0 ? '+' : ''}{(dados.taxaMedia * 100).toFixed(1)}% ao mês
+                </p>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={dados.projecao3meses}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                    <YAxis tickFormatter={(v: number) => formatCurrencyShort(v)} tick={{ fontSize: 10 }} />
+                    <Tooltip formatter={(value) => formatCurrency(Number(value))} />
+                    <Bar dataKey="valor" name="Projeção" fill="#6366F1" radius={[4, 4, 0, 0]} opacity={0.8} />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div className="flex gap-4 mt-2">
+                  {dados.projecao3meses.map((p, i) => (
+                    <div key={i} className="text-center flex-1">
+                      <p className="text-xs text-gray-500">{p.label}</p>
+                      <p className="text-sm font-bold text-indigo-700">{formatCurrencyShort(p.valor)}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+                <h3 className="text-sm font-semibold text-gray-700">Meta de Margem ({dados.margemAlvo}%)</h3>
+                <div className="p-3 bg-blue-50 rounded-xl">
+                  <p className="text-xs text-blue-600 font-semibold mb-1">Para atingir {dados.margemAlvo}% de margem:</p>
+                  <p className="text-sm text-gray-700">
+                    A receita precisa ser de{' '}
+                    <span className="font-bold text-blue-700">{formatCurrency(dados.receitaMeta)}</span>
+                  </p>
+                </div>
+                <div className="p-3 bg-gray-50 rounded-xl">
+                  <p className="text-xs text-gray-500 font-semibold mb-2">Situação atual</p>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Margem atual</span>
+                    <span className={`font-bold ${margem >= dados.margemAlvo ? 'text-emerald-700' : 'text-red-700'}`}>
+                      {margem.toFixed(2)}%
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm mt-1">
+                    <span className="text-gray-600">Gap para meta</span>
+                    <span className={`font-bold ${margem >= dados.margemAlvo ? 'text-emerald-700' : 'text-amber-700'}`}>
+                      {margem >= dados.margemAlvo
+                        ? `+${(margem - dados.margemAlvo).toFixed(2)}% acima`
+                        : `-${(dados.margemAlvo - margem).toFixed(2)}% abaixo`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* ══ SEÇÃO 6 — ANÁLISE DE CUSTOS (condicional) ══ */}
+          {totalCustos > 0 && (
+            <div className="report-section">
+              <SectionTitle number="6" title="Análise de Custos Operacionais" />
+              <div className="bg-white rounded-xl border border-gray-200 p-5">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-sm font-semibold text-gray-700">Custos do Período</h3>
+                  <a href="/interno/custos" className="text-xs text-blue-600 hover:text-blue-800 font-medium no-print">
+                    Ver detalhamento completo →
+                  </a>
+                </div>
+                <div className="space-y-2">
+                  {custos.slice(0, 6).map((c) => (
+                    <div key={c.id} className="flex justify-between text-sm py-1 border-b border-gray-50">
+                      <span className="text-gray-600">{c.descricao}</span>
+                      <span className="font-medium text-red-700">- {formatCurrency(c.valor)}</span>
+                    </div>
+                  ))}
+                  {custos.length > 6 && (
+                    <p className="text-xs text-gray-400">+ {custos.length - 6} outros</p>
+                  )}
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between font-bold text-sm">
+                  <span>Total Custos Mensais</span>
+                  <span className="text-red-700">- {formatCurrency(totalCustos)}</span>
+                </div>
+                {f.markupPos > 0 && (
+                  <p className="text-xs text-gray-400 mt-2">
+                    {((totalCustos / f.markupPos) * 100).toFixed(1)}% do Markup POS
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* ══ SEÇÃO 7 — DIAGNÓSTICO & RECOMENDAÇÕES ══ */}
+          <div className="report-section page-break">
+            <SectionTitle number="7" title="Diagnóstico e Recomendações" />
             <div className="space-y-3">
               {insights.map((ins, i) => {
                 const cfg = nivelConfig[ins.nivel]
@@ -769,10 +1036,10 @@ export function RelatoriosPage() {
             </div>
           </div>
 
-          {/* ══ SEÇÃO 5 — PLANO DE AÇÃO ══ */}
+          {/* ══ SEÇÃO 8 — PLANO DE AÇÃO ══ */}
           {acoes.length > 0 && (
             <div className="report-section">
-              <SectionTitle number="5" title="Plano de Ação Prioritário" />
+              <SectionTitle number="8" title="Plano de Ação Prioritário" />
               <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <p className="text-xs text-gray-400 mb-4">Ações derivadas dos pontos críticos e de atenção identificados acima.</p>
                 <div className="space-y-4">

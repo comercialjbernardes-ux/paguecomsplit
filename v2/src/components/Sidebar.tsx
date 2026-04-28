@@ -20,8 +20,6 @@ import {
   ChevronDown,
   ChevronRight,
   Wrench,
-  BarChart2,
-  FileText,
   ScrollText,
 } from 'lucide-react'
 import { useState } from 'react'
@@ -74,7 +72,7 @@ const sections: NavSection[] = [
         icon: <FileBarChart className="w-4 h-4" />,
       },
       {
-        label: 'Projecao de Crescimento',
+        label: 'Projeção de Crescimento',
         path: '/interno/projecao',
         icon: <TrendingUp className="w-4 h-4" />,
       },
@@ -84,56 +82,46 @@ const sections: NavSection[] = [
         icon: <Wallet className="w-4 h-4" />,
       },
       {
-        label: 'Analise de Carteira',
+        label: 'Análise de Carteira',
         path: '/interno/carteira',
         icon: <Users className="w-4 h-4" />,
       },
       {
-        label: 'Lancamentos',
+        label: 'Lançamentos',
         path: '/interno/transacoes',
         icon: <Receipt className="w-4 h-4" />,
       },
       {
-        label: 'Gestao de Custos',
+        label: 'Gestão de Custos',
         path: '/interno/gestao-custos',
         icon: <Wrench className="w-4 h-4" />,
       },
     ],
   },
   {
-    title: 'Relatorios',
+    title: 'Relatórios',
     color: 'text-violet-700',
     bgColor: 'bg-violet-50',
     items: [
       {
-        label: 'Gerar Relatorios',
+        label: 'Relatório Completo',
         path: '/relatorios',
         icon: <ClipboardList className="w-4 h-4" />,
-      },
-      {
-        label: 'Comparativo Mensal',
-        path: '/comparativo',
-        icon: <BarChart2 className="w-4 h-4" />,
-      },
-      {
-        label: 'Relatorio Executivo',
-        path: '/relatorio-executivo',
-        icon: <FileText className="w-4 h-4" />,
       },
     ],
   },
   {
-    title: 'Configuracao',
+    title: 'Configuração',
     color: 'text-orange-700',
     bgColor: 'bg-orange-50',
     items: [
       {
-        label: 'Parametrizacao',
+        label: 'Parametrização',
         path: '/parametrizacao',
         icon: <Sliders className="w-4 h-4" />,
       },
       {
-        label: 'Configuracoes',
+        label: 'Configurações',
         path: '/settings',
         icon: <Settings className="w-4 h-4" />,
       },
