@@ -342,45 +342,81 @@ export function mapRowsRepasses(rows: (string | number)[][]): LancamentoCusto[] 
 /**
  * Mapeia linhas da aba "Descontos" para LancamentoCusto[]
  *
- * Estrutura confirmada (JAN/FEV/MAR):
- *   Rows 1-5: cabeçalho (título, vazio, desc, vazio, header)
- *   Rows 6+:  dados (vazio | CNPJ | Parceiro | Tipo | Origem/Descrição | Valor)
- *   Última linha: total
- *     - JAN/FEV: "TOTAL DESCONTOS" na col D (idx 3)
- *     - MAR:     "TOTAL DESCONTOS" na col A (idx 0)
+ * ATENÇÃO — estrutura diverge entre planilhas:
  *
- * CORREÇÃO: VALOR estava mapeado para idx 4 (texto de descrição) → sempre 0.
- * Correto: TIPO=3, DESCRICAO=4, VALOR=5.
- * Detecção do total: verifica "TOTAL" em qualquer célula da linha.
+ *  JAN/FEV (6 colunas):
+ *    [vazio] | [CNPJ] | [Parceiro] | [Tipo] | [Origem do Desconto] | [Valor]
+ *    → VALOR no idx 5, Tipo no idx 3, Descrição no idx 4
+ *
+ *  MAR (5 colunas — Tipo e Descrição MESCLADOS em uma única célula):
+ *    [vazio] | [CNPJ] | [Parceiro] | [Tipo  |  Origem do Desconto] | [Valor]
+ *    → VALOR no idx 4, célula idx 3 contém "POS  |  10 P2 - 27/01 - 799 - 5x"
+ *
+ * O mapper detecta dinamicamente o índice de VALOR lendo a linha de header.
+ * Quando Tipo e Descrição estão mesclados ("X | Y"), separa pelo "|".
+ *
+ * Linha de total:
+ *  - JAN/FEV: "TOTAL DESCONTOS" na col D (idx 3)
+ *  - MAR:     "TOTAL DESCONTOS" na col A (idx 0)
+ *  → detectada por `row.some(cell => cell.includes('TOTAL'))`
  */
 export function mapRowsDescontos(rows: (string | number)[][], periodo = 'atual'): LancamentoCusto[] {
   if (rows.length <= 5) return []
 
+  // ── Detecção dinâmica do índice de VALOR ─────────────────────
+  // Varre as 6 primeiras linhas procurando header que tenha "valor" E "cnpj"
+  let valorIdx: number = COL_DESCONTOS.VALOR  // fallback JAN/FEV: 5
+  for (let i = 0; i < Math.min(6, rows.length); i++) {
+    const hdrs = (rows[i] || []).map((h) => String(h || '').toLowerCase())
+    const vIdx = hdrs.findIndex((h) => h.includes('valor'))
+    const cIdx = hdrs.findIndex((h) => h.includes('cnpj'))
+    if (vIdx >= 0 && cIdx >= 0) { valorIdx = vIdx; break }
+  }
+  // Índice da coluna Tipo+Desc (sempre imediatamente antes de VALOR)
+  const descTipoIdx = valorIdx - 1
+
   return rows
-    .slice(5) // pula cabeçalho
+    .slice(5)
     .filter((row) => {
-      // Detecta linha de total em QUALQUER coluna (JAN/FEV: col D; MAR: col A)
+      // Linha de total em qualquer coluna (JAN/FEV: col D / MAR: col A)
       const isTotal = row.some((cell) => String(cell || '').toUpperCase().includes('TOTAL'))
-      // Requer ao menos 6 colunas E valor numérico na col F (idx 5)
-      const hasValue = row.length >= 6 && Boolean(row[COL_DESCONTOS.VALOR])
+      // Requer que a coluna VALOR exista e seja não-vazia
+      const hasValue = row.length > valorIdx && Boolean(row[valorIdx])
       return hasValue && !isTotal
     })
     .map((row, index) => {
-      const tipo      = String(row[COL_DESCONTOS.TIPO]      || '').toLowerCase()
-      const descricao = String(row[COL_DESCONTOS.DESCRICAO] || row[COL_DESCONTOS.TIPO] || 'Desconto')
-      const desc      = descricao.toLowerCase()
-      // Categorização baseada em tipo (col D) + descrição (col E)
-      const categoria = desc.includes('aluguel') || tipo.includes('aluguel') ? 'Aluguel'
-        : tipo === 'chip' || desc.includes('chip') || desc.includes('mensalidade') ? 'Infraestrutura'
-        : tipo === 'pos' ? 'Equipamentos'
+      // Extrai Tipo e Descrição — podem estar mesclados ("POS | 10 P2 - ...")
+      const tipoDescCell = String(row[descTipoIdx] || '').trim()
+      const pipePos = tipoDescCell.indexOf('|')
+      let tipo: string
+      let descricao: string
+
+      if (pipePos >= 0) {
+        // MAR: célula mesclada → separa pelo "|"
+        tipo = tipoDescCell.substring(0, pipePos).trim()
+        descricao = tipoDescCell.substring(pipePos + 1).trim()
+      } else {
+        // JAN/FEV: Tipo e Descrição em colunas separadas
+        tipo = String(row[Math.max(0, descTipoIdx - 1)] || '').trim()
+        descricao = tipoDescCell || tipo
+      }
+      if (!descricao) descricao = tipo || 'Desconto'
+
+      const desc   = descricao.toLowerCase()
+      const tipoLc = tipo.toLowerCase()
+      const categoria =
+        desc.includes('aluguel')    || tipoLc.includes('aluguel') ? 'Aluguel'
+        : tipoLc === 'chip'         || desc.includes('chip')      || desc.includes('mensalidade') ? 'Infraestrutura'
+        : tipoLc === 'pos'                                         ? 'Equipamentos'
         : 'Fornecedores'
+
       return {
         id: `DESC-${index + 1}`,
         data: periodoToDate(periodo),
         descricao,
         categoria,
         tipo: 'despesa' as const,
-        valor: Math.abs(parseNumericValue(row[COL_DESCONTOS.VALOR])),
+        valor: Math.abs(parseNumericValue(row[valorIdx])),
         conta: 'Descontos',
         source: 'sheets' as const,
         _sheetRow: index + 6,
