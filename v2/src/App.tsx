@@ -28,6 +28,7 @@ import { ParametrizacaoPage } from './pages/config/Parametrizacao'
 import { InternoGestaoCustos } from './pages/interno/GestaoCustos'
 import { ComparativoMensalPage } from './pages/ComparativoMensal'
 import { RelatorioExecutivoPage } from './pages/RelatorioExecutivo'
+import { Logs } from './pages/Logs'
 
 export default function App() {
   return (
@@ -69,6 +70,9 @@ export default function App() {
           {/* ── Configuracao (laranja) ────────────────────── */}
           <Route path="parametrizacao" element={<ParametrizacaoPage />} />
           <Route path="settings" element={<SettingsPage />} />
+
+          {/* ── Sistema ───────────────────────────────────── */}
+          <Route path="logs" element={<Logs />} />
         </Route>
 
         {/* Fallback: redireciona para raiz */}

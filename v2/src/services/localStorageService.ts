@@ -4,6 +4,8 @@
 //         vdf_segment_overrides, vdf_regras_comissao
 // ═══════════════════════════════════════════════════════════════
 
+import { logger } from './errorLogger'
+
 export type LocalKey =
   | 'vdf_vendedores'
   | 'vdf_lancamentos'
@@ -24,7 +26,7 @@ export function getAll<T>(key: LocalKey): T[] {
     if (!raw) return []
     return JSON.parse(raw) as T[]
   } catch (e) {
-    console.warn(`[LocalStorage] Erro ao ler "${key}":`, e)
+    logger.warn(`Erro ao ler chave "${key}"`, 'localStorageService.read', { key, error: String(e) })
     return []
   }
 }
@@ -36,7 +38,7 @@ export function getScalar<T>(key: LocalKey): T | null {
     if (!raw) return null
     return JSON.parse(raw) as T
   } catch (e) {
-    console.warn(`[LocalStorage] Erro ao ler "${key}":`, e)
+    logger.warn(`Erro ao ler chave "${key}"`, 'localStorageService.read', { key, error: String(e) })
     return null
   }
 }
@@ -46,7 +48,7 @@ export function setScalar<T>(key: LocalKey, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch (e) {
-    console.warn(`[LocalStorage] Erro ao salvar "${key}":`, e)
+    logger.warn(`Erro ao salvar chave "${key}"`, 'localStorageService.write', { key, error: String(e) })
   }
 }
 
@@ -62,7 +64,7 @@ export function upsert<T extends { id: string | number }>(key: LocalKey, item: T
     }
     localStorage.setItem(key, JSON.stringify(existing))
   } catch (e) {
-    console.warn(`[LocalStorage] Erro ao salvar em "${key}":`, e)
+    logger.warn(`Erro ao salvar chave "${key}"`, 'localStorageService.write', { key, error: String(e) })
   }
 }
 
@@ -73,7 +75,7 @@ export function remove(key: LocalKey, id: string | number): void {
     const updated = existing.filter((e) => String(e.id) !== String(id))
     localStorage.setItem(key, JSON.stringify(updated))
   } catch (e) {
-    console.warn(`[LocalStorage] Erro ao remover de "${key}":`, e)
+    logger.warn(`Erro ao salvar chave "${key}"`, 'localStorageService.write', { key, error: String(e) })
   }
 }
 
@@ -82,7 +84,7 @@ export function clear(key: LocalKey): void {
   try {
     localStorage.removeItem(key)
   } catch (e) {
-    console.warn(`[LocalStorage] Erro ao limpar "${key}":`, e)
+    logger.warn(`Erro ao salvar chave "${key}"`, 'localStorageService.write', { key, error: String(e) })
   }
 }
 

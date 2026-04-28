@@ -22,6 +22,7 @@ import {
   Wrench,
   BarChart2,
   FileText,
+  ScrollText,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
@@ -135,6 +136,18 @@ const sections: NavSection[] = [
         label: 'Configuracoes',
         path: '/settings',
         icon: <Settings className="w-4 h-4" />,
+      },
+    ],
+  },
+  {
+    title: 'Sistema',
+    color: 'text-gray-700',
+    bgColor: 'bg-gray-100',
+    items: [
+      {
+        label: 'Logs do Sistema',
+        path: '/logs',
+        icon: <ScrollText className="w-4 h-4" />,
       },
     ],
   },

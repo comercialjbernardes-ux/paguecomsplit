@@ -5,6 +5,7 @@
 
 import { ENV } from '../config/env'
 import { SHEETS_SCOPE, PROFILE_SCOPE } from '../config/sheets'
+import { logger } from './errorLogger'
 import type { GoogleUser } from '../types'
 
 // Tipos do Google Identity Services (window.google)
@@ -62,7 +63,7 @@ export function initGoogleAuth(): Promise<void> {
           scope: `${SHEETS_SCOPE} ${PROFILE_SCOPE}`,
           callback: handleTokenResponse,
           error_callback: (error) => {
-            console.error('[Auth] Erro OAuth:', error)
+            logger.warn('Erro OAuth', 'googleAuth.initTokenClient', { error })
             notifyListeners(null, null)
           },
         })
@@ -94,7 +95,7 @@ export function initGoogleAuth(): Promise<void> {
  */
 export function signIn(): void {
   if (!tokenClient) {
-    console.error('[Auth] Token client nao inicializado. Chame initGoogleAuth() primeiro.')
+    logger.error('Token client nao inicializado. Chame initGoogleAuth() primeiro.', 'googleAuth.signIn')
     return
   }
   tokenClient.requestAccessToken({ prompt: 'consent' })
@@ -135,7 +136,7 @@ export function onAuthStateChange(callback: AuthCallback): () => void {
 
 async function handleTokenResponse(response: TokenResponse): Promise<void> {
   if (response.error) {
-    console.error('[Auth] Erro no token:', response.error)
+    logger.error('Erro no token OAuth', 'googleAuth.handleTokenResponse', undefined, { responseError: response.error })
     notifyListeners(null, null)
     return
   }
@@ -151,7 +152,7 @@ async function handleTokenResponse(response: TokenResponse): Promise<void> {
     const user = await fetchUserProfile(response.access_token)
     notifyListeners(user, response.access_token)
   } catch (error) {
-    console.error('[Auth] Erro ao buscar perfil:', error)
+    logger.error('Erro ao buscar perfil do usuario', 'googleAuth.fetchUserProfile', error instanceof Error ? error : new Error(String(error)))
     notifyListeners(null, response.access_token)
   }
 }

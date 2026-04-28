@@ -12,6 +12,7 @@ import {
   type ReactNode,
 } from 'react'
 import { getSpreadsheetMetadata, readRange } from '../services/sheetsApi'
+import { logger } from '../services/errorLogger'
 import {
   addLancamento as addLancamentoService,
   updateLancamento as updateLancamentoService,
@@ -111,7 +112,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
           const dados = mapRowsToFechamento(rowsTyped, periodo)
           fechamentoData.push(dados)
         } catch (err) {
-          console.warn(`[Sheets] Erro ao ler aba "${tab.title}":`, err)
+          logger.warn(`Erro ao ler aba "${tab.title}"`, 'SheetsContext.connect', { tabTitle: tab.title, error: String(err) })
         }
       }
       setFechamentos(fechamentoData)
@@ -141,7 +142,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
           const rows = await readRange(`'${SHEET_TABS.VENDEDORES}'!A:Z`, id)
           setVendedores(mapRowsToVendedores(rows as (string | number)[][]))
         } catch {
-          console.warn('[Sheets] Aba Vendedores nao encontrada')
+          logger.warn('Aba Vendedores nao encontrada', 'SheetsContext.connect')
         }
       }
 
@@ -156,15 +157,15 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
           const rows = await readRange(`'${SHEET_TABS.CLIENTES}'!A:Z`, id)
           setClientes(mapRowsToClientes(rows as (string | number)[][]))
         } catch {
-          console.warn('[Sheets] Erro ao ler aba Clientes')
+          logger.warn('Erro ao ler aba Clientes', 'SheetsContext.connect')
         }
       } else if (mkpPosTab) {
         try {
           const rows = await readRange(`'${SHEET_TABS.MKP_POS}'!A:F`, id)
           setClientes(mapRowsMKPdePOS(rows as (string | number)[][], periodoAtualDaPlanilha))
-          console.info(`[Sheets] Clientes carregados da aba "${SHEET_TABS.MKP_POS}"`)
+          logger.info(`Clientes carregados da aba "${SHEET_TABS.MKP_POS}"`, 'SheetsContext.connect')
         } catch {
-          console.warn('[Sheets] Erro ao ler aba MKP de POS')
+          logger.warn('Erro ao ler aba MKP de POS', 'SheetsContext.connect')
         }
       }
 
@@ -178,7 +179,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
           const rows = await readRange(`'${SHEET_TABS.LANCAMENTOS}'!A:Z`, id)
           setLancamentos(mapRowsToLancamentos(rows as (string | number)[][]))
         } catch {
-          console.warn('[Sheets] Erro ao ler aba Lancamentos')
+          logger.warn('Erro ao ler aba Lancamentos', 'SheetsContext.connect')
         }
       } else {
         // Combina lancamentos de Repasses + Descontos + Cobr. Conta Digital
@@ -189,9 +190,9 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
           try {
             const rows = await readRange(`'${SHEET_TABS.REPASSES}'!A:F`, id)
             combined.push(...mapRowsRepasses(rows as (string | number)[][]))
-            console.info(`[Sheets] ${combined.length} repasses carregados`)
+            logger.info(`${combined.length} repasses carregados`, 'SheetsContext.connect')
           } catch {
-            console.warn('[Sheets] Erro ao ler aba Repasses')
+            logger.warn('Erro ao ler aba Repasses', 'SheetsContext.connect')
           }
         }
 
@@ -201,9 +202,9 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
             const rows = await readRange(`'${SHEET_TABS.DESCONTOS}'!A:E`, id)
             const descontos = mapRowsDescontos(rows as (string | number)[][], periodoAtualDaPlanilha)
             combined.push(...descontos)
-            console.info(`[Sheets] ${descontos.length} descontos carregados`)
+            logger.info(`${descontos.length} descontos carregados`, 'SheetsContext.connect')
           } catch {
-            console.warn('[Sheets] Erro ao ler aba Descontos')
+            logger.warn('Erro ao ler aba Descontos', 'SheetsContext.connect')
           }
         }
 
@@ -213,15 +214,15 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
             const rows = await readRange(`'${SHEET_TABS.COBR_DIGITAL}'!A:E`, id)
             const cobr = mapRowsCobrDigital(rows as (string | number)[][], periodoAtualDaPlanilha)
             combined.push(...cobr)
-            console.info(`[Sheets] ${cobr.length} cobranças digitais carregadas`)
+            logger.info(`${cobr.length} cobranças digitais carregadas`, 'SheetsContext.connect')
           } catch {
-            console.warn('[Sheets] Erro ao ler aba Cobr. Conta Digital')
+            logger.warn('Erro ao ler aba Cobr. Conta Digital', 'SheetsContext.connect')
           }
         }
 
         if (combined.length > 0) {
           setLancamentos(combined)
-          console.info(`[Sheets] Total: ${combined.length} lancamentos combinados`)
+          logger.info(`Total: ${combined.length} lancamentos combinados`, 'SheetsContext.connect')
         }
       }
 
@@ -237,6 +238,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
       if (sheetId) setCurrentSheetId(sheetId)
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido'
+      logger.error('Falha ao conectar planilha', 'SheetsContext.connect', err instanceof Error ? err : new Error(String(err)), { sheetId: id })
       setError(message)
       setConnectionStatus((prev) => ({ ...prev, connected: false }))
     } finally {

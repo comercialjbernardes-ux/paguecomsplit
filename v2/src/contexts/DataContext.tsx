@@ -26,6 +26,7 @@ import {
   mergeSegmentOverrides,
 } from '../services/mergeStrategies'
 import { getSpreadsheetMetadata, readRange } from '../services/sheetsApi'
+import { logger } from '../services/errorLogger'
 import {
   filterFechamentoTabs,
   mapRowsToFechamento,
@@ -109,7 +110,7 @@ async function loadHistoricalSheetData(
       const rows = await readRange(`'${tab.title}'!A:J`, sheetId) as (string | number)[][]
       fechamentos.push(mapRowsToFechamento(rows, canonicalPeriodo))
     } catch {
-      console.warn(`[Historical] Erro ao ler aba "${tab.title}"`)
+      logger.warn(`Erro ao ler aba "${tab.title}"`, 'DataContext.loadHistoricalSheetData', { tabTitle: tab.title })
     }
   }
 
@@ -120,7 +121,7 @@ async function loadHistoricalSheetData(
       const rows = await readRange(`'${SHEET_TABS.VENDEDORES}'!A:Z`, sheetId) as (string | number)[][]
       vendedores = mapRowsToVendedores(rows)
     } catch {
-      console.warn('[Historical] Erro ao ler aba Vendedores')
+      logger.warn('Erro ao ler aba Vendedores', 'DataContext.loadHistoricalSheetData')
     }
   }
 
@@ -131,14 +132,14 @@ async function loadHistoricalSheetData(
       const rows = await readRange(`'${SHEET_TABS.CLIENTES}'!A:Z`, sheetId) as (string | number)[][]
       clientes = mapRowsToClientes(rows)
     } catch {
-      console.warn('[Historical] Erro ao ler aba Clientes')
+      logger.warn('Erro ao ler aba Clientes', 'DataContext.loadHistoricalSheetData')
     }
   } else if (findTabLocal(meta.sheets, SHEET_TABS.MKP_POS)) {
     try {
       const rows = await readRange(`'${SHEET_TABS.MKP_POS}'!A:F`, sheetId) as (string | number)[][]
       clientes = mapRowsMKPdePOS(rows, canonicalPeriodo)
     } catch {
-      console.warn('[Historical] Erro ao ler aba MKP de POS')
+      logger.warn('Erro ao ler aba MKP de POS', 'DataContext.loadHistoricalSheetData')
     }
   }
 
@@ -149,7 +150,7 @@ async function loadHistoricalSheetData(
       const rows = await readRange(`'${SHEET_TABS.LANCAMENTOS}'!A:Z`, sheetId) as (string | number)[][]
       lancamentos = mapRowsToLancamentos(rows)
     } catch {
-      console.warn('[Historical] Erro ao ler aba Lancamentos')
+      logger.warn('Erro ao ler aba Lancamentos', 'DataContext.loadHistoricalSheetData')
     }
   } else {
     const combined: LancamentoCusto[] = []
@@ -158,7 +159,7 @@ async function loadHistoricalSheetData(
         const rows = await readRange(`'${SHEET_TABS.REPASSES}'!A:F`, sheetId) as (string | number)[][]
         combined.push(...mapRowsRepasses(rows))
       } catch {
-        console.warn('[Historical] Erro ao ler aba Repasses')
+        logger.warn('Erro ao ler aba Repasses', 'DataContext.loadHistoricalSheetData')
       }
     }
     if (findTabLocal(meta.sheets, SHEET_TABS.DESCONTOS)) {
@@ -166,7 +167,7 @@ async function loadHistoricalSheetData(
         const rows = await readRange(`'${SHEET_TABS.DESCONTOS}'!A:E`, sheetId) as (string | number)[][]
         combined.push(...mapRowsDescontos(rows, canonicalPeriodo))
       } catch {
-        console.warn('[Historical] Erro ao ler aba Descontos')
+        logger.warn('Erro ao ler aba Descontos', 'DataContext.loadHistoricalSheetData')
       }
     }
     if (findTabLocal(meta.sheets, SHEET_TABS.COBR_DIGITAL)) {
@@ -174,7 +175,7 @@ async function loadHistoricalSheetData(
         const rows = await readRange(`'${SHEET_TABS.COBR_DIGITAL}'!A:E`, sheetId) as (string | number)[][]
         combined.push(...mapRowsCobrDigital(rows, canonicalPeriodo))
       } catch {
-        console.warn('[Historical] Erro ao ler aba Cobr. Conta Digital')
+        logger.warn('Erro ao ler aba Cobr. Conta Digital', 'DataContext.loadHistoricalSheetData')
       }
     }
     lancamentos = combined
@@ -300,6 +301,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     } catch (err) {
       setIsLoadingHistorical(false)
       const msg = err instanceof Error ? err.message : 'Erro ao carregar planilha'
+      logger.error('Falha ao carregar planilha histórica', 'DataContext.addHistoricalSheet', err instanceof Error ? err : new Error(String(err)), { sheetId: id, month, year })
       return { success: false, error: msg }
     }
   }, [])
