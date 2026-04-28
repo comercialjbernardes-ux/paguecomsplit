@@ -491,8 +491,9 @@ if __name__ == "__main__":
     recarregar_dados()
     fonte = "JSON enriquecido" if ARQUIVO_JSON.exists() else "CSV básico (sem enriquecimento)"
     n_ov = sum(1 for r in _dados if r.get("_editado_manualmente"))
+    porta = int(os.environ.get("PORT", 5001))
     print(f"\nDashboard iniciado — {len(_dados)} registros carregados ({fonte})")
     if n_ov:
         print(f"  {n_ov} registro(s) com edições manuais aplicadas")
-    print("Acesse: http://localhost:5001\n")
-    app.run(debug=True, port=5001)
+    print(f"Acesse: http://localhost:{porta}\n")
+    app.run(debug=True, port=porta)
