@@ -342,6 +342,11 @@ export function mapRowsRepasses(rows: (string | number)[][]): LancamentoCusto[] 
       // Rejeita linhas de header que vazem (contém texto de coluna como "CNPJ" ou "Estabelecimento")
       const nome = String(row[COL_REPASSES.NOME] || '').toLowerCase()
       if (nome.includes('cnpj') || nome.includes('estabelec') || nome === '') return false
+      // Rejeita linhas de TOTAL/resumo ao final da aba (ex: "TOTAL  —  77 itens").
+      // Essas linhas têm data vazia, o que as torna invisíveis em modo de período específico
+      // (dataPertenceAoPeriodo("", "Jan2026") = false) mas visíveis em modo acumulado
+      // onde o filtro de data é bypassado — causando dupla contagem dos valores.
+      if (nome === 'total' || /^total[\s\-–—:,/()]/.test(nome)) return false
       // Rejeita se o valor for falsy (0, vazio, undefined)
       return Boolean(row[COL_REPASSES.VALOR])
     })
