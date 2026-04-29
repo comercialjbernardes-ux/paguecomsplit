@@ -361,22 +361,32 @@ export function mapRowsRepasses(rows: (string | number)[][]): LancamentoCusto[] 
  *  → detectada por `row.some(cell => cell.includes('TOTAL'))`
  */
 export function mapRowsDescontos(rows: (string | number)[][], periodo = 'atual'): LancamentoCusto[] {
-  if (rows.length <= 5) return []
+  if (rows.length <= 1) return []
 
-  // ── Detecção dinâmica do índice de VALOR ─────────────────────
-  // Varre as 6 primeiras linhas procurando header que tenha "valor" E "cnpj"
-  let valorIdx: number = COL_DESCONTOS.VALOR  // fallback JAN/FEV: 5
-  for (let i = 0; i < Math.min(6, rows.length); i++) {
+  // ── Detecção dinâmica: índice da linha de header E índice da coluna Valor ──
+  // A Google Sheets API pode omitir linhas completamente vazias (ex: linhas 2 e 4
+  // entre título/subtítulo e cabeçalho de Jan/Fev), movendo o cabeçalho para idx 2.
+  // Usar slice() dinâmico garante que sempre começamos APÓS o cabeçalho real.
+  let valorIdx: number = COL_DESCONTOS.VALOR  // fallback: 5 (col F em Jan/Fev)
+  let headerRowIdx: number = 4  // fallback: 5 linhas de cabeçalho (idx 0-4)
+
+  for (let i = 0; i < Math.min(10, rows.length); i++) {
     const hdrs = (rows[i] || []).map((h) => String(h || '').toLowerCase())
     const vIdx = hdrs.findIndex((h) => h.includes('valor'))
     const cIdx = hdrs.findIndex((h) => h.includes('cnpj'))
-    if (vIdx >= 0 && cIdx >= 0) { valorIdx = vIdx; break }
+    if (vIdx >= 0 && cIdx >= 0) {
+      valorIdx = vIdx
+      headerRowIdx = i
+      break
+    }
   }
+
+  const dataStartIdx = headerRowIdx + 1
   // Índice da coluna Tipo+Desc (sempre imediatamente antes de VALOR)
   const descTipoIdx = valorIdx - 1
 
   return rows
-    .slice(5)
+    .slice(dataStartIdx)
     .filter((row) => {
       // Linha de total em qualquer coluna (JAN/FEV: col D / MAR: col A)
       const isTotal = row.some((cell) => String(cell || '').toUpperCase().includes('TOTAL'))

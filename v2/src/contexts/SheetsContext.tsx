@@ -199,7 +199,7 @@ export function SheetsProvider({ children }: { children: ReactNode }) {
         const descontosTab = findTab(metadata.sheets, SHEET_TABS.DESCONTOS)
         if (descontosTab) {
           try {
-            const rows = await readRange(`'${SHEET_TABS.DESCONTOS}'!A:E`, id)
+            const rows = await readRange(`'${SHEET_TABS.DESCONTOS}'!A:F`, id)
             const descontos = mapRowsDescontos(rows as (string | number)[][], periodoAtualDaPlanilha)
             combined.push(...descontos)
             logger.info(`${descontos.length} descontos carregados`, 'SheetsContext.connect')

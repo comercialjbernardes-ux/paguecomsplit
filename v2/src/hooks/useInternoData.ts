@@ -26,12 +26,18 @@ interface InternoData {
    * sem depender do fechamentoAtual global.
    */
   getLocaisPorPeriodo: (periodo: string) => { receitas: number; despesas: number }
+  /**
+   * Retorna o snapshot de clientes do período informado (ex: "Mar2026").
+   * Todos os memos de Carteira.tsx que dependem de `filtrados` passam a ser
+   * period-aware quando este getter é usado como base de clientes.
+   */
+  getClientesPorPeriodo: (periodo: string) => ClienteCarteira[]
   isLoading: boolean
   error: string | null
 }
 
 export function useInternoData(): InternoData {
-  const { fechamentos, lancamentos, clientes, isLoading, error } = useDataContext()
+  const { fechamentos, lancamentos, clientes, isLoading, error, getClientesPorPeriodo } = useDataContext()
 
   // DataContext.allFechamentos já entrega os fechamentos em ordem cronológica
   // (sortFechamentos por YYYY*12+mes). Pegar o último elemento é suficiente e correto.
@@ -103,6 +109,7 @@ export function useInternoData(): InternoData {
     totalReceitasLocais,
     totalDespesasLocais,
     getLocaisPorPeriodo,
+    getClientesPorPeriodo,
     isLoading,
     error,
   }

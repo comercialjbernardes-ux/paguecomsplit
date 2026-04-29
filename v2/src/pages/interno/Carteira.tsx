@@ -28,7 +28,7 @@ import {
 const SEGMENTOS_FIXOS = ['Alimentacao', 'Comercio', 'Saude', 'Servicos', 'Hospedagem & Lazer', 'Outros']
 
 export function InternoCarteira() {
-  const { clientes, segmentos, isLoading, fechamentos, fechamentoAtual } = useInternoData()
+  const { clientes, segmentos, isLoading, fechamentos, fechamentoAtual, getClientesPorPeriodo } = useInternoData()
   const { saveSegmentOverride, removeSegmentOverride, custos, equipamentos } = useDataContext()
   const [filtroSegmento, setFiltroSegmento] = useState('todos')
   const [filtroVendedor, setFiltroVendedor] = useState('todos')
@@ -46,16 +46,27 @@ export function InternoCarteira() {
     return periodoSelecionado
   }, [isAcumulado, periodoSelecionado, fechamentoAtual])
 
-  // Clientes filtrados
+  // Base de clientes do período selecionado.
+  // Em modo acumulado ou sem período definido, usa o snapshot mais recente (clientes global).
+  // Em modo período específico, usa o snapshot daquele mês via getClientesPorPeriodo.
+  // Todos os memos downstream (kpis, charts, healthScores…) passam a ser period-aware
+  // automaticamente pois dependem de `filtrados` que por sua vez depende de `clientesBase`.
+  const clientesBase = useMemo(() => {
+    if (!periodoEfetivo || isAcumulado) return clientes
+    const periodClients = getClientesPorPeriodo(periodoEfetivo)
+    return periodClients.length > 0 ? periodClients : clientes
+  }, [clientes, periodoEfetivo, isAcumulado, getClientesPorPeriodo])
+
+  // Clientes filtrados — aplica filtros de UI sobre a base do período correto
   const filtrados = useMemo(() => {
-    return clientes.filter((c) => {
+    return clientesBase.filter((c) => {
       if (filtroSegmento !== 'todos' && c.segmento !== filtroSegmento) return false
       if (filtroVendedor !== 'todos' && c.vendedor !== filtroVendedor) return false
       if (filtroStatus !== 'todos' && c.status !== filtroStatus) return false
       if (busca && !c.nome.toLowerCase().includes(busca.toLowerCase())) return false
       return true
     })
-  }, [clientes, filtroSegmento, filtroVendedor, filtroStatus, busca])
+  }, [clientesBase, filtroSegmento, filtroVendedor, filtroStatus, busca])
 
   // Top 10 por volume
   const top10 = useMemo(() => {

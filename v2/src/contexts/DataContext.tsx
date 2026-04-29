@@ -164,7 +164,7 @@ async function loadHistoricalSheetData(
     }
     if (findTabLocal(meta.sheets, SHEET_TABS.DESCONTOS)) {
       try {
-        const rows = await readRange(`'${SHEET_TABS.DESCONTOS}'!A:E`, sheetId) as (string | number)[][]
+        const rows = await readRange(`'${SHEET_TABS.DESCONTOS}'!A:F`, sheetId) as (string | number)[][]
         combined.push(...mapRowsDescontos(rows, canonicalPeriodo))
       } catch {
         logger.warn('Erro ao ler aba Descontos', 'DataContext.loadHistoricalSheetData')
@@ -477,6 +477,41 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setEquipamentos(getAll<Equipamento>('vdf_equipamentos'))
   }, [])
 
+  // ─ getClientesPorPeriodo ─────────────────────────────────────
+  /**
+   * Retorna clientes do snapshot do período informado (ex: "Mar2026").
+   * Converte o período para a chave do historicalDataMap ("YYYY-MM"),
+   * aplica segment overrides e enriquecimento de contaDigitalAtiva.
+   * Fallback: snapshot mais recente (clientes global).
+   */
+  const getClientesPorPeriodo = useCallback((periodo: string): ClienteCarteira[] => {
+    const mesMap: Record<string, number> = {
+      jan:1, fev:2, mar:3, abr:4, mai:5, jun:6,
+      jul:7, ago:8, set:9, out:10, nov:11, dez:12,
+    }
+    const m = periodo.toLowerCase().match(/^([a-z]{3})(\d{4})$/)
+    if (!m) return clientes
+    const month = mesMap[m[1]]
+    if (!month) return clientes
+    const mapKey = `${m[2]}-${String(month).padStart(2, '0')}`
+    const base = historicalDataMap[mapKey]?.clientes ?? []
+    if (base.length === 0) return clientes
+    // Aplica overrides de segmento
+    const withOverrides = mergeSegmentOverrides(base, segmentOverrides)
+    // Enriquece contaDigitalAtiva igual ao memo clientes
+    const nomesComDigital = new Set(
+      lancamentos
+        .filter((l) => l.categoria === 'Conta Digital')
+        .map((l) => l.nomeCliente?.toLowerCase().trim())
+        .filter((n): n is string => Boolean(n)),
+    )
+    if (nomesComDigital.size === 0) return withOverrides
+    return withOverrides.map((c) => ({
+      ...c,
+      contaDigitalAtiva: nomesComDigital.has(c.nome.toLowerCase().trim()),
+    }))
+  }, [historicalDataMap, segmentOverrides, lancamentos, clientes])
+
   // ─ Segment Overrides ────────────────────────────────────────
   const saveSegmentOverride = useCallback((override: SegmentOverride) => {
     upsert<SegmentOverride & { id: number }>(
@@ -534,6 +569,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       saveMeta,
       saveSegmentOverride,
       removeSegmentOverride,
+      getClientesPorPeriodo,
       custos,
       saveCusto,
       deleteCusto,
@@ -566,6 +602,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       saveMeta,
       saveSegmentOverride,
       removeSegmentOverride,
+      getClientesPorPeriodo,
       custos,
       saveCusto,
       deleteCusto,

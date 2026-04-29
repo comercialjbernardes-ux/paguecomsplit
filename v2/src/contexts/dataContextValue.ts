@@ -78,6 +78,12 @@ export interface DataContextType {
   saveSegmentOverride: (override: SegmentOverride) => void
   /** Remove override e restaura inferência automática de segmento para o cliente */
   removeSegmentOverride: (clienteId: number) => void
+  /**
+   * Retorna o snapshot de clientes de um período específico (ex: "Mar2026").
+   * Aplica segment overrides e enriquecimento de contaDigitalAtiva, assim como
+   * o array `clientes` global. Retorna o snapshot mais recente como fallback.
+   */
+  getClientesPorPeriodo: (periodo: string) => ClienteCarteira[]
 
   // ─ CRUD de Custos Operacionais ───────────────────────────────
   custos: CustoOperacional[]

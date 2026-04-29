@@ -13,7 +13,7 @@ import {
   Users, Store, ArrowUpRight, ArrowDownRight, Activity,
   CheckCircle, AlertTriangle, XCircle, Lightbulb,
   CreditCard, Percent, Wallet, ShieldAlert,
-  Calendar, ChevronRight,
+  ChevronRight,
 } from 'lucide-react'
 import { useEquipeData } from '../../hooks/useEquipeData'
 import { useInternoData } from '../../hooks/useInternoData'
@@ -21,6 +21,7 @@ import { useDataContext } from '../../contexts/dataContextValue'
 import { NOME_EMPRESA, PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 import { LoadingState } from '../../components/LoadingState'
 import { ErrorBanner } from '../../components/ErrorBanner'
+import { PeriodSelector } from '../../components/PeriodSelector'
 import { formatCurrency, formatCurrencyShort } from '../../utils/format'
 import { calcCustosMensalEfetivo, dataPertenceAoPeriodo } from '../../utils/custos'
 import {
@@ -78,69 +79,105 @@ export function EquipeDashboard() {
   const { fechamentos, clientes, getLocaisPorPeriodo, lancamentos } = useInternoData()
   const { custos, equipamentos } = useDataContext()
   const [periodoSel, setPeriodoSel] = useState<string>('ultimo')
+  const isAcumulado = periodoSel === 'acumulado'
+
+  // Fechamento sintético para modo acumulado — soma todos os períodos
+  const fechamentoAcumulado = useMemo<DadosFechamento | null>(() => {
+    if (!isAcumulado || fechamentos.length === 0) return null
+    const n = fechamentos.length
+    const ultimo = fechamentos[fechamentos.length - 1]
+    const totalTPV    = fechamentos.reduce((s, f) => s + f.tpvTotal, 0)
+    const totalMarkup = fechamentos.reduce((s, f) => s + f.markupPos, 0)
+    return {
+      periodo: `Acumulado (${n} ${n === 1 ? 'mês' : 'meses'})`,
+      ecsAtivos:    ultimo.ecsAtivos,
+      tpvTotal:     totalTPV,
+      tpvMedio:     ultimo.ecsAtivos > 0 ? totalTPV / ultimo.ecsAtivos : ultimo.tpvMedio,
+      markupPos:    totalMarkup,
+      comissaoRede: fechamentos.reduce((s, f) => s + f.comissaoRede, 0),
+      repasse:      fechamentos.reduce((s, f) => s + f.repasse, 0),
+      faturaDigital:fechamentos.reduce((s, f) => s + f.faturaDigital, 0),
+      descontos:    fechamentos.reduce((s, f) => s + f.descontos, 0),
+      valorLiquido: fechamentos.reduce((s, f) => s + f.valorLiquido, 0),
+      taxaMargem:   totalTPV > 0 ? totalMarkup / totalTPV : 0,
+    }
+  }, [fechamentos, isAcumulado])
 
   // Período selecionado e anterior
   const fechamentoAtual = useMemo<DadosFechamento | null>(() => {
-    if (!fechamentos.length) return null
+    if (isAcumulado || !fechamentos.length) return null
     if (periodoSel === 'ultimo') return fechamentos[fechamentos.length - 1]
     return fechamentos.find((f) => f.periodo === periodoSel) ?? fechamentos[fechamentos.length - 1]
-  }, [fechamentos, periodoSel])
+  }, [fechamentos, periodoSel, isAcumulado])
+
+  // Fechamento efetivo: acumulado sintético OU período individual
+  const fechamentoEfetivo = useMemo<DadosFechamento | null>(() => {
+    if (isAcumulado) return fechamentoAcumulado
+    return fechamentoAtual
+  }, [isAcumulado, fechamentoAcumulado, fechamentoAtual])
 
   const fechamentoAnt = useMemo<DadosFechamento | null>(() => {
-    if (!fechamentoAtual || fechamentos.length < 2) return null
+    if (isAcumulado || !fechamentoAtual || fechamentos.length < 2) return null
     const idx = fechamentos.indexOf(fechamentoAtual)
     return idx > 0 ? fechamentos[idx - 1] : null
-  }, [fechamentos, fechamentoAtual])
+  }, [fechamentos, fechamentoAtual, isAcumulado])
 
   // Custo mensal efetivo — inclui mensais, prorate trimestral/anual, únicos do período atual
   const totalCustos = useMemo(() => {
-    const op = calcCustosMensalEfetivo(custos, fechamentoAtual?.periodo)
-    const eq = equipamentos.reduce((s, eq) => (eq.numeroParcelas - eq.parcelasPagas) > 0 ? s + eq.valorParcela : s, 0)
+    const nPeriodos = isAcumulado ? fechamentos.length : 1
+    const op = isAcumulado
+      ? fechamentos.reduce((s, fec) => s + calcCustosMensalEfetivo(custos, fec.periodo), 0)
+      : calcCustosMensalEfetivo(custos, fechamentoAtual?.periodo)
+    const eq = equipamentos.reduce((s, eq) => (eq.numeroParcelas - eq.parcelasPagas) > 0 ? s + eq.valorParcela : s, 0) * nPeriodos
     return op + eq
-  }, [custos, equipamentos, fechamentoAtual?.periodo])
+  }, [custos, equipamentos, fechamentoAtual?.periodo, isAcumulado, fechamentos])
 
   // KPIs e variações
   const kpis = useMemo(() => {
-    const f = fechamentoAtual; const ant = fechamentoAnt
+    const f = fechamentoEfetivo; const ant = isAcumulado ? null : fechamentoAnt
     if (!f) return null
     const margem = f.tpvTotal > 0 ? (f.markupPos / f.tpvTotal) * 100 : (f.taxaMargem ?? 0) * 100
     const ticketMedio = f.ecsAtivos > 0 ? f.markupPos / f.ecsAtivos : 0
-    // Usar lançamentos locais específicos do período selecionado (não do último período global)
-    const locaisPeriodo = getLocaisPorPeriodo(f.periodo)
+    // Lançamentos locais: em acumulado, soma todos; caso contrário usa período específico
+    const locaisPeriodo = isAcumulado
+      ? (() => {
+          const locais = lancamentos.filter((l) => l.source === 'local')
+          return {
+            receitas: locais.filter((l) => l.tipo === 'receita').reduce((s, l) => s + Math.abs(l.valor), 0),
+            despesas: locais.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + Math.abs(l.valor), 0),
+          }
+        })()
+      : getLocaisPorPeriodo(f.periodo)
     const recLocais  = locaisPeriodo.receitas
     const despLocais = locaisPeriodo.despesas
-    // Descontos: usar agregado do Resumo se disponivel; caso contrario somar lancamentos
-    // source:'sheets' da aba Descontos para evitar que f.descontos=0 subestime deducoes.
+    // Descontos: em acumulado f.descontos já é a soma; caso 0, fallback para lancamentos sheets
     const sheetsDescontos = f.descontos === 0
       ? lancamentos
-          .filter((l) => l.source === 'sheets' && l.conta === 'Descontos' && dataPertenceAoPeriodo(l.data, f.periodo))
+          .filter((l) => l.source === 'sheets' && l.conta === 'Descontos' && (isAcumulado ? true : dataPertenceAoPeriodo(l.data, f.periodo)))
           .reduce((s, l) => s + Math.abs(l.valor), 0)
       : 0
     const descontosEfetivos = f.descontos > 0 ? f.descontos : sheetsDescontos
-    // Valor liquido ajustado inclui receitas/despesas manuais + custos operacionais + equipamentos
     const valorLiquidoAjustado = f.valorLiquido + recLocais - despLocais - totalCustos
-    const lucroOp = valorLiquidoAjustado
     const receitaBruta = f.markupPos + f.comissaoRede + f.repasse + recLocais
     const totalDeducoes = f.faturaDigital + descontosEfetivos + despLocais + totalCustos
     const pctDeducoes = receitaBruta > 0 ? (totalDeducoes / receitaBruta) * 100 : 0
+    // Variações: só fazem sentido em modo período individual
     const var_ = (campo: keyof DadosFechamento) =>
-      ant && (ant[campo] as number) > 0 ? (((f[campo] as number) - (ant[campo] as number)) / (ant[campo] as number)) * 100 : null
+      (!isAcumulado && ant && (ant[campo] as number) > 0)
+        ? (((f[campo] as number) - (ant[campo] as number)) / (ant[campo] as number)) * 100
+        : null
     const saude: 'CRITICA' | 'ATENCAO' | 'SAUDAVEL' = margem < 1 ? 'CRITICA' : margem < 1.5 ? 'ATENCAO' : 'SAUDAVEL'
-    // Comparar valor ajustado atual contra valor líquido bruto do anterior
-    // (os lançamentos locais são período-específicos e não podem ser retroativamente
-    // aplicados ao período anterior sem recalcular para aquele período)
-    const valorLiquidoAjustadoAnt = ant ? ant.valorLiquido : null
-    return { f, ant, margem, ticketMedio, lucroOp, receitaBruta, totalDeducoes, pctDeducoes, saude,
+    const valorLiquidoAjustadoAnt = (!isAcumulado && ant) ? ant.valorLiquido : null
+    return { f, ant, margem, ticketMedio, lucroOp: valorLiquidoAjustado, receitaBruta, totalDeducoes, pctDeducoes, saude,
       valorLiquidoAjustado, descontosEfetivos,
       varTpv: var_('tpvTotal'), varMarkup: var_('markupPos'),
       varLiquido: valorLiquidoAjustadoAnt && valorLiquidoAjustadoAnt !== 0
         ? ((valorLiquidoAjustado - valorLiquidoAjustadoAnt) / Math.abs(valorLiquidoAjustadoAnt)) * 100
         : null,
       varEcs: var_('ecsAtivos'),
-      // M-04: guard para ant.markupPos undefined — evita NaN pp
-      varMargem: (ant?.tpvTotal && ant.markupPos != null) ? margem - (ant.markupPos / ant.tpvTotal * 100) : null,
+      varMargem: (!isAcumulado && ant?.tpvTotal && ant.markupPos != null) ? margem - (ant.markupPos / ant.tpvTotal * 100) : null,
     }
-  }, [fechamentoAtual, fechamentoAnt, totalCustos, getLocaisPorPeriodo, lancamentos])
+  }, [fechamentoEfetivo, fechamentoAnt, totalCustos, getLocaisPorPeriodo, lancamentos, isAcumulado])
 
   // Análise de carteira
   const carteira = useMemo(() => {
@@ -159,9 +196,9 @@ export function EquipeDashboard() {
 
   // Insights
   const insights = useMemo(() => {
-    if (!fechamentoAtual) return []
-    return gerarInsights(fechamentoAtual, fechamentoAnt, carteira?.semReceita.length ?? 0, carteira?.oportunidades.length ?? 0, kpis?.descontosEfetivos)
-  }, [fechamentoAtual, fechamentoAnt, carteira, kpis])
+    if (!fechamentoEfetivo) return []
+    return gerarInsights(fechamentoEfetivo, isAcumulado ? null : fechamentoAnt, carteira?.semReceita.length ?? 0, carteira?.oportunidades.length ?? 0, kpis?.descontosEfetivos)
+  }, [fechamentoEfetivo, fechamentoAnt, carteira, kpis, isAcumulado])
 
   // Vendedores ordenados
   const rankingVend = useMemo(() => [...vendedores].sort((a, b) => b.faturamentoMensal - a.faturamentoMensal), [vendedores])
@@ -186,16 +223,13 @@ export function EquipeDashboard() {
             <p className="text-slate-400 text-sm mt-0.5">Central de desempenho comercial · {hoje}</p>
           </div>
           <div className="flex items-center gap-3 flex-wrap">
-            <div className="flex items-center gap-2 bg-slate-700 rounded-lg px-3 py-2">
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              <select value={periodoSel} onChange={(e) => setPeriodoSel(e.target.value)}
-                className="bg-transparent text-white text-sm border-none outline-none cursor-pointer">
-                <option value="ultimo" className="bg-slate-800">Último período</option>
-                {[...fechamentos].reverse().map((f) => (
-                  <option key={f.periodo} value={f.periodo} className="bg-slate-800">{f.periodo}</option>
-                ))}
-              </select>
-            </div>
+            {fechamentos.length > 0 && (
+              <PeriodSelector
+                fechamentos={fechamentos}
+                value={periodoSel}
+                onChange={setPeriodoSel}
+              />
+            )}
           </div>
         </div>
         {/* Faixa de destaque com os 3 números mais importantes */}

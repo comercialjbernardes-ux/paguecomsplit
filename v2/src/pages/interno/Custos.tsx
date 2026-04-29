@@ -12,7 +12,7 @@ import {
   Wallet, Search, Filter, ArrowUpRight, ArrowDownRight,
   Receipt, Plus, Edit3, Trash2, RefreshCw,
   ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
-  Package, Wrench,
+  Package, Wrench, CreditCard, Tag, Send,
 } from 'lucide-react'
 import { useInternoData } from '../../hooks/useInternoData'
 import { useDataContext } from '../../contexts/dataContextValue'
@@ -77,6 +77,21 @@ export function InternoCustos() {
     return periodoSelecionado
   }, [isAcumulado, periodoSelecionado, fechamentoAtual])
 
+  // Data padrão para o formulário de novo lançamento:
+  // 1º dia do período selecionado (ou hoje se acumulado / sem período)
+  const defaultFormDate = useMemo(() => {
+    if (isAcumulado || !periodoEfetivo) return new Date().toISOString().split('T')[0]
+    const MESES_NUM: Record<string, string> = {
+      jan: '01', fev: '02', mar: '03', abr: '04', mai: '05', jun: '06',
+      jul: '07', ago: '08', set: '09', out: '10', nov: '11', dez: '12',
+    }
+    const m = periodoEfetivo.match(/^([A-Za-z]{3})(\d{4})$/)
+    if (!m) return new Date().toISOString().split('T')[0]
+    const month = MESES_NUM[m[1].toLowerCase()]
+    if (!month) return new Date().toISOString().split('T')[0]
+    return `${m[2]}-${month}-01`
+  }, [periodoEfetivo, isAcumulado])
+
   // ── useMemos ───────────────────────────────────────────────────
 
   const filtrados = useMemo(() => {
@@ -109,13 +124,6 @@ export function InternoCustos() {
     return filtrados.slice(start, start + PAGE_SIZE)
   }, [filtrados, pagina])
 
-  // KPIs globais (todos os lancamentos, sem filtro)
-  const totaisGlobal = useMemo(() => {
-    const receitas = lancamentos.filter((l) => l.tipo === 'receita').reduce((s, l) => s + Math.abs(l.valor), 0)
-    const despesas = lancamentos.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + Math.abs(l.valor), 0)
-    return { receitas, despesas, saldo: receitas - despesas }
-  }, [lancamentos])
-
   const custoMensalEfetivo = useMemo(() => calcCustosMensalEfetivo(custos), [custos])
 
   const custoMensalEquip = useMemo(() => {
@@ -126,6 +134,35 @@ export function InternoCustos() {
   }, [equipamentos])
 
   const custoMensalTotal = custoMensalEfetivo + custoMensalEquip
+
+  // ── Lançamentos do período (sem filtros de UI) ──────────────────
+  const lancamentosPeriodo = useMemo(() => {
+    if (isAcumulado || !periodoEfetivo) return lancamentos
+    return lancamentos.filter((l) => dataPertenceAoPeriodo(l.data, periodoEfetivo))
+  }, [lancamentos, isAcumulado, periodoEfetivo])
+
+  // KPIs do período selecionado (respeita filtro de período, ignora filtros de UI)
+  const totaisGlobal = useMemo(() => {
+    const receitas = lancamentosPeriodo.filter((l) => l.tipo === 'receita').reduce((s, l) => s + Math.abs(l.valor), 0)
+    const despesas = lancamentosPeriodo.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + Math.abs(l.valor), 0)
+    return { receitas, despesas, saldo: receitas - despesas }
+  }, [lancamentosPeriodo])
+
+  // ── Totais por conta (período-aware) ────────────────────────────
+  const totaisContas = useMemo(() => {
+    const byAccount = (conta: string) => {
+      const items = lancamentosPeriodo.filter((l) => l.conta === conta)
+      const receitas = items.filter((l) => l.tipo === 'receita').reduce((s, l) => s + Math.abs(l.valor), 0)
+      const despesas = items.filter((l) => l.tipo === 'despesa').reduce((s, l) => s + Math.abs(l.valor), 0)
+      return { receitas, despesas, count: items.length }
+    }
+    return {
+      cobrDigital: byAccount('Cobr. Conta Digital'),
+      descontos:   byAccount('Descontos'),
+      repasses:    byAccount('Repasses'),
+    }
+  }, [lancamentosPeriodo])
+
   const resultadoFinal = totaisGlobal.saldo - custoMensalTotal
 
   const porCategoria = useMemo(() => {
@@ -213,6 +250,7 @@ export function InternoCustos() {
       }
       setIsFormOpen(false)
       setEditItem(null)
+      setPagina(1)  // volta para página 1 para o novo lançamento ficar visível
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao salvar'
       showFeedback('error', msg)
@@ -420,6 +458,110 @@ export function InternoCustos() {
           </p>
           <p className="text-xs text-gray-400 mt-1">Saldo - custos mensais</p>
         </div>
+      </div>
+
+      {/* ── Breakdown: Cobr. Conta Digital | Descontos | Repasses ── */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        {/* Cobr. Conta Digital */}
+        <button
+          className="card-hover border-l-4 border-l-blue-400 text-left w-full"
+          onClick={() => { setFiltroConta('Cobr. Conta Digital'); setAba('lancamentos') }}
+          title="Filtrar lançamentos por Cobr. Conta Digital"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <CreditCard className="w-4 h-4 text-blue-500 shrink-0" />
+            <span className="text-sm text-gray-500 font-medium">Cobr. Conta Digital</span>
+            {totaisContas.cobrDigital.count > 0 && (
+              <span className="ml-auto text-xs bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-medium">
+                {totaisContas.cobrDigital.count}
+              </span>
+            )}
+          </div>
+          {totaisContas.cobrDigital.receitas > 0 && (
+            <p className="text-lg font-bold text-blue-700">
+              + {formatCurrency(totaisContas.cobrDigital.receitas)}
+            </p>
+          )}
+          {totaisContas.cobrDigital.despesas > 0 && (
+            <p className={`font-bold ${totaisContas.cobrDigital.receitas > 0 ? 'text-sm text-red-600' : 'text-lg text-red-700'}`}>
+              - {formatCurrency(totaisContas.cobrDigital.despesas)}
+            </p>
+          )}
+          {totaisContas.cobrDigital.count === 0 && (
+            <p className="text-lg font-bold text-gray-400">—</p>
+          )}
+          <p className="text-xs text-gray-400 mt-1">
+            {periodoEfetivo ? periodoEfetivo : isAcumulado ? 'Acumulado' : 'Todos os períodos'}
+          </p>
+        </button>
+
+        {/* Descontos */}
+        <button
+          className="card-hover border-l-4 border-l-red-400 text-left w-full"
+          onClick={() => { setFiltroConta('Descontos'); setAba('lancamentos') }}
+          title="Filtrar lançamentos por Descontos"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Tag className="w-4 h-4 text-red-500 shrink-0" />
+            <span className="text-sm text-gray-500 font-medium">Descontos</span>
+            {totaisContas.descontos.count > 0 && (
+              <span className="ml-auto text-xs bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-medium">
+                {totaisContas.descontos.count}
+              </span>
+            )}
+          </div>
+          {totaisContas.descontos.despesas > 0 && (
+            <p className="text-lg font-bold text-red-700">
+              - {formatCurrency(totaisContas.descontos.despesas)}
+            </p>
+          )}
+          {totaisContas.descontos.receitas > 0 && (
+            <p className={`font-bold ${totaisContas.descontos.despesas > 0 ? 'text-sm text-emerald-600' : 'text-lg text-emerald-700'}`}>
+              + {formatCurrency(totaisContas.descontos.receitas)}
+            </p>
+          )}
+          {totaisContas.descontos.count === 0 && (
+            <p className="text-lg font-bold text-gray-400">—</p>
+          )}
+          <p className="text-xs text-gray-400 mt-1">
+            {periodoEfetivo ? periodoEfetivo : isAcumulado ? 'Acumulado' : 'Todos os períodos'}
+          </p>
+        </button>
+
+        {/* Repasses */}
+        <button
+          className="card-hover border-l-4 border-l-emerald-400 text-left w-full"
+          onClick={() => { setFiltroConta('Repasses'); setAba('lancamentos') }}
+          title="Filtrar lançamentos por Repasses"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <Send className="w-4 h-4 text-emerald-500 shrink-0" />
+            <span className="text-sm text-gray-500 font-medium">Repasses</span>
+            {totaisContas.repasses.count > 0 && (
+              <span className="ml-auto text-xs bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-medium">
+                {totaisContas.repasses.count}
+              </span>
+            )}
+          </div>
+          {totaisContas.repasses.receitas > 0 && (
+            <p className="text-lg font-bold text-emerald-700">
+              + {formatCurrency(totaisContas.repasses.receitas)}
+            </p>
+          )}
+          {totaisContas.repasses.despesas > 0 && (
+            <p className={`font-bold ${totaisContas.repasses.receitas > 0 ? 'text-sm text-red-600' : 'text-lg text-red-700'}`}>
+              - {formatCurrency(totaisContas.repasses.despesas)}
+            </p>
+          )}
+          {totaisContas.repasses.count === 0 && (
+            <p className="text-lg font-bold text-gray-400">—</p>
+          )}
+          <p className="text-xs text-gray-400 mt-1">
+            {periodoEfetivo ? periodoEfetivo : isAcumulado ? 'Acumulado' : 'Todos os períodos'}
+          </p>
+        </button>
+
       </div>
 
       {/* ── Tabs ── */}
@@ -878,6 +1020,7 @@ export function InternoCustos() {
       <TransactionForm
         isOpen={isFormOpen}
         editItem={editItem}
+        defaultDate={defaultFormDate}
         contas={contas}
         isSaving={isSaving}
         onSave={handleSaveLancamento}

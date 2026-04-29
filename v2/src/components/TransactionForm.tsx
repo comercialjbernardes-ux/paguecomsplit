@@ -15,6 +15,13 @@ interface TransactionFormProps {
   isOpen: boolean
   /** Lancamento para editar (null = criar novo) */
   editItem: LancamentoCusto | null
+  /**
+   * Data padrão para novos lançamentos no formato ISO (AAAA-MM-DD).
+   * Quando informada, pré-preenche o campo Data com o 1º dia do período selecionado,
+   * garantindo que o lançamento caia no mês correto sem o usuário precisar ajustar.
+   * Se omitida, usa a data de hoje.
+   */
+  defaultDate?: string
   /** Contas disponiveis (lidas da planilha) */
   contas: string[]
   /** Salvando na planilha */
@@ -25,8 +32,10 @@ interface TransactionFormProps {
   onClose: () => void
 }
 
+const TODAY_ISO = new Date().toISOString().split('T')[0]
+
 const EMPTY_FORM: LancamentoFormData = {
-  data: new Date().toISOString().split('T')[0],
+  data: TODAY_ISO,
   descricao: '',
   categoria: '',
   tipo: 'despesa',
@@ -37,6 +46,7 @@ const EMPTY_FORM: LancamentoFormData = {
 export function TransactionForm({
   isOpen,
   editItem,
+  defaultDate,
   contas,
   isSaving,
   onSave,
@@ -47,9 +57,11 @@ export function TransactionForm({
 
   const isEdit = editItem !== null
 
-  // Preencher formulario ao editar
+  // Preencher formulario ao editar ou resetar para novo lançamento.
   // EditItem.data pode ser DD/MM/AAAA (sheets) ou AAAA-MM-DD (ISO local)
-  // O input type="date" exige AAAA-MM-DD, entao convertemos se necessario
+  // O input type="date" exige AAAA-MM-DD, entao convertemos se necessario.
+  // Para novos lançamentos, usa defaultDate (1º dia do período selecionado)
+  // se fornecido, garantindo que o lançamento caia no mês correto.
   useEffect(() => {
     if (editItem) {
       const dataIso = (() => {
@@ -59,7 +71,7 @@ export function TransactionForm({
           const [dd, mm, yyyy] = d.split('/')
           return `${yyyy}-${mm}-${dd}`
         }
-        return new Date().toISOString().split('T')[0]
+        return TODAY_ISO
       })()
       setForm({
         data: dataIso,
@@ -70,10 +82,10 @@ export function TransactionForm({
         conta: editItem.conta,
       })
     } else {
-      setForm(EMPTY_FORM)
+      setForm({ ...EMPTY_FORM, data: defaultDate ?? TODAY_ISO })
     }
     setErrors([])
-  }, [editItem, isOpen])
+  }, [editItem, isOpen, defaultDate])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
