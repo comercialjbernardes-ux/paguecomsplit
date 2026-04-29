@@ -34,32 +34,38 @@ export async function exportElementToPDF(
   element: HTMLElement,
   fileName: string = 'relatorio'
 ): Promise<void> {
+  // Captura todo o elemento como canvas de alta resolução
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff',
+    allowTaint: true,
+    imageTimeout: 15000,
   })
 
   const imgData = canvas.toDataURL('image/png')
   const pdf = new jsPDF('p', 'mm', 'a4')
-  const pageWidth = pdf.internal.pageSize.getWidth()
+
+  const pageWidth  = pdf.internal.pageSize.getWidth()
   const pageHeight = pdf.internal.pageSize.getHeight()
-  const imgWidth = pageWidth - 20
-  const imgHeight = (canvas.height * imgWidth) / canvas.width
+  const margin     = 10
+  const imgWidth   = pageWidth - margin * 2
+  // Altura total da imagem em mm (proporção mantida)
+  const imgHeight  = (canvas.height * imgWidth) / canvas.width
+  // Altura útil por página (descontando margens superior e inferior)
+  const usableH    = pageHeight - margin * 2
 
-  // Se a imagem e maior que a pagina, divide em multiplas paginas
-  let heightLeft = imgHeight
-  let position = 10
+  // Página 1 — imagem começa na margem superior
+  pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight)
 
-  pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
-  heightLeft -= (pageHeight - 20)
-
-  while (heightLeft > 0) {
-    position = -(pageHeight - 20) + 10
+  // Páginas seguintes — desloca a imagem para cima acumulando usableH por página
+  let yOffset = usableH
+  while (yOffset < imgHeight) {
     pdf.addPage()
-    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight)
-    heightLeft -= (pageHeight - 20)
+    // Posição negativa: traz a parte já exibida para "acima" da página atual
+    pdf.addImage(imgData, 'PNG', margin, margin - yOffset, imgWidth, imgHeight)
+    yOffset += usableH
   }
 
   pdf.save(`${fileName}.pdf`)

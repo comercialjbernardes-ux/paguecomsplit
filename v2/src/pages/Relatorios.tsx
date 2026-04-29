@@ -14,14 +14,12 @@ import {
   DollarSign, Users, ArrowUpRight, ArrowDownRight, Minus,
   Printer, CheckCircle, AlertTriangle, XCircle, AlertCircle,
   Target, Lightbulb, ShieldAlert, Activity, Calendar, Star,
-  FileJson,
 } from 'lucide-react'
 import { useInternoData } from '../hooks/useInternoData'
 import { useEquipeData } from '../hooks/useEquipeData'
 import { useDataContext } from '../contexts/dataContextValue'
 import { NOME_EMPRESA, PRECO_CONTA_DIGITAL } from '../constants/empresa'
 import { LoadingState } from '../components/LoadingState'
-import { ExportMenu } from '../components/ExportMenu'
 import { exportElementToPDF } from '../services/exportService'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../utils/format'
 import { calcCustosMensalEfetivo } from '../utils/custos'
@@ -200,7 +198,7 @@ function Badge({ valor }: { valor: number | null }) {
 // ─── Componente Principal ─────────────────────────────────────
 
 export function RelatoriosPage() {
-  const { fechamentos, clientes, lancamentos, isLoading } = useInternoData()
+  const { fechamentos, clientes, isLoading } = useInternoData()
   useEquipeData()
   const { custos, equipamentos } = useDataContext()
   const [periodoSelecionado, setPeriodoSelecionado] = useState<string>('ultimo')
@@ -409,41 +407,6 @@ export function RelatoriosPage() {
     }
   }
 
-  function handleExportJSON() {
-    if (!dados) return
-    const exportData = {
-      geradoEm: new Date().toISOString(),
-      periodo: isAcumulado ? `Acumulado (${nPeriodos} períodos)` : dados.f.periodo,
-      periodosDisponiveis: fechamentos.map((f) => f.periodo),
-      kpis: {
-        tpvTotal: dados.f.tpvTotal,
-        markupPos: dados.f.markupPos,
-        margem: dados.margem,
-        ecsAtivos: dados.f.ecsAtivos,
-        valorLiquido: dados.f.valorLiquido,
-        resultadoOperacional: dados.lucroOp,
-      },
-      dre: dados.dreLinhas,
-      evolucao: dados.evolucao,
-      carteira: {
-        ecsCom: dados.ecsCom,
-        ecsSemReceita: dados.ecsSemReceita.length,
-        oportunidades: dados.oportunidades.length,
-        top10: dados.top10.map((ec) => ({ nome: ec.nome, markup: ec.ticketMedio })),
-      },
-      custos: totalCustos,
-      insights: dados.insights.map((i) => ({ nivel: i.nivel, titulo: i.titulo, acao: i.acao })),
-      acoes: dados.acoes,
-    }
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `relatorio-${isAcumulado ? 'acumulado' : dados.f.periodo}-${new Date().toISOString().slice(0, 10)}.json`
-    a.click()
-    URL.revokeObjectURL(url)
-  }
-
   if (isLoading) return <LoadingState message="Carregando dados do relatório..." />
 
   if (!dados || !periodoAtual) {
@@ -549,23 +512,6 @@ export function RelatoriosPage() {
               <FileBarChart className="w-4 h-4" />
               Exportar PDF
             </button>
-            <button
-              onClick={handleExportJSON}
-              className="btn-outline flex items-center gap-2 text-sm"
-            >
-              <FileJson className="w-4 h-4" />
-              JSON
-            </button>
-            <ExportMenu
-              data={{
-                fechamentos,
-                vendedores: [],
-                lancamentos,
-                clientes,
-              }}
-              defaultReportType="completo"
-              fileName={`relatorio-${dados.f.periodo}`}
-            />
           </div>
         </div>
 
