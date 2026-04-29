@@ -149,11 +149,13 @@ export async function deleteRows(
 /**
  * Fetch com autenticacao (token OAuth ou API Key)
  *
- * Estrategia:
- * - GET  (leitura): sempre usa API Key. Se o usuario estiver logado, tambem
- *   envia o Bearer token como Authorization — isso garante acesso tanto a
- *   planilhas publicas quanto a privadas compartilhadas com o usuario.
- * - POST/PUT/DELETE (escrita): usa Bearer token (obrigatorio).
+ * Estrategia (PONTO 1 — segurança: API Key não exposta quando autenticado):
+ * - GET  (leitura) COM token OAuth: usa APENAS Bearer token.
+ *   A API Key nunca é enviada na URL — não aparece em logs de servidor,
+ *   headers de referrer ou DevTools quando o usuário está autenticado.
+ * - GET  (leitura) SEM token OAuth: usa API Key como fallback (leitura pública).
+ *   Não deve ocorrer neste app (login é obrigatório), mas mantido por segurança.
+ * - POST/PUT/DELETE (escrita): usa Bearer token (obrigatório).
  */
 async function fetchWithAuth(
   url: string,
@@ -168,8 +170,10 @@ async function fetchWithAuth(
     ...(options.headers as Record<string, string>),
   }
 
-  // Para leituras: sempre adiciona API Key na URL
-  if (!isWrite && ENV.GOOGLE_API_KEY) {
+  // Para leituras SEM token OAuth: usa API Key como fallback.
+  // Quando o usuário está autenticado, o Bearer token já autoriza acesso
+  // à planilha — expor a chave na URL seria redundante e desnecessário.
+  if (!isWrite && ENV.GOOGLE_API_KEY && !token) {
     const separator = url.includes('?') ? '&' : '?'
     url = `${url}${separator}key=${ENV.GOOGLE_API_KEY}`
   }

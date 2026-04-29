@@ -41,6 +41,19 @@ export type { ReportData }
  *  - SVGs e gráficos Recharts renderizam nativamente
  *  - Quebras de página controladas por CSS (break-before / break-inside)
  *  - Arquivo final pequeno e texto selecionável
+ *
+ * PONTO 5 — Limitação conhecida (window.print() vs Puppeteer):
+ *  - Chrome/Edge: funciona de forma determinística via "Salvar como PDF"
+ *  - Firefox: pode gerar quebras de página diferentes e omitir SVGs complexos
+ *  - Safari iOS: diálogo de impressão não oferece opção "Salvar como PDF"
+ *  - Headless/CI: window.print() não tem efeito sem browser com GUI
+ *
+ *  Para geração de PDF determinística em produção (headless, multi-browser
+ *  ou triggered server-side), migrar para Puppeteer em uma Vercel/Cloudflare
+ *  Function:
+ *    POST /api/export-pdf { html: string } → retorna Buffer do PDF
+ *  O frontend enviaria o HTML serializado e receberia o PDF pronto.
+ *  Estimativa: ~1-2 dias de implementação, dependência: puppeteer-core + Chromium.
  */
 export async function exportElementToPDF(
   element: HTMLElement,

@@ -18,8 +18,10 @@ export const ENV = {
     return import.meta.env.VITE_SHEET_ID || '1KTRmSWudADXNz6ncJ_ITusdCy_5RDzCV'
   },
 
-  /** Verifica se as credenciais estao configuradas */
+  /** Verifica se as credenciais estao configuradas.
+   *  API Key é opcional — OAuth Bearer token cobre todas as leituras de planilhas
+   *  privadas. A chave só seria necessária para acesso público (não aplicável). */
   get isConfigured(): boolean {
-    return Boolean(this.GOOGLE_CLIENT_ID && this.GOOGLE_API_KEY)
+    return Boolean(this.GOOGLE_CLIENT_ID)
   },
 }

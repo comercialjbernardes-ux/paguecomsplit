@@ -4,7 +4,7 @@
 // Cada mês cadastrado carrega: fechamentos, vendedores, clientes e lancamentos.
 // ═══════════════════════════════════════════════════════════════
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import {
   Settings as SettingsIcon,
   CheckCircle2,
@@ -17,9 +17,13 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
+  Download,
+  Upload,
+  HardDrive,
 } from 'lucide-react'
 import { useDataContext } from '../contexts/dataContextValue'
 import type { HistoricalSheet } from '../contexts/dataContextValue'
+import { exportLocalBackup, importLocalBackup, getBackupStats } from '../services/backupService'
 
 // ─── Constantes ───────────────────────────────────────────────
 const MESES = [
@@ -114,6 +118,128 @@ function MonthSlot({
         <Plus className="w-3.5 h-3.5 text-gray-400 group-hover:text-blue-500" />
       </div>
     </button>
+  )
+}
+
+// ─── DataBackupSection ────────────────────────────────────────
+/**
+ * PONTO 2 — localStorage como único storage de dados críticos.
+ * Permite exportar todos os dados locais para um arquivo JSON e
+ * restaurá-los a partir de um backup existente.
+ */
+function DataBackupSection() {
+  const [importStatus, setImportStatus] = useState<{
+    type: 'success' | 'error' | null
+    message: string
+  }>({ type: null, message: '' })
+  const [isImporting, setIsImporting] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const stats = getBackupStats()
+  const totalItems = stats.reduce((sum, s) => sum + s.itemCount, 0)
+  const keysWithData = stats.filter(s => s.hasData).length
+
+  const handleExport = () => {
+    exportLocalBackup()
+  }
+
+  const handleImportClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setIsImporting(true)
+    setImportStatus({ type: null, message: '' })
+    const result = await importLocalBackup(file)
+    setIsImporting(false)
+    if (result.success) {
+      const date = result.exportedAt
+        ? new Date(result.exportedAt).toLocaleDateString('pt-BR')
+        : 'data desconhecida'
+      setImportStatus({
+        type: 'success',
+        message: `${result.keysRestored.length} chaves restauradas (backup de ${date}). Recarregue a página para aplicar.`,
+      })
+    } else {
+      setImportStatus({ type: 'error', message: result.error || 'Erro ao importar.' })
+    }
+    // Limpa o input para permitir reimportar o mesmo arquivo
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  return (
+    <div className="card border-amber-200 bg-amber-50/40">
+      <div className="flex items-start justify-between mb-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <HardDrive className="w-5 h-5 text-amber-500" />
+            Backup de Dados Locais
+          </h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            Exporte todos os dados locais para um arquivo JSON. Importe para restaurar em outro
+            dispositivo ou após limpar o cache do navegador.
+          </p>
+        </div>
+        <span className="text-xs font-medium text-amber-700 bg-amber-100 border border-amber-200 px-2 py-1 rounded-lg whitespace-nowrap">
+          {keysWithData} chaves · {totalItems} itens
+        </span>
+      </div>
+
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={handleExport}
+          className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+        >
+          <Download className="w-4 h-4" />
+          Exportar Backup
+        </button>
+
+        <button
+          onClick={handleImportClick}
+          disabled={isImporting}
+          className="flex items-center gap-2 px-4 py-2.5 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg border border-gray-200 transition-colors disabled:opacity-50"
+        >
+          {isImporting
+            ? <Loader2 className="w-4 h-4 animate-spin" />
+            : <Upload className="w-4 h-4" />
+          }
+          {isImporting ? 'Importando…' : 'Importar Backup'}
+        </button>
+
+        {/* Input file oculto */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".json,application/json"
+          className="hidden"
+          onChange={handleFileChange}
+        />
+      </div>
+
+      {importStatus.type && (
+        <div className={`mt-3 p-3 rounded-lg text-sm flex items-start gap-2 ${
+          importStatus.type === 'success'
+            ? 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+            : 'bg-red-50 border border-red-200 text-red-700'
+        }`}>
+          {importStatus.type === 'success'
+            ? <CheckCircle2 className="w-4 h-4 flex-shrink-0 mt-0.5" />
+            : <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+          }
+          {importStatus.message}
+          {importStatus.type === 'success' && (
+            <button
+              onClick={() => window.location.reload()}
+              className="ml-auto text-xs font-semibold text-emerald-700 underline whitespace-nowrap"
+            >
+              Recarregar agora
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -265,6 +391,9 @@ export function SettingsPage() {
           Gerencie as planilhas mensais do benchmark — cada mês alimenta todas as abas do dashboard
         </p>
       </div>
+
+      {/* Backup de dados locais — proteção contra perda de configuração */}
+      <DataBackupSection />
 
       {/* Benchmark Anual — fonte principal de dados */}
       <MonthlyBenchmarkGrid />

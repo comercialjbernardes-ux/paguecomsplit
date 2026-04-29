@@ -284,13 +284,15 @@ export function mapRowsMKPdePOS(rows: (string | number)[][], periodo = 'atual'):
       const cell = String(row[NOMEi] || '').toLowerCase()
       // Rejeita linhas de header que "vazarem" para a área de dados
       if (/^(cnpj|nome|estabelec|header|detalhamento)/.test(cell)) return false
-      // Rejeita linhas de TOTAL em qualquer coluna
-      if (isTotalRow(row)) return false
       // Precisa ter ao menos nome (string) ou CNPJ (número > 0) preenchido
       const nomeVal = String(row[NOMEi] || '').trim()
       const cnpjVal = String(row[CNPJi] || '').trim()
       const nomeOk  = nomeVal.length > 0 && !/^\d+$/.test(nomeVal) // nome não pode ser só números
       const cnpjOk  = cnpjVal.length >= 8 && /\d/.test(cnpjVal)   // CNPJ tem ≥ 8 dígitos
+      // Rejeita linhas de TOTAL somente quando NÃO há CNPJ válido.
+      // Empresas como "Total Soluções EIRELI" ou "Total Service LTDA" têm CNPJ
+      // e NÃO devem ser filtradas — apenas as linhas de rodapé sem CNPJ.
+      if (isTotalRow(row) && !cnpjOk) return false
       return nomeOk || cnpjOk
     })
     .map((row, index) => {
