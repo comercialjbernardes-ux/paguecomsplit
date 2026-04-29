@@ -622,10 +622,7 @@ export function InternoCarteira() {
             <h3 className="text-lg font-semibold text-gray-900">Ranking de Lucratividade Real</h3>
           </div>
           <p className="text-sm text-gray-400 mb-4">
-            Lucro Estimado = Markup do EC − Custo Operacional Proporcional (ponderado pelo volume).
-            {custos.length === 0 && equipamentos.length === 0 && (
-              <span className="text-amber-600 ml-1">Cadastre custos em Gestao de Custos para uma analise precisa.</span>
-            )}
+            Ranking dos ECs por lucro estimado — Markup recebido menos custos operacionais proporcionais ao volume.
           </p>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -637,7 +634,6 @@ export function InternoCarteira() {
                   <th className="text-left py-2 px-3 font-medium text-gray-500">Segmento</th>
                   <th className="text-right py-2 px-3 font-medium text-gray-500">Volume (TPV)</th>
                   <th className="text-right py-2 px-3 font-medium text-gray-500">Markup POS</th>
-                  <th className="text-right py-2 px-3 font-medium text-gray-500">Custo Proporcional</th>
                   <th className="text-right py-2 px-3 font-medium text-gray-500">Lucro Estimado</th>
                 </tr>
               </thead>
@@ -650,7 +646,6 @@ export function InternoCarteira() {
                     <td className="py-2 px-3 text-gray-500">{c.segmento}</td>
                     <td className="py-2 px-3 text-right">{formatCurrency(c.volumeTotal)}</td>
                     <td className="py-2 px-3 text-right text-emerald-700">{formatCurrency(c.ticketMedio)}</td>
-                    <td className="py-2 px-3 text-right text-red-600">- {formatCurrency(c.custoCliente)}</td>
                     <td className="py-2 px-3 text-right">
                       <span className={`font-bold ${c.lucroEstimado >= 0 ? 'text-emerald-700' : 'text-red-700'}`}>
                         {c.lucroEstimado >= 0 ? '' : '- '}{formatCurrency(Math.abs(c.lucroEstimado))}
