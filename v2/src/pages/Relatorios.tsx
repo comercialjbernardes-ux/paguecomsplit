@@ -206,31 +206,58 @@ export function RelatoriosPage() {
   const [periodoSelecionado, setPeriodoSelecionado] = useState<string>('ultimo')
   const reportRef = useRef<HTMLDivElement>(null)
 
+  const isAcumulado = periodoSelecionado === 'acumulado'
+  const nPeriodos = fechamentos.length || 1
+
+  const fechamentoAcumulado = useMemo<DadosFechamento | null>(() => {
+    if (fechamentos.length === 0) return null
+    return fechamentos.reduce<DadosFechamento>(
+      (acc, f) => ({
+        ...acc,
+        tpvTotal:      acc.tpvTotal      + f.tpvTotal,
+        markupPos:     acc.markupPos     + f.markupPos,
+        valorLiquido:  acc.valorLiquido  + f.valorLiquido,
+        repasse:       acc.repasse       + f.repasse,
+        comissaoRede:  acc.comissaoRede  + f.comissaoRede,
+        descontos:     acc.descontos     + f.descontos,
+        faturaDigital: acc.faturaDigital + f.faturaDigital,
+        // snapshot fields — usa o mais recente
+        ecsAtivos: fechamentos[fechamentos.length - 1].ecsAtivos,
+        tpvMedio:  fechamentos[fechamentos.length - 1].tpvMedio,
+        periodo:   'Acumulado',
+      }),
+      { ...fechamentos[0], tpvTotal: 0, markupPos: 0, valorLiquido: 0, repasse: 0, comissaoRede: 0, descontos: 0, faturaDigital: 0 },
+    )
+  }, [fechamentos])
+
   // Custo mensal total — inclui prorate trimestral/anual/único no período selecionado
   const totalCustos = useMemo(() => {
-    const periodo = periodoSelecionado === 'ultimo'
+    const periodoRef = isAcumulado
       ? fechamentos[fechamentos.length - 1]?.periodo
-      : fechamentos.find((f) => f.periodo === periodoSelecionado)?.periodo
-    const op = calcCustosMensalEfetivo(custos, periodo)
+      : periodoSelecionado === 'ultimo'
+        ? fechamentos[fechamentos.length - 1]?.periodo
+        : fechamentos.find((f) => f.periodo === periodoSelecionado)?.periodo
+    const op = calcCustosMensalEfetivo(custos, periodoRef)
     const eq = equipamentos.reduce((s, eq) => {
       const r = eq.numeroParcelas - eq.parcelasPagas
       return r > 0 ? s + eq.valorParcela : s
     }, 0)
-    return op + eq
-  }, [custos, equipamentos, periodoSelecionado, fechamentos])
+    return (op + eq) * (isAcumulado ? nPeriodos : 1)
+  }, [custos, equipamentos, periodoSelecionado, fechamentos, isAcumulado, nPeriodos])
 
   // Período selecionado
   const periodoAtual = useMemo<DadosFechamento | null>(() => {
     if (fechamentos.length === 0) return null
+    if (isAcumulado) return fechamentoAcumulado
     if (periodoSelecionado === 'ultimo') return fechamentos[fechamentos.length - 1]
     return fechamentos.find((f) => f.periodo === periodoSelecionado) || fechamentos[fechamentos.length - 1]
-  }, [fechamentos, periodoSelecionado])
+  }, [fechamentos, periodoSelecionado, isAcumulado, fechamentoAcumulado])
 
   const periodoAnterior = useMemo<DadosFechamento | null>(() => {
-    if (!periodoAtual || fechamentos.length < 2) return null
+    if (isAcumulado || !periodoAtual || fechamentos.length < 2) return null
     const idx = fechamentos.indexOf(periodoAtual)
     return idx > 0 ? fechamentos[idx - 1] : null
-  }, [fechamentos, periodoAtual])
+  }, [fechamentos, periodoAtual, isAcumulado])
 
   // Variações por período para tabela comparativa (todos os períodos, mais recente primeiro)
   const periodosComVar = useMemo(() => {
@@ -378,7 +405,7 @@ export function RelatoriosPage() {
 
   const handleExportPDF = async () => {
     if (reportRef.current) {
-      await exportElementToPDF(reportRef.current, `relatorio-${dados?.f.periodo || 'venda-feita'}`)
+      await exportElementToPDF(reportRef.current, `relatorio-${isAcumulado ? 'acumulado' : (dados?.f.periodo || 'venda-feita')}`)
     }
   }
 
@@ -386,7 +413,7 @@ export function RelatoriosPage() {
     if (!dados) return
     const exportData = {
       geradoEm: new Date().toISOString(),
-      periodo: dados.f.periodo,
+      periodo: isAcumulado ? `Acumulado (${nPeriodos} períodos)` : dados.f.periodo,
       periodosDisponiveis: fechamentos.map((f) => f.periodo),
       kpis: {
         tpvTotal: dados.f.tpvTotal,
@@ -412,7 +439,7 @@ export function RelatoriosPage() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `relatorio-${dados.f.periodo}-${new Date().toISOString().slice(0, 10)}.json`
+    a.download = `relatorio-${isAcumulado ? 'acumulado' : dados.f.periodo}-${new Date().toISOString().slice(0, 10)}.json`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -488,6 +515,7 @@ export function RelatoriosPage() {
               onChange={(e) => setPeriodoSelecionado(e.target.value)}
               className="input-field w-auto text-sm py-1.5"
             >
+              <option value="acumulado">Resultado Acumulado</option>
               <option value="ultimo">Último período</option>
               {[...fechamentos].reverse().map((fec) => (
                 <option key={fec.periodo} value={fec.periodo}>{fec.periodo}</option>
@@ -543,8 +571,11 @@ export function RelatoriosPage() {
               </div>
               <div className="text-right">
                 <p className="text-slate-400 text-xs">Período de referência</p>
-                <p className="text-white text-xl font-bold">{f.periodo}</p>
-                {ant && <p className="text-slate-400 text-xs mt-1">Comparativo: {ant.periodo}</p>}
+                <p className="text-white text-xl font-bold">
+                  {isAcumulado ? `Acumulado — ${nPeriodos} ${nPeriodos === 1 ? 'período' : 'períodos'}` : f.periodo}
+                </p>
+                {!isAcumulado && ant && <p className="text-slate-400 text-xs mt-1">Comparativo: {ant.periodo}</p>}
+                {isAcumulado && <p className="text-slate-400 text-xs mt-1">{fechamentos.map(f => f.periodo).join(' · ')}</p>}
                 <p className="text-slate-500 text-xs mt-1">Gerado em {hoje}</p>
               </div>
             </div>
@@ -1061,7 +1092,7 @@ export function RelatoriosPage() {
           {/* Rodapé do relatório */}
           <div className="text-center py-4 border-t border-gray-200">
             <p className="text-xs text-gray-400">
-              Relatório gerado automaticamente pela plataforma Venda Feita · {hoje} · Período: {f.periodo}
+              Relatório gerado automaticamente pela plataforma Venda Feita · {hoje} · Período: {isAcumulado ? `Acumulado (${nPeriodos} períodos)` : f.periodo}
             </p>
           </div>
 
