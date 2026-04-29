@@ -404,22 +404,32 @@ export function mapRowsDescontos(rows: (string | number)[][], periodo = 'atual')
   // entre título/subtítulo e cabeçalho de Jan/Fev), movendo o cabeçalho para idx 2.
   // Usar slice() dinâmico garante que sempre começamos APÓS o cabeçalho real.
   let valorIdx: number = COL_DESCONTOS.VALOR  // fallback: 5 (col F em Jan/Fev)
-  let headerRowIdx: number = 4  // fallback: 5 linhas de cabeçalho (idx 0-4)
+  let headerRowIdx: number = -1  // -1 = não encontrado; evita pular dados por default errado
 
   for (let i = 0; i < Math.min(10, rows.length); i++) {
     const hdrs = (rows[i] || []).map((h) => String(h || '').toLowerCase())
     const vIdx = hdrs.findIndex((h) => h.includes('valor'))
     const cIdx = hdrs.findIndex((h) => h.includes('cnpj'))
-    if (vIdx >= 0 && cIdx >= 0) {
+    // Exige ≥ 3 keywords de cabeçalho na mesma linha para evitar falso-positivo
+    // em linhas de anotação/subtítulo que possam conter "cnpj" e "valor" acidentalmente.
+    const hits = hdrs.filter((h) =>
+      h.includes('cnpj') || h.includes('parceiro') || h.includes('tipo') ||
+      h.includes('valor') || h.includes('desconto') || h.includes('origem')
+    ).length
+    if (vIdx >= 0 && cIdx >= 0 && hits >= 3) {
       valorIdx = vIdx
       headerRowIdx = i
       break
     }
   }
 
-  const dataStartIdx = headerRowIdx + 1
-  // Índice da coluna Tipo+Desc (sempre imediatamente antes de VALOR)
-  const descTipoIdx = valorIdx - 1
+  // Fallback conservador: se o header não foi encontrado, começa na linha 1.
+  // Pior caso: a linha 0 (título) é pulada, mas os dados não são zerados.
+  // Sem isso, headerRowIdx=-1 → dataStartIdx=0, incluindo título como dado.
+  const dataStartIdx = headerRowIdx >= 0 ? headerRowIdx + 1 : 1
+  // Índice da coluna Tipo+Desc (sempre imediatamente antes de VALOR).
+  // Math.max(0, ...) garante que nunca resulte em índice negativo mesmo se valorIdx=0.
+  const descTipoIdx = Math.max(0, valorIdx - 1)
 
   return rows
     .slice(dataStartIdx)

@@ -539,10 +539,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(
     () => ({
       // connectionStatus reflete o estado do Benchmark Anual, não da planilha primária.
+      // Campos listados explicitamente (sem spread) para não vazar sheetId/tabs da primária.
       connectionStatus: {
-        ...sheets.connectionStatus,
         connected: Object.keys(historicalDataMap).length > 0,
+        sheetId: '',                               // Benchmark Anual não tem sheetId próprio
         title: 'Benchmark Anual',
+        tabs: [],                                  // usa historicalSheets, não tabs de aba
+        lastSync: sheets.connectionStatus.lastSync, // preserva timestamp da última sync
       },
       isLoading: isLoadingHistorical,
       error: null,
