@@ -2,6 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Container de impressão (escondido na tela) ───── */
+#vdf-pdf-root {
+  display: none;
+}
+
+/* ─── Print / Exportar PDF ─────────────────────────── */
+@media print {
+  /* Tamanho de página A4, margens finas */
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+
+  /* Oculta tudo exceto o container de impressão */
+  body > *:not(#vdf-pdf-root) {
+    display: none !important;
+  }
+
+  /* Mostra e posiciona o container de impressão */
+  #vdf-pdf-root {
+    display: block !important;
+    width: 100% !important;
+    background: white !important;
+  }
+
+  /* Força impressão de cores de fundo e bordas */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
+  }
+
+  /* Remove sombras que ficam feias no papel */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Evita quebra de página dentro de seções do relatório */
+  .report-section {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  /* Força nova página antes de seções marcadas */
+  .page-break {
+    break-before: page !important;
+    page-break-before: always !important;
+  }
+
+  /* Grids e charts: mantém layout */
+  .grid { display: grid !important; }
+
+  /* Recharts: permite overflow de labels no eixo X rotacionado */
+  .recharts-wrapper,
+  .recharts-responsive-container {
+    overflow: visible !important;
+  }
+
+  /* Links internos não aparecem em PDF */
+  .no-print { display: none !important; }
+}
+
 /* ─── Estilos globais ──────────────────────────────── */
 body {
   @apply bg-gray-50 text-gray-900 antialiased;

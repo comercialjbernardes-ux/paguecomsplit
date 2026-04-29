@@ -1,10 +1,9 @@
 // ═══════════════════════════════════════════════════════════════
 // Export Service — Exportacao de dados para PDF, Excel e CSV
-// Usa jsPDF + html2canvas para PDF, SheetJS (xlsx) para Excel
+// Usa jsPDF para PDF estruturado, SheetJS (xlsx) para Excel
 // ═══════════════════════════════════════════════════════════════
 
 import jsPDF from 'jspdf'
-import html2canvas from 'html2canvas'
 import * as XLSX from 'xlsx'
 import { formatCurrency, formatPercent } from '../utils/format'
 import type { DadosFechamento, Vendedor, LancamentoCusto, ClienteCarteira, ReportData } from '../types'
@@ -27,48 +26,54 @@ export type { ReportData }
 // ─── PDF Export ───────────────────────────────────────────────
 
 /**
- * Exporta um elemento HTML como PDF
- * Captura o elemento via html2canvas e insere no jsPDF
+ * Exporta um elemento HTML como PDF via impressão nativa do browser.
+ *
+ * Estratégia:
+ *  1. Clona o elemento já renderizado (SVGs Recharts incluídos) num
+ *     container temporário escondido na tela mas visível em @media print.
+ *  2. Define document.title como nome do arquivo (Chrome/Edge usam isso
+ *     como nome padrão ao salvar como PDF).
+ *  3. Chama window.print() → dialog "Salvar como PDF" do browser.
+ *  4. Remove o container após o diálogo ser fechado.
+ *
+ * Vantagens sobre html2canvas:
+ *  - Não gera canvas gigantesco (o bug das 497 páginas)
+ *  - SVGs e gráficos Recharts renderizam nativamente
+ *  - Quebras de página controladas por CSS (break-before / break-inside)
+ *  - Arquivo final pequeno e texto selecionável
  */
 export async function exportElementToPDF(
   element: HTMLElement,
   fileName: string = 'relatorio'
 ): Promise<void> {
-  // Captura todo o elemento como canvas de alta resolução
-  const canvas = await html2canvas(element, {
-    scale: 2,
-    useCORS: true,
-    logging: false,
-    backgroundColor: '#ffffff',
-    allowTaint: true,
-    imageTimeout: 15000,
+  // Container isolado: escondido na tela, visível apenas em @media print
+  const printRoot = document.createElement('div')
+  printRoot.id = 'vdf-pdf-root'
+
+  // Clona o elemento com todos os filhos já renderizados
+  printRoot.appendChild(element.cloneNode(true))
+  document.body.appendChild(printRoot)
+
+  // O title vira nome padrão do arquivo no diálogo "Salvar como PDF"
+  const prevTitle = document.title
+  document.title = fileName
+
+  return new Promise<void>((resolve) => {
+    const cleanup = () => {
+      if (document.body.contains(printRoot)) {
+        document.body.removeChild(printRoot)
+      }
+      document.title = prevTitle
+      resolve()
+    }
+
+    // afterprint dispara quando o diálogo de impressão fecha
+    window.addEventListener('afterprint', cleanup, { once: true })
+    // Fallback: alguns browsers (Firefox older) não disparam afterprint
+    setTimeout(cleanup, 30_000)
+
+    window.print()
   })
-
-  const imgData = canvas.toDataURL('image/png')
-  const pdf = new jsPDF('p', 'mm', 'a4')
-
-  const pageWidth  = pdf.internal.pageSize.getWidth()
-  const pageHeight = pdf.internal.pageSize.getHeight()
-  const margin     = 10
-  const imgWidth   = pageWidth - margin * 2
-  // Altura total da imagem em mm (proporção mantida)
-  const imgHeight  = (canvas.height * imgWidth) / canvas.width
-  // Altura útil por página (descontando margens superior e inferior)
-  const usableH    = pageHeight - margin * 2
-
-  // Página 1 — imagem começa na margem superior
-  pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight)
-
-  // Páginas seguintes — desloca a imagem para cima acumulando usableH por página
-  let yOffset = usableH
-  while (yOffset < imgHeight) {
-    pdf.addPage()
-    // Posição negativa: traz a parte já exibida para "acima" da página atual
-    pdf.addImage(imgData, 'PNG', margin, margin - yOffset, imgWidth, imgHeight)
-    yOffset += usableH
-  }
-
-  pdf.save(`${fileName}.pdf`)
 }
 
 /**

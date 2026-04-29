@@ -499,7 +499,7 @@ export function RelatoriosPage() {
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <button
-              onClick={() => window.print()}
+              onClick={handleExportPDF}
               className="btn-outline flex items-center gap-2 text-sm"
             >
               <Printer className="w-4 h-4" />
