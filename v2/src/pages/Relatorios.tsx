@@ -302,8 +302,8 @@ export function RelatoriosPage() {
     const varEcs = ant && ant.ecsAtivos > 0 ? ((f.ecsAtivos - ant.ecsAtivos) / ant.ecsAtivos) * 100 : null
 
     const saude: 'CRITICA' | 'ATENCAO' | 'SAUDAVEL' =
-      margem < 1 || lucroOp < -1000 ? 'CRITICA'
-      : margem < 1.5 || lucroOp < 0 ? 'ATENCAO'
+      margem < 0.5 || lucroOp < -1000 ? 'CRITICA'
+      : margem < 1.0 || lucroOp < 0  ? 'ATENCAO'
       : 'SAUDAVEL'
 
     // Análise da carteira
@@ -461,24 +461,36 @@ export function RelatoriosPage() {
     saude, ecsSemReceita, oportunidades, top10, ecsCom,
     paretoData, top5pct, evolucao, dreLinhas, insights, acoes } = dados
 
+  // Texto de tendência usado nas descrições dinâmicas
+  const antLabel = ant?.periodo ?? 'período anterior'
+  const tendenciaDesc =
+    varMarkup === null ? '' :
+    varMarkup >  5  ? ` Receita em alta: +${varMarkup.toFixed(1)}% vs ${antLabel}.` :
+    varMarkup < -5  ? ` Receita em queda: ${varMarkup.toFixed(1)}% vs ${antLabel}.` :
+    ` Receita estável vs ${antLabel}.`
+
   const saudeConfig = {
     CRITICA: {
       bg: 'bg-red-600', border: 'border-red-700',
       text: 'text-white', badge: 'SITUAÇÃO CRÍTICA',
       icon: <XCircle className="w-6 h-6" />,
-      desc: 'Indicadores exigem ação imediata. Veja as recomendações abaixo.',
+      desc: `Margem em ${margem.toFixed(2)}% — exige ação imediata.${tendenciaDesc} Veja as recomendações abaixo.`,
     },
     ATENCAO: {
       bg: 'bg-amber-500', border: 'border-amber-600',
       text: 'text-white', badge: 'REQUER ATENÇÃO',
       icon: <AlertTriangle className="w-6 h-6" />,
-      desc: 'Desempenho abaixo do ideal em alguns indicadores. Acompanhe de perto.',
+      desc: varMarkup !== null && varMarkup > 0
+        ? `Margem em ${margem.toFixed(2)}% (abaixo de 1%), mas receita subindo +${varMarkup.toFixed(1)}% vs ${antLabel}. Acompanhe a evolução.`
+        : `Margem em ${margem.toFixed(2)}% — abaixo de 1%.${tendenciaDesc} Acompanhe de perto.`,
     },
     SAUDAVEL: {
       bg: 'bg-emerald-600', border: 'border-emerald-700',
       text: 'text-white', badge: 'SITUAÇÃO SAUDÁVEL',
       icon: <CheckCircle className="w-6 h-6" />,
-      desc: 'Todos os indicadores dentro das metas. Manter o ritmo de crescimento.',
+      desc: varMarkup !== null && varMarkup > 0
+        ? `Margem saudável em ${margem.toFixed(2)}% e receita crescendo +${varMarkup.toFixed(1)}% vs ${antLabel}. Manter o ritmo.`
+        : `Margem saudável em ${margem.toFixed(2)}%. Todos os indicadores dentro das metas.`,
     },
   }
   const sc = saudeConfig[saude]
@@ -581,34 +593,59 @@ export function RelatoriosPage() {
             </div>
 
             {/* Banner de situação */}
-            <div className={`${sc.bg} px-6 py-4 flex items-center justify-between flex-wrap gap-3`}>
+            <div className={`${sc.bg} px-6 py-4 flex items-center justify-between flex-wrap gap-4`}>
+              {/* Esquerda: diagnóstico de saúde */}
               <div className={`flex items-center gap-3 ${sc.text}`}>
                 {sc.icon}
                 <div>
                   <p className="font-bold text-lg">{sc.badge}</p>
-                  <p className="text-sm opacity-90">{sc.desc}</p>
+                  <p className="text-sm opacity-90 max-w-md">{sc.desc}</p>
                 </div>
               </div>
-              <div className={`flex gap-4 ${sc.text}`}>
-                {varMarkup !== null && (
-                  <div className="text-center">
-                    <p className="text-xs opacity-75">Receita</p>
-                    <p className="font-bold text-sm">{varMarkup >= 0 ? '+' : ''}{varMarkup.toFixed(1)}%</p>
+
+              {/* Direita: evolução vs período anterior — separada visualmente */}
+              {(varMarkup !== null || varTpv !== null || varEcs !== null) && (
+                <div className={`flex items-stretch gap-4 ${sc.text}`}>
+                  {/* Linha divisória vertical */}
+                  <div className="w-px bg-white opacity-30 self-stretch hidden sm:block" />
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider opacity-60 mb-2">
+                      Evolução vs {antLabel}
+                    </p>
+                    <div className="flex gap-5">
+                      {varMarkup !== null && (
+                        <div className="text-center">
+                          <p className="text-xs opacity-70">Receita</p>
+                          <p className="font-bold text-base">
+                            {varMarkup >= 0 ? '+' : ''}{varMarkup.toFixed(1)}%
+                          </p>
+                        </div>
+                      )}
+                      {varTpv !== null && (
+                        <div className="text-center">
+                          <p className="text-xs opacity-70">TPV</p>
+                          <p className="font-bold text-base">
+                            {varTpv >= 0 ? '+' : ''}{varTpv.toFixed(1)}%
+                          </p>
+                        </div>
+                      )}
+                      {varEcs !== null && (
+                        <div className="text-center">
+                          <p className="text-xs opacity-70">ECs Ativos</p>
+                          <p className="font-bold text-base">
+                            {varEcs >= 0 ? '+' : ''}{varEcs.toFixed(1)}%
+                          </p>
+                        </div>
+                      )}
+                      {/* Margem atual — ancora o diagnóstico aos números */}
+                      <div className="text-center border-l border-white border-opacity-20 pl-4">
+                        <p className="text-xs opacity-70">Margem</p>
+                        <p className="font-bold text-base">{margem.toFixed(2)}%</p>
+                      </div>
+                    </div>
                   </div>
-                )}
-                {varTpv !== null && (
-                  <div className="text-center">
-                    <p className="text-xs opacity-75">TPV</p>
-                    <p className="font-bold text-sm">{varTpv >= 0 ? '+' : ''}{varTpv.toFixed(1)}%</p>
-                  </div>
-                )}
-                {varEcs !== null && (
-                  <div className="text-center">
-                    <p className="text-xs opacity-75">ECs</p>
-                    <p className="font-bold text-sm">{varEcs >= 0 ? '+' : ''}{varEcs.toFixed(1)}%</p>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
           </div>
 
