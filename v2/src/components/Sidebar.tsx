@@ -151,16 +151,29 @@ export function Sidebar() {
     section.items.some((item) => location.pathname.startsWith(item.path))
 
   return (
-    <aside className="w-64 bg-navy-500 text-white flex flex-col min-h-screen">
+    <aside className="w-64 bg-navy-700 text-white flex flex-col min-h-screen">
       {/* Logo */}
-      <div className="p-6 border-b border-navy-400">
+      <div className="p-6 border-b border-navy-600">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
-            <TrendingUp className="w-5 h-5 text-white" />
+          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 ring-2 ring-emerald-500/40">
+            <img
+              src="https://framerusercontent.com/images/aNFf2Yq399aDWSKJnSNJ2v3yo.png"
+              alt="Venda Feita"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const t = e.currentTarget as HTMLImageElement
+                t.style.display = 'none'
+                const parent = t.parentElement
+                if (parent) {
+                  parent.classList.add('bg-emerald-500', 'items-center', 'justify-center')
+                  parent.innerHTML = '<svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>'
+                }
+              }}
+            />
           </div>
           <div>
-            <h1 className="text-lg font-bold leading-tight">Venda Feita</h1>
-            <p className="text-xs text-navy-200">Dashboard Financeiro</p>
+            <h1 className="text-lg font-bold font-display leading-tight tracking-tight">Venda Feita</h1>
+            <p className="text-xs text-navy-300">Dashboard Financeiro</p>
           </div>
         </div>
       </div>
@@ -176,7 +189,7 @@ export function Sidebar() {
               {/* Titulo da secao */}
               <button
                 onClick={() => toggleSection(section.title)}
-                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-navy-200 hover:text-white transition-colors"
+                className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold uppercase tracking-wider text-navy-300 hover:text-white transition-colors"
               >
                 <span
                   className={`inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold ${section.bgColor} ${section.color}`}
@@ -204,8 +217,8 @@ export function Sidebar() {
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all ${
                           isActive
-                            ? 'bg-emerald-500/20 text-emerald-400 font-medium'
-                            : 'text-navy-100 hover:bg-navy-400/50 hover:text-white'
+                            ? 'bg-emerald-500/15 text-emerald-400 font-medium border-l-2 border-emerald-500'
+                            : 'text-navy-200 hover:bg-navy-600/70 hover:text-white'
                         }`
                       }
                     >
@@ -221,14 +234,14 @@ export function Sidebar() {
       </nav>
 
       {/* Usuario */}
-      <div className="border-t border-navy-400 p-4">
+      <div className="border-t border-navy-600 p-4">
         {user ? (
           <div className="flex items-center gap-3">
             {user.picture ? (
               <img
                 src={user.picture}
                 alt={user.name}
-                className="w-9 h-9 rounded-full ring-2 ring-navy-400"
+                className="w-9 h-9 rounded-full ring-2 ring-navy-600"
               />
             ) : (
               <div className="w-9 h-9 rounded-full bg-emerald-500 flex items-center justify-center text-sm font-bold">
@@ -237,11 +250,11 @@ export function Sidebar() {
             )}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user.name}</p>
-              <p className="text-xs text-navy-200 truncate">{user.email}</p>
+              <p className="text-xs text-navy-300 truncate">{user.email}</p>
             </div>
             <button
               onClick={signOut}
-              className="p-1.5 text-navy-200 hover:text-red-400 transition-colors rounded-lg hover:bg-navy-400/50"
+              className="p-1.5 text-navy-300 hover:text-red-400 transition-colors rounded-lg hover:bg-navy-600/70"
               title="Sair"
             >
               <LogOut className="w-4 h-4" />

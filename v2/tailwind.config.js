@@ -7,33 +7,40 @@ export default {
   theme: {
     extend: {
       colors: {
+        // ── Navy — extraído de vendafeita.com (paleta escura teal-navy) ──
         navy: {
-          50: '#e6e9ed',
-          100: '#b0b9c5',
-          200: '#8a97a9',
-          300: '#546881',
-          400: '#334a68',
-          500: '#0D1B2A',
-          600: '#0b1826',
-          700: '#09131e',
-          800: '#070e17',
-          900: '#050b11',
+          50:  '#e8eaeb',
+          100: '#b6bcc0',
+          200: '#8e979d',
+          300: '#5d6b72',
+          400: '#364e5c',
+          500: '#1b2831',   // bg cards dark (era #0D1B2A)
+          600: '#141e25',
+          700: '#0f161b',   // sidebar bg — darkest dark vendafeita.com
+          800: '#0a1014',
+          900: '#060b0f',
         },
+        // ── Emerald — verde exato de vendafeita.com #00A573 ──
         emerald: {
-          50: '#e6f9f2',
-          100: '#b0ecd8',
-          200: '#8ae3c5',
-          300: '#54d6ab',
-          400: '#33ce9a',
-          500: '#00C896',
-          600: '#00a87e',
-          700: '#008362',
-          800: '#00664c',
-          900: '#004e3a',
+          50:  '#e6f7f2',
+          100: '#b3e8d9',
+          200: '#80d9c0',
+          300: '#4dcba7',
+          400: '#26bf95',
+          500: '#00A573',   // CTA principal vendafeita.com (era #00C896)
+          600: '#008b61',
+          700: '#006e4b',
+          800: '#005038',
+          900: '#003625',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        // Inter para corpo de texto, Exo para títulos e exibição
+        sans:    ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Exo', 'Inter', 'system-ui', 'sans-serif'],
+      },
+      backgroundImage: {
+        'vf-hero': 'linear-gradient(180deg, #0f161b 0%, rgba(0,165,115,0.05) 100%)',
       },
     },
   },

@@ -17,7 +17,7 @@ export function LoadingState({
 }: LoadingStateProps) {
   if (fullScreen) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--vf-bg-light)' }}>
         <div className="text-center">
           <Loader2 className="w-10 h-10 text-emerald-500 animate-spin mx-auto mb-4" />
           <p className="text-gray-500 text-sm">{message}</p>

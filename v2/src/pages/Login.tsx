@@ -5,7 +5,7 @@
 
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { TrendingUp, ShieldCheck, Database, BarChart3 } from 'lucide-react'
+import { ShieldCheck, Database, BarChart3 } from 'lucide-react'
 import { useAuth } from '../contexts/AuthContext'
 import { ENV } from '../config/env'
 
@@ -23,15 +23,36 @@ export function LoginPage() {
   const isConfigured = ENV.isConfigured
 
   return (
-    <div className="min-h-screen bg-navy-500 flex">
+    <div className="min-h-screen flex" style={{ background: 'var(--vf-dark)' }}>
       {/* Lado esquerdo — Branding */}
-      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12">
-        <div className="max-w-md text-center">
-          <div className="w-20 h-20 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg shadow-emerald-500/30">
-            <TrendingUp className="w-10 h-10 text-white" />
+      <div
+        className="hidden lg:flex lg:w-1/2 flex-col justify-center items-center p-12 relative overflow-hidden"
+        style={{ background: 'linear-gradient(160deg, #0f161b 0%, #1b2831 60%, rgba(0,165,115,0.08) 100%)' }}
+      >
+        {/* subtle glow accent */}
+        <div
+          className="absolute bottom-0 left-1/2 -translate-x-1/2 w-96 h-96 rounded-full pointer-events-none"
+          style={{ background: 'radial-gradient(circle, rgba(0,165,115,0.12) 0%, transparent 70%)' }}
+        />
+        <div className="max-w-md text-center relative z-10">
+          <div className="w-24 h-24 rounded-full overflow-hidden mx-auto mb-8 shadow-xl ring-4 ring-emerald-500/30">
+            <img
+              src="https://framerusercontent.com/images/aNFf2Yq399aDWSKJnSNJ2v3yo.png"
+              alt="Venda Feita"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                const t = e.currentTarget as HTMLImageElement
+                t.style.display = 'none'
+                const parent = t.parentElement
+                if (parent) {
+                  parent.classList.add('bg-emerald-500', 'flex', 'items-center', 'justify-center')
+                  parent.innerHTML = '<svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>'
+                }
+              }}
+            />
           </div>
-          <h1 className="text-4xl font-bold text-white mb-4">Venda Feita</h1>
-          <p className="text-lg text-navy-100 mb-12">
+          <h1 className="text-4xl font-bold font-display tracking-tight text-white mb-4">Venda Feita</h1>
+          <p className="text-lg text-navy-300 mb-12">
             Dashboard Financeiro de Resultados e Gestao Comercial
           </p>
 
@@ -57,14 +78,27 @@ export function LoginPage() {
       </div>
 
       {/* Lado direito — Login */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white lg:rounded-l-3xl">
+      <div className="flex-1 flex items-center justify-center p-8 bg-white lg:rounded-l-3xl shadow-2xl">
         <div className="w-full max-w-sm">
           {/* Logo mobile */}
           <div className="lg:hidden text-center mb-8">
-            <div className="w-16 h-16 bg-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <TrendingUp className="w-8 h-8 text-white" />
+            <div className="w-16 h-16 rounded-full overflow-hidden flex items-center justify-center mx-auto mb-4 ring-2 ring-emerald-500/30">
+              <img
+                src="https://framerusercontent.com/images/aNFf2Yq399aDWSKJnSNJ2v3yo.png"
+                alt="Venda Feita"
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  const t = e.currentTarget as HTMLImageElement
+                  t.style.display = 'none'
+                  const parent = t.parentElement
+                  if (parent) {
+                    parent.classList.add('bg-emerald-500')
+                    parent.innerHTML = '<svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>'
+                  }
+                }}
+              />
             </div>
-            <h1 className="text-2xl font-bold text-navy-500">Venda Feita</h1>
+            <h1 className="text-2xl font-bold font-display tracking-tight text-navy-700">Venda Feita</h1>
           </div>
 
           <div className="text-center lg:text-left">
@@ -101,9 +135,9 @@ export function LoginPage() {
           <button
             onClick={signIn}
             disabled={isLoading || !isConfigured}
-            className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-navy-500 text-white rounded-xl font-medium
-                       hover:bg-navy-600 transition-all focus:outline-none focus:ring-2 focus:ring-navy-500 focus:ring-offset-2
-                       disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-navy-500/20"
+            className="w-full flex items-center justify-center gap-3 px-6 py-3.5 bg-navy-700 text-white rounded-xl font-medium
+                       hover:bg-navy-800 transition-all focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2
+                       disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-navy-900/20"
           >
             {isLoading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -155,7 +189,7 @@ function Feature({
 }) {
   return (
     <div className="flex items-start gap-4">
-      <div className="w-10 h-10 bg-navy-400/50 rounded-xl flex items-center justify-center text-emerald-400 flex-shrink-0">
+      <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 flex-shrink-0 ring-1 ring-emerald-500/20">
         {icon}
       </div>
       <div>

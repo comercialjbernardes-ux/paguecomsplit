@@ -1,6 +1,21 @@
+/* ─── Google Fonts — Exo (display) + Inter (body) ─── */
+@import url('https://fonts.googleapis.com/css2?family=Exo:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── Venda Feita — CSS custom properties ─────────── */
+:root {
+  --vf-primary:      #00A573;
+  --vf-primary-dark: #008b61;
+  --vf-primary-glow: rgba(0, 165, 115, 0.18);
+  --vf-dark:         #0f161b;
+  --vf-dark-mid:     #1b2831;
+  --vf-bg-light:     #f6fbfe;
+  --vf-bg-card:      #ffffff;
+  --vf-border:       #e2ecf4;
+}
 
 /* ─── Container de impressão (escondido na tela) ───── */
 #vdf-pdf-root {
@@ -67,7 +82,8 @@
 
 /* ─── Estilos globais ──────────────────────────────── */
 body {
-  @apply bg-gray-50 text-gray-900 antialiased;
+  @apply text-gray-900 antialiased;
+  background-color: var(--vf-bg-light);
   font-family: 'Inter', system-ui, sans-serif;
   margin: 0;
 }
@@ -85,10 +101,11 @@ body {
   @apply bg-transparent;
 }
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-300 rounded-full;
+  background-color: #b0c8d8;
+  border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-400;
+  background-color: #8aabbc;
 }
 
 /* ─── Classes utilitarias ──────────────────────────── */
