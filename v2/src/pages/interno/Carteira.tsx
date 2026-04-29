@@ -47,15 +47,39 @@ export function InternoCarteira() {
   }, [isAcumulado, periodoSelecionado, fechamentoAtual])
 
   // Base de clientes do período selecionado.
-  // Em modo acumulado ou sem período definido, usa o snapshot mais recente (clientes global).
   // Em modo período específico, usa o snapshot daquele mês via getClientesPorPeriodo.
+  // Em modo acumulado, agrega clientes de TODOS os períodos por ID:
+  //   - soma volumeTotal e ticketMedio de cada mês
+  //   - mantém metadados (nome, cnpj, segmento, status, vendedor…) do período mais recente
   // Todos os memos downstream (kpis, charts, healthScores…) passam a ser period-aware
   // automaticamente pois dependem de `filtrados` que por sua vez depende de `clientesBase`.
   const clientesBase = useMemo(() => {
-    if (!periodoEfetivo || isAcumulado) return clientes
-    const periodClients = getClientesPorPeriodo(periodoEfetivo)
-    return periodClients.length > 0 ? periodClients : clientes
-  }, [clientes, periodoEfetivo, isAcumulado, getClientesPorPeriodo])
+    if (!isAcumulado) {
+      if (!periodoEfetivo) return clientes
+      const periodClients = getClientesPorPeriodo(periodoEfetivo)
+      return periodClients.length > 0 ? periodClients : clientes
+    }
+
+    // Modo acumulado: agregar clientes de TODOS os períodos por ID
+    // Soma volumeTotal e ticketMedio; mantém metadados do período mais recente
+    if (fechamentos.length === 0) return clientes
+    const mergeMap = new Map<number, (typeof clientes)[0]>()
+    // Percorre cronologicamente (fechamentos já está ordenado)
+    // O último período sobrescreve os metadados → dados mais recentes ficam
+    for (const f of fechamentos) {
+      const periodClients = getClientesPorPeriodo(f.periodo)
+      for (const c of periodClients) {
+        const prev = mergeMap.get(c.id)
+        mergeMap.set(c.id, {
+          ...c,                                              // metadados do mais recente
+          volumeTotal: (prev?.volumeTotal ?? 0) + c.volumeTotal,
+          ticketMedio: (prev?.ticketMedio ?? 0) + c.ticketMedio,
+        })
+      }
+    }
+    const result = Array.from(mergeMap.values())
+    return result.length > 0 ? result : clientes
+  }, [clientes, periodoEfetivo, isAcumulado, getClientesPorPeriodo, fechamentos])
 
   // Clientes filtrados — aplica filtros de UI sobre a base do período correto
   const filtrados = useMemo(() => {
@@ -185,17 +209,20 @@ export function InternoCarteira() {
 
   // MELHORIA 06: lucro estimado por cliente (custo proporcional por volume)
   // Usa calcCustosMensalEfetivo com período específico se selecionado
+  // Em modo acumulado multiplica o custo mensal pelo número de períodos acumulados
   const rankingLucratividade = useMemo(() => {
+    const nPeriodos = isAcumulado ? fechamentos.length : 1
     const custoMensalBase = periodoEfetivo
       ? calcCustosMensalEfetivo(custos, periodoEfetivo)
       : calcCustosMensalSemUnico(custos)
 
-    const custoMensalTotal =
+    const custoMensalTotal = (
       custoMensalBase +
       equipamentos.reduce((s, eq) => {
         const restantes = eq.numeroParcelas - eq.parcelasPagas
         return s + (restantes > 0 ? eq.valorParcela : 0)
       }, 0)
+    ) * nPeriodos
 
     const volumeTotal = filtrados.reduce((s, c) => s + c.volumeTotal, 0)
 
@@ -208,7 +235,7 @@ export function InternoCarteira() {
       const lucroEstimado = c.ticketMedio - custoCliente - custoContaDigital
       return { ...c, custoCliente: custoCliente + custoContaDigital, lucroEstimado }
     }).sort((a, b) => b.lucroEstimado - a.lucroEstimado)
-  }, [filtrados, custos, equipamentos, periodoEfetivo])
+  }, [filtrados, custos, equipamentos, periodoEfetivo, isAcumulado, fechamentos])
 
   if (isLoading) return <LoadingState message="Carregando carteira..." />
 
@@ -267,11 +294,11 @@ export function InternoCarteira() {
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatNumber(kpis.totalClientes)}</p>
         </div>
         <div className="card-hover">
-          <p className="text-sm text-gray-500">Volume Total</p>
+          <p className="text-sm text-gray-500">{isAcumulado ? 'Volume Acumulado' : 'Volume Total'}</p>
           <p className="text-2xl font-bold text-emerald-700 mt-1">{formatCurrency(kpis.totalVolume)}</p>
         </div>
         <div className="card-hover">
-          <p className="text-sm text-gray-500">Markup Medio por EC</p>
+          <p className="text-sm text-gray-500">{isAcumulado ? 'Markup Total por EC' : 'Markup Medio por EC'}</p>
           <p className="text-2xl font-bold text-blue-700 mt-1">{formatCurrency(kpis.markupMedio)}</p>
         </div>
         <div className="card-hover">
