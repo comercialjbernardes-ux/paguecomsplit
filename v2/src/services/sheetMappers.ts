@@ -219,55 +219,79 @@ export function mapRowsToVendedores(rows: (string | number)[][]): Vendedor[] {
  *   Row 3+: dados
  */
 export function mapRowsMKPdePOS(rows: (string | number)[][], periodo = 'atual'): ClienteCarteira[] {
-  if (rows.length <= 2) return []
+  if (rows.length === 0) return []
 
-  // Detecta a linha de cabeçalho escaneando as primeiras 5 linhas
-  // A aba real pode ter: Row1=título, Row2=vazio ou sublabel, Row3=headers
+  // ── Detecção dinâmica do cabeçalho ─────────────────────────────────────────
+  // Escaneia as primeiras 15 linhas para encontrar a linha de cabeçalho.
+  // Jan/Fev podem ter mais linhas em branco antes do cabeçalho que Março.
+  // Aceita labels alternativos: "volume" (=TPV), "mkp|pos" (=markup), etc.
   let headerRowIdx = -1
-  for (let i = 0; i < Math.min(5, rows.length); i++) {
+  for (let i = 0; i < Math.min(15, rows.length); i++) {
     const cells = (rows[i] || []).map((h) => String(h || '').toLowerCase())
-    // Considera linha de header se contiver ao menos 2 das palavras-chave
-    const hits = cells.filter((c) => /cnpj|nome|estabelec|tpv|markup|margem/.test(c)).length
+    const hits = cells.filter((c) =>
+      /cnpj|nome|estabelec|tpv|volume\s*total|markup|mkp\s*pos|margem/.test(c)
+    ).length
     if (hits >= 2) { headerRowIdx = i; break }
   }
 
-  // Se não encontrou header, assume que os dados começam em rows[2] (skip título+header)
+  // Se ainda não encontrou, faz varredura completa (fallback de segurança)
+  if (headerRowIdx < 0) {
+    for (let i = 0; i < rows.length; i++) {
+      const cells = (rows[i] || []).map((h) => String(h || '').toLowerCase())
+      const hits = cells.filter((c) => /cnpj|nome|estabelec|tpv|markup|margem/.test(c)).length
+      if (hits >= 2) { headerRowIdx = i; break }
+    }
+  }
+
   const dataStart = headerRowIdx >= 0 ? headerRowIdx + 1 : 2
 
-  // Mapeamento de colunas a partir do header encontrado (ou fallback fixo)
-  // Fallback correto para planilha real: Col A=seq, B=CNPJ(número), C=Nome/Estabelecimento
+  // ── Mapeamento de colunas ─────────────────────────────────────────────────
+  // Quando o cabeçalho é encontrado dinamicamente, os índices são precisos.
+  // Quando não encontrado, usa os fallbacks do COL_MKP_POS (baseados na planilha Março).
   const headers = headerRowIdx >= 0
     ? (rows[headerRowIdx] || []).map((h) => String(h || '').toLowerCase())
     : []
   const nomeIdx = headers.findIndex((h) => /nome|estabelec/i.test(h))
   const cnpjIdx = headers.findIndex((h) => /cnpj/i.test(h))
-  const tpvIdx  = headers.findIndex((h) => /tpv/i.test(h))
-  const mkpIdx  = headers.findIndex((h) => /markup/i.test(h))
+  // TPV: aceita "TPV Total", "Volume Total", "Vol. Total", etc.
+  const tpvIdx  = headers.findIndex((h) => /tpv|volume\s*total|vol\.\s*total/i.test(h))
+  // Markup: aceita "Markup", "MKP", "MKP POS", etc.
+  const mkpIdx  = headers.findIndex((h) => /markup|mkp/i.test(h))
   const mrgIdx  = headers.findIndex((h) => /margem/i.test(h))
 
-  // Fallback: índice 1 = Nome/Estabelecimento (Col B), índice 2 = CNPJ (Col C)
-  const CNPJi   = cnpjIdx >= 0 ? cnpjIdx : 2
-  const NOMEi   = nomeIdx >= 0 ? nomeIdx : 1
+  const CNPJi   = cnpjIdx >= 0 ? cnpjIdx : COL_MKP_POS.CNPJ
+  const NOMEi   = nomeIdx >= 0 ? nomeIdx : COL_MKP_POS.NOME
   const TPVi    = tpvIdx  >= 0 ? tpvIdx  : COL_MKP_POS.TPV
   const MARKUPi = mkpIdx  >= 0 ? mkpIdx  : COL_MKP_POS.MARKUP
   const MARGEMi = mrgIdx  >= 0 ? mrgIdx  : COL_MKP_POS.MARGEM
 
+  // ── Helpers de detecção de linha TOTAL ──────────────────────────────────
+  // Captura variantes: "TOTAL", "TOTAL — 59 ECs", "TOTAL GERAL", "TOTAL:", etc.
+  // Evita rejeitar empresas como "Totaltech LTDA" (letra imediatamente após "Total").
+  const isTotalRow = (row: (string | number)[]): boolean => {
+    return row.some((c) => {
+      const s = String(c || '').trim().toUpperCase()
+      // Exato "TOTAL" OU "TOTAL" seguido de espaço/pontuação
+      return s === 'TOTAL' || /^TOTAL[\s\-–—:,/()]/.test(s)
+    })
+  }
+
   return rows
     .slice(dataStart)
-    // Filtra linhas de header e linhas de sumarização/total
     .filter((row) => {
-      if (row.length < 3) return false
+      // Linha muito curta → descarta (provavelmente vazia)
+      if (row.length < 2) return false
       const cell = String(row[NOMEi] || '').toLowerCase()
-      // Rejeita headers conhecidos
+      // Rejeita linhas de header que "vazarem" para a área de dados
       if (/^(cnpj|nome|estabelec|header|detalhamento)/.test(cell)) return false
-      // Rejeita linhas de TOTAL: "TOTAL — 59 ECs", "TOTAL GERAL", "TOTAL" etc.
-      // Usa [\s\-–—] para não rejeitar empresas como "Totaltech LTDA"
-      if (/^total[\s\-–—]|^total$/.test(cell)) return false
-      // Varredura extra: rejeita se QUALQUER célula da linha começar com "TOTAL "
-      // (cobre total rows onde o rótulo pode estar em coluna diferente do nome)
-      if (row.some((c) => /^total[\s\-–—]/i.test(String(c || '').trim()))) return false
-      // Precisa ter ao menos nome ou CNPJ preenchido
-      return Boolean(row[NOMEi] || row[CNPJi])
+      // Rejeita linhas de TOTAL em qualquer coluna
+      if (isTotalRow(row)) return false
+      // Precisa ter ao menos nome (string) ou CNPJ (número > 0) preenchido
+      const nomeVal = String(row[NOMEi] || '').trim()
+      const cnpjVal = String(row[CNPJi] || '').trim()
+      const nomeOk  = nomeVal.length > 0 && !/^\d+$/.test(nomeVal) // nome não pode ser só números
+      const cnpjOk  = cnpjVal.length >= 8 && /\d/.test(cnpjVal)   // CNPJ tem ≥ 8 dígitos
+      return nomeOk || cnpjOk
     })
     .map((row, index) => {
       const tpv    = parseNumericValue(row[TPVi])
