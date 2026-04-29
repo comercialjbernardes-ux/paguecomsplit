@@ -20,8 +20,9 @@ import { TransactionForm } from '../../components/TransactionForm'
 import { DeleteConfirmDialog } from '../../components/DeleteConfirmDialog'
 import { LoadingState } from '../../components/LoadingState'
 import { ErrorBanner } from '../../components/ErrorBanner'
+import { PeriodSelector } from '../../components/PeriodSelector'
 import { formatCurrency, getChartColor, parseDateBR } from '../../utils/format'
-import { calcCustosMensalEfetivo, labelRecorrencia } from '../../utils/custos'
+import { calcCustosMensalEfetivo, labelRecorrencia, dataPertenceAoPeriodo } from '../../utils/custos'
 import type { LancamentoCusto, CustoOperacional, Equipamento } from '../../types'
 import type { LancamentoFormData } from '../../services/sheetsCrud'
 
@@ -56,7 +57,7 @@ export function InternoCustos() {
   const [showFormEq, setShowFormEq] = useState(false)
 
   // ── Hooks e contexto ───────────────────────────────────────────
-  const { lancamentos, categorias, contas, isLoading, error } = useInternoData()
+  const { lancamentos, categorias, contas, isLoading, error, fechamentos, fechamentoAtual } = useInternoData()
   const {
     custos, saveCusto, deleteCusto,
     equipamentos, saveEquipamento, deleteEquipamento,
@@ -66,11 +67,25 @@ export function InternoCustos() {
 
   const isBenchmarkMode = historicalSheets.length > 0
 
+  // ── Período selecionado ────────────────────────────────────────
+  const [periodoSelecionado, setPeriodoSelecionado] = useState<string>('ultimo')
+  const isAcumulado = periodoSelecionado === 'acumulado'
+
+  const periodoEfetivo = useMemo(() => {
+    if (isAcumulado) return null
+    if (periodoSelecionado === 'ultimo') return fechamentoAtual?.periodo ?? null
+    return periodoSelecionado
+  }, [isAcumulado, periodoSelecionado, fechamentoAtual])
+
   // ── useMemos ───────────────────────────────────────────────────
 
   const filtrados = useMemo(() => {
     return lancamentos
       .filter((l) => {
+        // Filtro de período: se um período específico estiver selecionado
+        if (!isAcumulado && periodoEfetivo) {
+          if (!dataPertenceAoPeriodo(l.data, periodoEfetivo)) return false
+        }
         if (filtroCategoria !== 'todas' && l.categoria !== filtroCategoria) return false
         if (filtroConta !== 'todas' && l.conta !== filtroConta) return false
         if (filtroTipo !== 'todos' && l.tipo !== filtroTipo) return false
@@ -85,7 +100,7 @@ export function InternoCustos() {
         return true
       })
       .sort((a, b) => parseDateBR(b.data).getTime() - parseDateBR(a.data).getTime())
-  }, [lancamentos, filtroCategoria, filtroConta, filtroTipo, busca])
+  }, [lancamentos, filtroCategoria, filtroConta, filtroTipo, busca, isAcumulado, periodoEfetivo])
 
   const totalPages = Math.max(1, Math.ceil(filtrados.length / PAGE_SIZE))
 
@@ -319,9 +334,20 @@ export function InternoCustos() {
             <Wallet className="w-7 h-7 text-blue-500" />
             Financeiro
           </h1>
-          <p className="text-gray-500 mt-1">Lançamentos, custos operacionais e equipamentos</p>
+          <p className="text-gray-500 mt-1">
+            Lançamentos, custos operacionais e equipamentos
+            {periodoEfetivo && !isAcumulado && <span className="ml-2 text-xs text-gray-400">— {periodoEfetivo}</span>}
+            {isAcumulado && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">acumulado</span>}
+          </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 flex-wrap items-center">
+          {fechamentos.length > 0 && (
+            <PeriodSelector
+              fechamentos={fechamentos}
+              value={periodoSelecionado}
+              onChange={(v) => { setPeriodoSelecionado(v); setPagina(1) }}
+            />
+          )}
           {!isBenchmarkMode && (
             <button onClick={() => refetch()} className="btn-outline flex items-center gap-2" title="Recarregar da planilha">
               <RefreshCw className="w-4 h-4" />

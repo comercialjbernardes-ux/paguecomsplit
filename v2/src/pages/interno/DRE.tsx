@@ -5,7 +5,7 @@
 // TPV é informativo (volume dos ECs), nao linha de resultado
 // ═══════════════════════════════════════════════════════════════
 
-import { useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, Legend,
@@ -14,6 +14,7 @@ import { FileBarChart, TrendingUp, TrendingDown, ArrowRight, CreditCard, Users, 
 import { useInternoData } from '../../hooks/useInternoData'
 import { useDataContext } from '../../contexts/dataContextValue'
 import { LoadingState } from '../../components/LoadingState'
+import { PeriodSelector } from '../../components/PeriodSelector'
 import { formatCurrency, formatCurrencyShort, formatPercent } from '../../utils/format'
 import { calcCustosMensalEfetivo, dataPertenceAoPeriodo } from '../../utils/custos'
 import type { DadosFechamento } from '../../types'
@@ -23,13 +24,48 @@ export function InternoDRE() {
   const { fechamentos, fechamentoAtual, lancamentos, clientes, isLoading } = useInternoData()
   const { equipamentos, custos } = useDataContext()
 
+  const [periodoSelecionado, setPeriodoSelecionado] = useState<string>('ultimo')
+  const isAcumulado = periodoSelecionado === 'acumulado'
+
+  // Fechamento "sintético" para modo acumulado
+  const fechamentoAcumulado = useMemo((): DadosFechamento | null => {
+    if (!isAcumulado || fechamentos.length === 0) return null
+    const n = fechamentos.length
+    const ultimo = fechamentos[fechamentos.length - 1]
+    // Somas corretas para campos de fluxo (acumuláveis por período)
+    const totalTPV    = fechamentos.reduce((s, f) => s + f.tpvTotal, 0)
+    const totalMarkup = fechamentos.reduce((s, f) => s + f.markupPos, 0)
+    return {
+      periodo: `Acumulado (${n} ${n === 1 ? 'mês' : 'meses'})`,
+      ecsAtivos: ultimo.ecsAtivos,           // snapshot do último mês (headcount, não acumulável)
+      tpvTotal: totalTPV,
+      // TPV Médio acumulado = TPV total ÷ ECs do último mês (evita viés de média aritmética)
+      tpvMedio: ultimo.ecsAtivos > 0 ? totalTPV / ultimo.ecsAtivos : ultimo.tpvMedio,
+      markupPos: totalMarkup,
+      comissaoRede: fechamentos.reduce((s, f) => s + f.comissaoRede, 0),
+      repasse: fechamentos.reduce((s, f) => s + f.repasse, 0),
+      faturaDigital: fechamentos.reduce((s, f) => s + f.faturaDigital, 0),
+      descontos: fechamentos.reduce((s, f) => s + f.descontos, 0),
+      valorLiquido: fechamentos.reduce((s, f) => s + f.valorLiquido, 0),
+      // Taxa de margem acumulada = Markup total ÷ TPV total (correto — evita média ponderada incorreta)
+      taxaMargem: totalTPV > 0 ? totalMarkup / totalTPV : 0,
+    }
+  }, [fechamentos, isAcumulado])
+
+  // Fechamento efetivo: acumulado, específico ou último
+  const fechamentoEfetivo = useMemo((): DadosFechamento | null => {
+    if (isAcumulado) return fechamentoAcumulado
+    if (periodoSelecionado === 'ultimo') return fechamentoAtual
+    return fechamentos.find((f) => f.periodo === periodoSelecionado) ?? fechamentoAtual
+  }, [isAcumulado, periodoSelecionado, fechamentoAtual, fechamentoAcumulado, fechamentos])
+
   // Estrutura correta do DRE:
   // Receitas: Markup POS + Comissao Rede + Repasse
   // Deducoes: Fatura Conta Digital + Descontos + Deducoes Lancadas (local)
   // Resultado: Valor Liquido Ajustado (= Receitas - Todas Deducoes)
   const dreData = useMemo(() => {
-    if (!fechamentoAtual) return null
-    const f = fechamentoAtual
+    if (!fechamentoEfetivo) return null
+    const f = fechamentoEfetivo
 
     // Margem real = Markup POS / TPV Total (quanto a empresa ganha sobre o volume processado)
     // Ex: R$28.759 markup / R$2.728.746 TPV = 1,054% — NAO dividir por receitas internas
@@ -38,9 +74,9 @@ export function InternoDRE() {
       : (f.taxaMargem ?? 0) * 100  // taxaMargem stored as decimal (0.01 = 1%)
 
     // Lancamentos manuais (source === 'local') filtrados pelo periodo atual
-    // Garante que lancamentos de outros meses nao contaminem o DRE deste periodo
+    // Em modo acumulado, inclui todos os lançamentos locais sem filtro de período
     const localNoPeriodo = lancamentos.filter(
-      (l) => l.source === 'local' && dataPertenceAoPeriodo(l.data, f.periodo)
+      (l) => l.source === 'local' && (isAcumulado ? true : dataPertenceAoPeriodo(l.data, f.periodo))
     )
 
     // Descontos efetivos: usar campo agregado do fechamento (Resumo) se disponivel.
@@ -49,7 +85,7 @@ export function InternoDRE() {
     // Evita dupla contagem: quando f.descontos > 0, os lancamentos ja estao no agregado.
     const sheetsDescontosPeriodo = f.descontos === 0
       ? lancamentos
-          .filter((l) => l.source === 'sheets' && l.conta === 'Descontos' && dataPertenceAoPeriodo(l.data, f.periodo))
+          .filter((l) => l.source === 'sheets' && l.conta === 'Descontos' && (isAcumulado ? true : dataPertenceAoPeriodo(l.data, f.periodo)))
           .reduce((s, l) => s + Math.abs(l.valor), 0)
       : 0
     const descontosEfetivos = f.descontos > 0 ? f.descontos : sheetsDescontosPeriodo
@@ -64,14 +100,19 @@ export function InternoDRE() {
       .filter((l) => l.tipo === 'despesa')
       .reduce((s, l) => s + Math.abs(l.valor), 0)
 
-    // ERRO 02: deducoes de equipamentos com parcelas ativas
+    // Equipamentos: custo mensal × número de períodos acumulados
+    // Nota: aproximação — não há histórico de parcelasPagas por mês no modelo de dados
+    const nPeriodos = isAcumulado ? fechamentos.length : 1
     const totalEquipMensal = equipamentos.reduce((s, eq) => {
       const restantes = eq.numeroParcelas - eq.parcelasPagas
       return s + (restantes > 0 ? eq.valorParcela : 0)
-    }, 0)
+    }, 0) * nPeriodos
 
-    // Custos operacionais — mensal integral + trimestral/3 + anual/12 + único no período
-    const totalCustosOperacionais = calcCustosMensalEfetivo(custos, f.periodo)
+    // Custos operacionais: em acumulado, soma o custo efetivo de cada período individual
+    // (inclui custos 'unico' que ocorreram em cada mês do intervalo, sem multiplicar prorate)
+    const totalCustosOperacionais = isAcumulado
+      ? fechamentos.reduce((s, fec) => s + calcCustosMensalEfetivo(custos, fec.periodo), 0)
+      : calcCustosMensalEfetivo(custos, f.periodo)
 
     // Receitas: planilha + manuais
     const receitas: { id: string; descricao: string; valor: number; isLocal?: boolean }[] = [
@@ -90,10 +131,10 @@ export function InternoDRE() {
       { id: 'descontos', descricao: 'Descontos do Periodo', valor: descontosEfetivos },
     ]
     if (totalEquipMensal > 0) {
-      deducoes.push({ id: 'equip', descricao: 'Ded. Equipamentos/Maquinas', valor: totalEquipMensal, isEquip: true })
+      deducoes.push({ id: 'equip', descricao: isAcumulado ? `Ded. Equipamentos (${nPeriodos}x)` : 'Ded. Equipamentos/Maquinas', valor: totalEquipMensal, isEquip: true })
     }
     if (totalCustosOperacionais > 0) {
-      deducoes.push({ id: 'custosOp', descricao: 'Custos Operacionais', valor: totalCustosOperacionais, isCustoOp: true })
+      deducoes.push({ id: 'custosOp', descricao: isAcumulado ? `Custos Operacionais (${nPeriodos}x)` : 'Custos Operacionais', valor: totalCustosOperacionais, isCustoOp: true })
     }
     if (totalDeducoesLocais > 0) {
       deducoes.push({ id: 'local', descricao: 'Deducoes Lancadas', valor: totalDeducoesLocais, isLocal: true })
@@ -128,12 +169,12 @@ export function InternoDRE() {
       totalDeducoesLocais,
       descontosEfetivos,
     }
-  }, [fechamentoAtual, lancamentos, equipamentos, custos])
+  }, [fechamentoEfetivo, fechamentos, lancamentos, equipamentos, custos, isAcumulado])
 
   // Waterfall chart: composicao do resultado (sem TPV — TPV e volume dos ECs, nao receita)
   const waterfallData = useMemo(() => {
-    if (!dreData) return []
-    const f = fechamentoAtual!
+    if (!dreData || !fechamentoEfetivo) return []
+    const f = fechamentoEfetivo
     const entries: { name: string; valor: number; tipo: string }[] = [
       { name: 'Markup POS', valor: f.markupPos, tipo: 'positivo' },
       { name: 'Comissao', valor: f.comissaoRede, tipo: 'positivo' },
@@ -157,7 +198,7 @@ export function InternoDRE() {
     }
     entries.push({ name: 'Liquido', valor: dreData.valorLiquidoAjustado, tipo: 'destaque' })
     return entries
-  }, [dreData, fechamentoAtual])
+  }, [dreData, fechamentoEfetivo])
 
   // Evolucao por periodo
   const evolucaoPeriodo = useMemo(() => {
@@ -168,14 +209,14 @@ export function InternoDRE() {
     }))
   }, [fechamentos])
 
-  // Lancamentos locais do periodo atual (fonte: localStorage via DataContext)
-  // Filtra pelo mesmo periodo de fechamentoAtual para exibir apenas entradas do mes corrente
+  // Lancamentos locais do periodo efetivo (fonte: localStorage via DataContext)
+  // Em modo acumulado inclui todos os lançamentos locais
   const lancamentosLocais = useMemo(() => {
-    if (!fechamentoAtual) return []
+    if (!fechamentoEfetivo) return []
     return lancamentos.filter(
-      (l) => l.source === 'local' && dataPertenceAoPeriodo(l.data, fechamentoAtual.periodo)
+      (l) => l.source === 'local' && (isAcumulado ? true : dataPertenceAoPeriodo(l.data, fechamentoEfetivo.periodo))
     )
-  }, [lancamentos, fechamentoAtual])
+  }, [lancamentos, fechamentoEfetivo, isAcumulado])
 
   const receitasLocais = useMemo(() =>
     lancamentosLocais.filter((l) => l.tipo === 'receita'),
@@ -198,15 +239,27 @@ export function InternoDRE() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
-          <FileBarChart className="w-7 h-7 text-blue-500" />
-          DRE Gerencial
-        </h1>
-        <p className="text-gray-500 mt-1">Demonstrativo de resultado — {fechamentoAtual?.periodo || 'sem dados'}</p>
+      <div className="flex items-start justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <FileBarChart className="w-7 h-7 text-blue-500" />
+            DRE Gerencial
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Demonstrativo de resultado — {fechamentoEfetivo?.periodo || 'sem dados'}
+            {isAcumulado && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium">acumulado</span>}
+          </p>
+        </div>
+        {fechamentos.length > 0 && (
+          <PeriodSelector
+            fechamentos={fechamentos}
+            value={periodoSelecionado}
+            onChange={setPeriodoSelecionado}
+          />
+        )}
       </div>
 
-      {fechamentoAtual && (
+      {fechamentoEfetivo && (
         <>
           {/* Contexto operacional (informativo — TPV e ECs nao sao receita da empresa) */}
           <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
@@ -218,21 +271,21 @@ export function InternoDRE() {
                 <CreditCard className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-gray-500">TPV Total</p>
-                  <p className="text-lg font-bold text-gray-800">{formatCurrency(fechamentoAtual.tpvTotal)}</p>
+                  <p className="text-lg font-bold text-gray-800">{formatCurrency(fechamentoEfetivo.tpvTotal)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Users className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-gray-500">ECs Ativos</p>
-                  <p className="text-lg font-bold text-gray-800">{fechamentoAtual.ecsAtivos}</p>
+                  <p className="text-lg font-bold text-gray-800">{fechamentoEfetivo.ecsAtivos}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <TrendingUp className="w-5 h-5 text-blue-500 flex-shrink-0" />
                 <div>
                   <p className="text-xs text-gray-500">TPV Medio por EC</p>
-                  <p className="text-lg font-bold text-gray-800">{formatCurrency(fechamentoAtual.tpvMedio)}</p>
+                  <p className="text-lg font-bold text-gray-800">{formatCurrency(fechamentoEfetivo.tpvMedio)}</p>
                 </div>
               </div>
             </div>
@@ -242,37 +295,37 @@ export function InternoDRE() {
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <DRECard
               label="Markup POS"
-              value={formatCurrency(fechamentoAtual.markupPos)}
-              variacao={fechamentoAtual.variacaoMarkup}
+              value={formatCurrency(fechamentoEfetivo.markupPos)}
+              variacao={fechamentoEfetivo.variacaoMarkup}
               icon={<TrendingUp className="w-5 h-5" />}
               color="emerald"
             />
             <DRECard
               label="Repasse"
-              value={formatCurrency(fechamentoAtual.repasse)}
+              value={formatCurrency(fechamentoEfetivo.repasse)}
               icon={<ArrowRight className="w-5 h-5" />}
               color="blue"
             />
             <DRECard
               label="Taxa de Margem"
-              value={formatPercent(dreData?.margemCalculada ?? (fechamentoAtual.taxaMargem * 100), 2)}
-              variacao={fechamentoAtual.variacaoMargem}
+              value={formatPercent(dreData?.margemCalculada ?? (fechamentoEfetivo.taxaMargem * 100), 2)}
+              variacao={fechamentoEfetivo.variacaoMargem}
               icon={<TrendingUp className="w-5 h-5" />}
               color={
-                (dreData?.margemCalculada ?? (fechamentoAtual.taxaMargem * 100)) >= 2 ? 'emerald'
-                : (dreData?.margemCalculada ?? (fechamentoAtual.taxaMargem * 100)) >= 1 ? 'blue'
+                (dreData?.margemCalculada ?? (fechamentoEfetivo.taxaMargem * 100)) >= 2 ? 'emerald'
+                : (dreData?.margemCalculada ?? (fechamentoEfetivo.taxaMargem * 100)) >= 1 ? 'blue'
                 : 'red'
               }
             />
             <DRECard
               label="Total Deducoes"
-              value={`- ${formatCurrency(dreData?.totalDeducoes ?? (fechamentoAtual.faturaDigital + fechamentoAtual.descontos))}`}
+              value={`- ${formatCurrency(dreData?.totalDeducoes ?? (fechamentoEfetivo.faturaDigital + fechamentoEfetivo.descontos))}`}
               icon={<TrendingDown className="w-5 h-5" />}
               color="red"
             />
             <DRECard
               label="Valor Liquido"
-              value={formatCurrency(dreData?.valorLiquidoAjustado ?? fechamentoAtual.valorLiquido)}
+              value={formatCurrency(dreData?.valorLiquidoAjustado ?? fechamentoEfetivo.valorLiquido)}
               icon={<ArrowRight className="w-5 h-5" />}
               color="navy"
             />
@@ -297,7 +350,8 @@ export function InternoDRE() {
             {dreData && (
               <div className="card">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Demonstrativo — {fechamentoAtual.periodo}
+                  Demonstrativo — {fechamentoEfetivo.periodo}
+                  {isAcumulado && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">acumulado</span>}
                 </h3>
                 <table className="w-full text-sm">
                   <thead>
@@ -458,11 +512,11 @@ export function InternoDRE() {
               )}
             </div>
           </div>
-          {fechamentoAtual && (
+          {fechamentoEfetivo && (
             <div className="bg-white rounded-xl p-4 border border-blue-100 flex justify-between items-center">
               <span className="font-semibold text-gray-800">Resultado Ajustado (Sheets + Manual)</span>
               <span className="text-xl font-bold text-blue-900">
-                {formatCurrency(dreData?.valorLiquidoAjustado ?? fechamentoAtual.valorLiquido)}
+                {formatCurrency(dreData?.valorLiquidoAjustado ?? fechamentoEfetivo.valorLiquido)}
               </span>
             </div>
           )}
@@ -488,7 +542,7 @@ export function InternoDRE() {
       )}
 
       {/* Vazio */}
-      {!fechamentoAtual && !isLoading && (
+      {!fechamentoEfetivo && !isLoading && (
         <div className="card text-center py-12">
           <FileBarChart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-gray-500">Sem dados de fechamento</h3>

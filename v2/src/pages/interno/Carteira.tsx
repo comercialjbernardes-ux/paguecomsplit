@@ -14,10 +14,11 @@ import { Users, Search, Filter, TrendingUp, Heart, Wifi, DollarSign, Activity } 
 import { useInternoData } from '../../hooks/useInternoData'
 import { useDataContext } from '../../contexts/dataContextValue'
 import { LoadingState } from '../../components/LoadingState'
+import { PeriodSelector } from '../../components/PeriodSelector'
 import {
   formatCurrency, formatNumber, getStatusBadgeClass, getChartColor,
 } from '../../utils/format'
-import { calcCustosMensalSemUnico } from '../../utils/custos'
+import { calcCustosMensalSemUnico, calcCustosMensalEfetivo } from '../../utils/custos'
 import { PRECO_CONTA_DIGITAL } from '../../constants/empresa'
 import {
   calcHealthScore, getHealthStatus, calcMargemReal,
@@ -27,13 +28,23 @@ import {
 const SEGMENTOS_FIXOS = ['Alimentacao', 'Comercio', 'Saude', 'Servicos', 'Hospedagem & Lazer', 'Outros']
 
 export function InternoCarteira() {
-  const { clientes, segmentos, isLoading } = useInternoData()
+  const { clientes, segmentos, isLoading, fechamentos, fechamentoAtual } = useInternoData()
   const { saveSegmentOverride, removeSegmentOverride, custos, equipamentos } = useDataContext()
   const [filtroSegmento, setFiltroSegmento] = useState('todos')
   const [filtroVendedor, setFiltroVendedor] = useState('todos')
   const [filtroStatus, setFiltroStatus] = useState('todos')
   const [busca, setBusca] = useState('')
   const [aba, setAba] = useState<'carteira' | 'saude' | 'lucratividade'>('carteira')
+
+  // ── Período selecionado ────────────────────────────────────────
+  const [periodoSelecionado, setPeriodoSelecionado] = useState<string>('ultimo')
+  const isAcumulado = periodoSelecionado === 'acumulado'
+
+  const periodoEfetivo = useMemo(() => {
+    if (isAcumulado) return null
+    if (periodoSelecionado === 'ultimo') return fechamentoAtual?.periodo ?? null
+    return periodoSelecionado
+  }, [isAcumulado, periodoSelecionado, fechamentoAtual])
 
   // Clientes filtrados
   const filtrados = useMemo(() => {
@@ -162,9 +173,14 @@ export function InternoCarteira() {
   const markupDistribuicao    = useMemo(() => getMarkupDistribution(filtrados),       [filtrados])
 
   // MELHORIA 06: lucro estimado por cliente (custo proporcional por volume)
+  // Usa calcCustosMensalEfetivo com período específico se selecionado
   const rankingLucratividade = useMemo(() => {
+    const custoMensalBase = periodoEfetivo
+      ? calcCustosMensalEfetivo(custos, periodoEfetivo)
+      : calcCustosMensalSemUnico(custos)
+
     const custoMensalTotal =
-      calcCustosMensalSemUnico(custos) +
+      custoMensalBase +
       equipamentos.reduce((s, eq) => {
         const restantes = eq.numeroParcelas - eq.parcelasPagas
         return s + (restantes > 0 ? eq.valorParcela : 0)
@@ -181,7 +197,7 @@ export function InternoCarteira() {
       const lucroEstimado = c.ticketMedio - custoCliente - custoContaDigital
       return { ...c, custoCliente: custoCliente + custoContaDigital, lucroEstimado }
     }).sort((a, b) => b.lucroEstimado - a.lucroEstimado)
-  }, [filtrados, custos, equipamentos])
+  }, [filtrados, custos, equipamentos, periodoEfetivo])
 
   if (isLoading) return <LoadingState message="Carregando carteira..." />
 
@@ -194,29 +210,42 @@ export function InternoCarteira() {
             <Users className="w-7 h-7 text-blue-500" />
             Analise de Carteira
           </h1>
-          <p className="text-gray-500 mt-1">Perfil, segmento e top clientes</p>
+          <p className="text-gray-500 mt-1">
+            Perfil, segmento e top clientes
+            {periodoEfetivo && !isAcumulado && <span className="ml-2 text-xs text-gray-400">— {periodoEfetivo}</span>}
+            {isAcumulado && <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">acumulado</span>}
+          </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setAba('carteira')}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === 'carteira' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            Carteira
-          </button>
-          <button
-            onClick={() => setAba('saude')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === 'saude' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            <Heart className="w-4 h-4" />
-            Saude
-          </button>
-          <button
-            onClick={() => setAba('lucratividade')}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === 'lucratividade' ? 'bg-violet-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-          >
-            <DollarSign className="w-4 h-4" />
-            Lucratividade
-          </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {fechamentos.length > 0 && (
+            <PeriodSelector
+              fechamentos={fechamentos}
+              value={periodoSelecionado}
+              onChange={setPeriodoSelecionado}
+            />
+          )}
+          <div className="flex gap-2">
+            <button
+              onClick={() => setAba('carteira')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === 'carteira' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              Carteira
+            </button>
+            <button
+              onClick={() => setAba('saude')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === 'saude' ? 'bg-emerald-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              <Heart className="w-4 h-4" />
+              Saude
+            </button>
+            <button
+              onClick={() => setAba('lucratividade')}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${aba === 'lucratividade' ? 'bg-violet-500 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+            >
+              <DollarSign className="w-4 h-4" />
+              Lucratividade
+            </button>
+          </div>
         </div>
       </div>
 
