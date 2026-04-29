@@ -254,11 +254,18 @@ export function mapRowsMKPdePOS(rows: (string | number)[][], periodo = 'atual'):
 
   return rows
     .slice(dataStart)
-    // Filtra linhas de header que possam ter escapado (texto "cnpj", "nome", "estabelec")
+    // Filtra linhas de header e linhas de sumarização/total
     .filter((row) => {
       if (row.length < 3) return false
       const cell = String(row[NOMEi] || '').toLowerCase()
+      // Rejeita headers conhecidos
       if (/^(cnpj|nome|estabelec|header|detalhamento)/.test(cell)) return false
+      // Rejeita linhas de TOTAL: "TOTAL — 59 ECs", "TOTAL GERAL", "TOTAL" etc.
+      // Usa [\s\-–—] para não rejeitar empresas como "Totaltech LTDA"
+      if (/^total[\s\-–—]|^total$/.test(cell)) return false
+      // Varredura extra: rejeita se QUALQUER célula da linha começar com "TOTAL "
+      // (cobre total rows onde o rótulo pode estar em coluna diferente do nome)
+      if (row.some((c) => /^total[\s\-–—]/i.test(String(c || '').trim()))) return false
       // Precisa ter ao menos nome ou CNPJ preenchido
       return Boolean(row[NOMEi] || row[CNPJi])
     })
