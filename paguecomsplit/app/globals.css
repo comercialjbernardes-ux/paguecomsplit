@@ -1,0 +1,58 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: 10 37 64;
+    --color-accent: 0 200 150;
+    --color-accent-warm: 255 107 53;
+    --color-bg: 247 249 252;
+    --color-surface: 255 255 255;
+    --color-text: 26 26 46;
+    --color-text-muted: 107 114 128;
+
+    --background: var(--color-bg);
+    --foreground: var(--color-text);
+
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-slate-200;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-bg text-text antialiased;
+    font-family: var(--font-body), system-ui, -apple-system, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display), system-ui, sans-serif;
+    @apply font-bold tracking-tight;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .container-page {
+    @apply mx-auto w-full max-w-6xl px-5 md:px-8;
+  }
+
+  .gradient-hero {
+    background: radial-gradient(120% 80% at 50% 0%, rgba(0, 200, 150, 0.08) 0%, transparent 60%),
+                linear-gradient(180deg, rgb(var(--color-bg)) 0%, rgb(var(--color-surface)) 100%);
+  }
+}
