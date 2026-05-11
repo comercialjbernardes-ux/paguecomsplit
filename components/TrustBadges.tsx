@@ -1,0 +1,53 @@
+import { Landmark, ShieldCheck, Scale } from "lucide-react";
+import { LegalOpinionModal } from "./LegalOpinionModal";
+
+export function TrustBadges() {
+  return (
+    <section className="container-page py-12 md:py-16">
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white p-5 shadow-soft">
+          <ShieldCheck className="h-8 w-8 flex-none text-accent-600" aria-hidden />
+          <div>
+            <p className="font-display text-sm font-bold text-primary-600">
+              Infraestrutura Cappta
+            </p>
+            <p className="text-sm text-muted leading-snug">
+              +14 anos de mercado, +R$ 7 bi/ano processados.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white p-5 shadow-soft">
+          <Landmark className="h-8 w-8 flex-none text-accent-600" aria-hidden />
+          <div>
+            <p className="font-display text-sm font-bold text-primary-600">
+              Regulado pelo BACEN
+            </p>
+            <p className="text-sm text-muted leading-snug">
+              Operação sob a regulação do Banco Central do Brasil.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white p-5 shadow-soft">
+          <Scale className="h-8 w-8 flex-none text-accent-600" aria-hidden />
+          <div>
+            <p className="font-display text-sm font-bold text-primary-600">
+              Parecer Jurídico
+            </p>
+            <p className="text-sm text-muted leading-snug mb-2">
+              Barcellos Tucunduva Advogados.
+            </p>
+            <LegalOpinionModal />
+          </div>
+        </div>
+      </div>
+
+      <p className="text-center text-sm text-muted mt-8 max-w-3xl mx-auto text-balance">
+        A SplitTech opera sobre infraestrutura Cappta, com mais de 14 anos de
+        mercado e mais de R$ 7 bilhões processados por ano, regulada pelo Banco
+        Central do Brasil.
+      </p>
+    </section>
+  );
+}

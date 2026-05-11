@@ -1,0 +1,226 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { segments, getSegmentBySlug, type Segment } from "@/lib/segments";
+import { NavBar } from "@/components/NavBar";
+import { Footer } from "@/components/Footer";
+import { SegmentHero } from "@/components/sections/SegmentHero";
+import { ProblemSection } from "@/components/sections/ProblemSection";
+import { CofreDigitalSection } from "@/components/sections/CofreDigitalSection";
+import { StepByStep } from "@/components/sections/StepByStep";
+import { DifferentialsGrid } from "@/components/sections/DifferentialsGrid";
+import { TestimonialBlock } from "@/components/sections/TestimonialBlock";
+import { EconomySimulator } from "@/components/EconomySimulator";
+import { LeadForm } from "@/components/LeadForm";
+import { TrustBadges } from "@/components/TrustBadges";
+import { CTAWhatsApp } from "@/components/CTAWhatsApp";
+import { SegmentGrid } from "@/components/SegmentGrid";
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://paguecomsplit.com.br";
+
+type Params = { segmento: string };
+
+export function generateStaticParams(): Params[] {
+  return segments.map((s) => ({ segmento: s.slug }));
+}
+
+export function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Metadata {
+  const segment = getSegmentBySlug(params.segmento);
+  if (!segment) return {};
+  const url = `${SITE_URL}/${segment.slug}`;
+  return {
+    title: segment.meta_title,
+    description: segment.meta_description,
+    keywords: segment.keywords,
+    alternates: { canonical: url },
+    openGraph: {
+      title: segment.meta_title,
+      description: segment.meta_description,
+      url,
+      type: "website",
+      locale: "pt_BR",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: segment.meta_title,
+      description: segment.meta_description,
+    },
+  };
+}
+
+export default function SegmentPage({ params }: { params: Params }) {
+  const segment = getSegmentBySlug(params.segmento);
+  if (!segment) notFound();
+
+  return (
+    <>
+      <SegmentJsonLd segment={segment} />
+      <NavBar />
+      <main>
+        {/* 1. Hero */}
+        <SegmentHero segment={segment} />
+
+        {/* 2. Problema */}
+        <ProblemSection segment={segment} />
+
+        {/* 3. Simulador */}
+        <section id="simulador" className="bg-white border-y border-slate-100">
+          <div className="container-page py-16 md:py-24">
+            <div className="max-w-2xl mb-10">
+              <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
+                Simulador
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-3 text-balance">
+                Quanto você está pagando a mais?
+              </h2>
+              <p className="text-muted text-pretty">
+                Ajuste os números para o seu negócio. Já carregamos os valores
+                típicos de {segment.name.toLowerCase()} para você só calibrar.
+              </p>
+            </div>
+            <EconomySimulator
+              defaults={segment.example}
+              segmentName={segment.name}
+              whatsappMessage={segment.whatsapp_message}
+            />
+          </div>
+        </section>
+
+        {/* 4. Cofre Digital */}
+        <CofreDigitalSection
+          example={segment.example}
+          thirdParty={segment.third_party}
+        />
+
+        {/* 5. Passo a passo */}
+        <StepByStep />
+
+        {/* 6. Diferenciais */}
+        <DifferentialsGrid />
+
+        {/* 7. Prova social — somente se houver depoimento */}
+        {segment.testimonial ? (
+          <TestimonialBlock testimonial={segment.testimonial} />
+        ) : null}
+
+        {/* 8. Credibilidade */}
+        <TrustBadges />
+
+        {/* 9. Formulario de captura */}
+        <section className="bg-bg">
+          <div className="container-page py-16 md:py-24">
+            <div className="grid gap-10 lg:grid-cols-5">
+              <div className="lg:col-span-2">
+                <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
+                  Fale com um especialista
+                </p>
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-4 text-balance">
+                  Quando o assunto é o seu caixa, vale conversar.
+                </h2>
+                <p className="text-text/70 leading-relaxed mb-6 text-pretty">
+                  Preencha ao lado ou chame direto no WhatsApp. Sem cobrança,
+                  sem compromisso — só uma análise honesta do seu caso.
+                </p>
+                <CTAWhatsApp
+                  message={segment.whatsapp_message}
+                  label="Chamar no WhatsApp"
+                  size="lg"
+                />
+              </div>
+              <div className="lg:col-span-3">
+                <LeadForm defaultSegment={segment.slug} />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Outros segmentos */}
+        <section className="container-page py-16">
+          <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
+            Outros segmentos
+          </p>
+          <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-600 mb-8">
+            O split também resolve para…
+          </h2>
+          <SegmentGrid highlightSlug={segment.slug} />
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
+}
+
+function SegmentJsonLd({ segment }: { segment: Segment }) {
+  const service = {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: `Split de pagamento SplitTech para ${segment.name}`,
+    serviceType: "Adquirência com split de pagamento",
+    provider: {
+      "@type": "Organization",
+      name: "SplitTech",
+      url: SITE_URL,
+    },
+    areaServed: "BR",
+    description: segment.meta_description,
+    audience: { "@type": "BusinessAudience", audienceType: segment.name },
+  };
+
+  const faq = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: `Como o split de pagamento ajuda ${segment.name.toLowerCase()}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: segment.pain +
+            " Com o Cofre Digital, o repasse a " +
+            segment.third_party.toLowerCase() +
+            " sai antes do imposto incidir — você tributa só sua margem.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Isso é legal? Tem amparo jurídico?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "Sim. A operação tem parecer da Barcellos Tucunduva Advogados, opera sobre infraestrutura Cappta (14+ anos) e é regulada pelo Banco Central do Brasil.",
+        },
+      },
+      {
+        "@type": "Question",
+        name: "Quanto eu posso economizar?",
+        acceptedAnswer: {
+          "@type": "Answer",
+          text:
+            "Depende do seu % de repasse e da sua alíquota no Simples. No exemplo calibrado para o seu segmento, a economia anual estimada é de " +
+            new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(
+              segment.example.annual_savings
+            ) + ".",
+        },
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(service) }}
+      />
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faq) }}
+      />
+    </>
+  );
+}
