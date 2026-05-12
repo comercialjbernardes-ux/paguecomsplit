@@ -19,7 +19,7 @@ const SITE_URL =
 export const metadata: Metadata = {
   title: "Para Representantes",
   description:
-    "Distribua uma solução que vende sozinha. Comissão recorrente por cliente ativado no split de pagamento da SplitTech.",
+    "Você apresenta o cálculo. O cliente vê quanto está perdendo de DAS. Você fecha. Comissão por ativação + recorrência sem teto.",
   alternates: { canonical: `${SITE_URL}/representantes` },
   openGraph: {
     title: "Para Representantes | paguecomsplit.com.br",
@@ -35,43 +35,43 @@ const MODEL = [
   {
     icon: Coins,
     title: "Comissão por ativação",
-    desc: "Valor fixo por cada cliente que você cadastra e que efetivamente ativa a maquininha.",
+    desc: "Valor fixo a cada cliente que ativa a maquininha SplitTech. Pago no mês da ativação.",
   },
   {
     icon: Repeat,
     title: "Recorrência mensal",
-    desc: "Você recebe um % sobre o volume processado pelo cliente, enquanto ele estiver ativo.",
+    desc: "Percentual sobre o volume processado por cada cliente, todo mês, enquanto ele estiver ativo.",
   },
   {
     icon: InfinityIcon,
     title: "Sem teto",
-    desc: "Quantos clientes você quiser na sua carteira. Sua receita escala com a sua rede.",
+    desc: "Sua carteira cresce, sua receita cresce. Sem limite de clientes, sem limite de comissão.",
   },
 ];
 
 const DISTRIBUTION = [
-  "Você recebe seus links segmentados exclusivos (ex: paguecomsplit.com.br/estetica?rep=seu-codigo)",
-  "Envia para o prospect certo, no canal certo",
-  "Prospect converte via LP ou WhatsApp",
-  "Lead entra automaticamente na sua carteira",
+  "Você recebe links segmentados exclusivos (ex.: paguecomsplit.com.br/estetica?rep=seu-codigo)",
+  "Envia para o prospect certo, no canal certo (WhatsApp, indicação, redes sociais)",
+  "O prospect simula a economia, vê o número e fala com você ou com o nosso time",
+  "O lead já entra na sua carteira",
   "Você acompanha conversões e comissões no painel",
 ];
 
 const MATERIAL = [
   {
     icon: Link2,
-    title: "Links rastreados",
-    desc: "Um link por segmento com o seu código de representante embutido.",
+    title: "Links rastreados por segmento",
+    desc: "Um link por segmento com o seu código embutido. Toda conversão entra na sua carteira.",
   },
   {
     icon: Share2,
-    title: "Conteúdo segmentado",
-    desc: "Posts, copies para WhatsApp e roteiros prontos por segmento.",
+    title: "Roteiros e copies prontos",
+    desc: "Posts, copies para WhatsApp e roteiros de abordagem prontos por segmento.",
   },
   {
     icon: LineChart,
-    title: "Simulador como ferramenta",
-    desc: "Use o simulador de economia em reuniões para mostrar o ganho na hora.",
+    title: "Simulador como ferramenta de venda",
+    desc: "Em reunião, o cliente vê quanto perde de DAS por mês. O número fecha a venda sozinho.",
   },
 ];
 
@@ -82,22 +82,22 @@ export default function RepresentantesPage() {
       <main>
         {/* 1. Proposta de valor */}
         <section className="gradient-hero">
-          <div className="container-page pt-16 pb-20 md:pt-24 md:pb-24">
+          <div className="container-page pt-14 pb-14 md:pt-20 md:pb-16">
             <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-4">
-              Para representantes
+              Para representantes e contadores
             </p>
-            <h1 className="font-display text-4xl md:text-6xl font-extrabold text-primary-600 leading-[1.05] tracking-tight max-w-3xl text-balance">
-              Distribua uma solução que <span className="text-accent-600">vende sozinha</span>.
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary-600 leading-[1.05] tracking-tight max-w-3xl text-balance">
+              Você apresenta. O cliente vê o número. <span className="text-accent-600">Você fecha.</span>
             </h1>
-            <p className="mt-6 text-lg md:text-2xl text-text/80 max-w-3xl text-pretty">
-              Cada cliente que você cadastra gera comissão recorrente enquanto
-              ele usa o sistema. Sem produto para entregar, sem suporte para
-              fazer — só vender economia tributária.
+            <p className="mt-5 text-lg md:text-xl text-text/80 max-w-3xl text-pretty">
+              Vender split é vender economia certa. Você mostra quanto o
+              cliente está perdendo de DAS todo mês — e ele decide. Sem
+              produto pra entregar, sem suporte pra fazer.
             </p>
 
-            <div className="mt-8">
+            <div className="mt-7">
               <CTAWhatsApp
-                message="Olá! Quero entender o programa de representantes da SplitTech."
+                message="Oi, quero entender o programa de representantes da SplitTech."
                 label="Quero conversar antes"
                 size="xl"
                 variant="outline"
@@ -107,13 +107,13 @@ export default function RepresentantesPage() {
         </section>
 
         {/* 2. Modelo de negocio */}
-        <section className="container-page py-16 md:py-24">
+        <section className="container-page py-12 md:py-16">
           <div className="max-w-2xl mb-10">
             <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
               Modelo de negócio
             </p>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 text-balance">
-              Você ganha duas vezes — e depois sempre.
+              Você ganha na ativação. E na recorrência, todo mês.
             </h2>
           </div>
           <ul className="grid gap-5 md:grid-cols-3" role="list">
@@ -138,13 +138,13 @@ export default function RepresentantesPage() {
 
         {/* 3. Como funciona a distribuicao */}
         <section className="bg-white border-y border-slate-100">
-          <div className="container-page py-16 md:py-20">
+          <div className="container-page py-12 md:py-16">
             <div className="max-w-2xl mb-10">
               <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
                 Distribuição
               </p>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 text-balance">
-                Como funciona o fluxo de indicação.
+                Como funciona o fluxo na prática.
               </h2>
             </div>
 
@@ -170,7 +170,7 @@ export default function RepresentantesPage() {
         </section>
 
         {/* 4. Material de apoio */}
-        <section className="container-page py-16 md:py-20">
+        <section className="container-page py-12 md:py-16">
           <div className="max-w-2xl mb-10">
             <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
               Material de apoio
@@ -200,7 +200,7 @@ export default function RepresentantesPage() {
 
         {/* 5. Form de cadastro */}
         <section className="bg-bg">
-          <div className="container-page py-16 md:py-24">
+          <div className="container-page py-12 md:py-16">
             <div className="grid gap-10 lg:grid-cols-5">
               <div className="lg:col-span-2">
                 <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
@@ -210,12 +210,12 @@ export default function RepresentantesPage() {
                   Comece em 1 dia útil.
                 </h2>
                 <p className="text-text/70 leading-relaxed mb-6 text-pretty">
-                  Após o cadastro, o time comercial entra em contato para
+                  Depois do cadastro, o time comercial entra em contato para
                   alinhar valores, gerar seus links rastreados e te enviar o
                   material de apoio.
                 </p>
                 <p className="inline-flex items-center gap-2 text-sm text-accent-700 font-semibold">
-                  Sem custo de adesão · sem mensalidade
+                  Adesão grátis · cancele quando quiser
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </p>
               </div>

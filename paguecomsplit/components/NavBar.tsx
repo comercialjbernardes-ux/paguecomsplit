@@ -25,8 +25,8 @@ export function NavBar() {
         </nav>
 
         <CTAWhatsApp
-          message="Olá! Vim do paguecomsplit.com.br e quero entender o split de pagamento."
-          label="Falar agora"
+          message="Oi, vim do paguecomsplit.com.br e quero entender como deixar de pagar DAS sobre a receita do meu parceiro."
+          label="Quero economizar"
           size="sm"
           variant="default"
         />

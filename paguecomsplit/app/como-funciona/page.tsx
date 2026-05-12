@@ -14,12 +14,12 @@ const SITE_URL =
 export const metadata: Metadata = {
   title: "Como funciona o Cofre Digital",
   description:
-    "Entenda como o split de pagamento da SplitTech separa o repasse a terceiros antes do Simples Nacional incidir.",
+    "Cada parte é separada antes de gerar imposto. A SplitTech administra a divisão do pagamento antes do DAS incidir — você tributa só a sua margem real.",
   alternates: { canonical: `${SITE_URL}/como-funciona` },
   openGraph: {
     title: "Como funciona o Cofre Digital | paguecomsplit.com.br",
     description:
-      "Split de pagamento, infraestrutura Cappta e parecer Barcellos Tucunduva — explicado em linguagem simples.",
+      "Split de pagamento, infraestrutura Cappta e parecer Barcellos Tucunduva — em linguagem direta, sem juridiquês.",
     url: `${SITE_URL}/como-funciona`,
     type: "article",
     locale: "pt_BR",
@@ -29,23 +29,23 @@ export const metadata: Metadata = {
 const FAQS = [
   {
     q: "O split é regulamentado?",
-    a: "Sim. A operação opera sobre infraestrutura Cappta (+14 anos, +R$ 7 bi/ano processados), regulada pelo Banco Central do Brasil. O modelo de split é a prática padrão do mercado de adquirência para repasses a múltiplos beneficiários.",
+    a: "Sim. A operação roda sobre infraestrutura Cappta (+14 anos, +R$ 7 bi/ano processados), regulada pelo Banco Central. Split é a prática padrão do mercado de adquirência para repasses a múltiplos beneficiários — não é gambiarra, é norma.",
   },
   {
-    q: "Por que o repasse fica fora da minha receita tributável?",
-    a: "Porque, juridicamente, o valor que pertence ao terceiro nunca foi seu — você só atuou como intermediário do pagamento. O split formaliza esse fluxo: o dinheiro do terceiro vai direto para a conta dele, antes de cair na sua. Você só tributa a sua margem real.",
+    q: "Por que a parte do parceiro fica fora da minha receita tributável?",
+    a: "Porque o valor que pertence ao parceiro nunca foi seu. Quando a divisão é gerida na origem da transação, o dinheiro do parceiro vai direto para a conta dele — antes de virar receita sua. Você passa a tributar só a sua margem real.",
   },
   {
-    q: "Preciso de um contrato com o terceiro?",
-    a: "Sim. O parecer pressupõe contratos formais com cada terceiro envolvido. Profissionais autônomos, parceiros, fornecedores — todos devem estar contratados de forma que o repasse seja claramente identificado.",
+    q: "Preciso de um contrato com o parceiro?",
+    a: "Sim. O parecer pressupõe contratos formais com cada parceiro envolvido na divisão. Profissionais autônomos, fornecedores, empreiteiros — todos precisam estar contratados de forma que a parte que pertence a cada um seja identificável.",
   },
   {
     q: "Funciona com qualquer empresa no Simples Nacional?",
-    a: "O split funciona melhor quando você tem repasses recorrentes a terceiros identificáveis. Restaurantes (gorjeta), clínicas (profissionais parceiros), oficinas (peças), etc. Se você tem zero repasse, não há economia. Use o simulador para ver seu cenário.",
+    a: "Funciona quando você tem repasses recorrentes a parceiros identificáveis. Restaurantes (gorjeta), clínicas (profissionais parceiros), oficinas (peças), construção (empreiteiros), etc. Se você não tem repasse, não há economia. Use o simulador para ver o seu caso.",
   },
   {
     q: "Posso ver o parecer jurídico completo?",
-    a: "Sim. O resumo está disponível no modal das landing pages. A versão integral é compartilhada pelo time comercial mediante solicitação no WhatsApp.",
+    a: "Sim. O resumo está no modal das landing pages. A versão integral é compartilhada pelo time comercial mediante solicitação no WhatsApp.",
   },
 ];
 
@@ -55,36 +55,38 @@ export default function ComoFuncionaPage() {
       <NavBar />
       <main>
         <section className="gradient-hero">
-          <div className="container-page pt-16 pb-16 md:pt-24 md:pb-20">
+          <div className="container-page pt-14 pb-14 md:pt-20 md:pb-16">
             <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-4">
               Como funciona
             </p>
-            <h1 className="font-display text-4xl md:text-6xl font-extrabold text-primary-600 leading-[1.05] tracking-tight max-w-3xl text-balance">
-              O Cofre Digital, em linguagem simples.
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary-600 leading-[1.05] tracking-tight max-w-3xl text-balance">
+              Cada parte é separada antes de gerar imposto.
             </h1>
-            <p className="mt-6 text-lg md:text-xl text-text/80 max-w-2xl text-pretty">
-              Sem juridiquês. Você precisa entender três coisas: o problema, o
-              fluxo e o amparo.
+            <p className="mt-5 text-lg md:text-xl text-text/80 max-w-2xl text-pretty">
+              Em 3 ideias: o problema, o fluxo, o amparo. Sem juridiquês.
+            </p>
+            <p className="mt-5 text-sm font-semibold text-primary-600/80">
+              Cappta · +R$ 7 bi/ano processados · Regulado BACEN
             </p>
           </div>
         </section>
 
-        <section className="container-page py-16">
+        <section className="container-page py-12 md:py-16">
           <div className="grid gap-6 md:grid-cols-3 max-w-5xl">
             <Card
               icon={<Vault className="h-7 w-7" aria-hidden />}
               title="O conceito"
-              body="Cofre Digital é uma conta de passagem regulada. O pagamento entra, e antes de virar saldo na sua conta, é dividido entre você e os terceiros."
+              body="O Cofre Digital recebe o pagamento, separa a parte do parceiro, e só depois deposita a sua. A divisão é gerida na origem da transação."
             />
             <Card
               icon={<ShieldCheck className="h-7 w-7" aria-hidden />}
               title="A regulação"
-              body="Infraestrutura Cappta, regulada pelo BACEN. Mesma base usada por adquirentes consolidados — não é uma operação 'fora da curva'."
+              body="Infraestrutura Cappta, regulada pelo BACEN. A mesma base usada por adquirentes consolidados — split é a prática padrão do mercado de adquirência."
             />
             <Card
               icon={<Building2 className="h-7 w-7" aria-hidden />}
               title="A consequência"
-              body="O Simples Nacional incide só sobre o que efetivamente é receita sua. Você não paga DAS sobre dinheiro do seu parceiro."
+              body="Você passa a tributar só a sua margem real. O dinheiro do seu parceiro nunca virou sua receita — e nunca entra no seu DAS."
             />
           </div>
         </section>
@@ -92,7 +94,7 @@ export default function ComoFuncionaPage() {
         <StepByStep />
 
         <section className="bg-white border-y border-slate-100">
-          <div className="container-page py-16 md:py-20">
+          <div className="container-page py-12 md:py-16">
             <div className="max-w-3xl">
               <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
                 Perguntas frequentes
@@ -121,25 +123,26 @@ export default function ComoFuncionaPage() {
 
         <TrustBadges />
 
-        <section className="container-page py-16 md:py-20">
+        <section className="container-page py-12 md:py-16">
           <div className="rounded-2xl bg-primary-600 text-white p-8 md:p-12 text-center">
             <h2 className="font-display text-2xl md:text-3xl font-bold mb-3 text-balance">
-              Pronto para ver o seu caso?
+              Não seja mais tributado pela receita do parceiro.
             </h2>
             <p className="text-white/70 mb-6 max-w-xl mx-auto text-pretty">
-              Simule sua economia em 30 segundos ou fale direto com um
-              especialista no WhatsApp.
+              Calcule sua economia em 30 segundos ou fale direto com um
+              especialista no WhatsApp — a gente refaz a conta com os seus
+              números reais.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <Button asChild variant="default" size="lg">
                 <Link href="/#simulador">
-                  Simular economia
+                  Calcular minha economia
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </Link>
               </Button>
               <CTAWhatsApp
-                message="Olá! Li como funciona o split em paguecomsplit.com.br e quero falar com um especialista."
-                label="Falar com especialista"
+                message="Oi, li como funciona o split em paguecomsplit.com.br e quero falar com um especialista."
+                label="Quero falar com especialista"
                 variant="primary"
                 size="lg"
               />

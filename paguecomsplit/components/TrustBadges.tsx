@@ -4,7 +4,10 @@ import { LegalOpinionModal } from "./LegalOpinionModal";
 export function TrustBadges() {
   return (
     <section className="container-page py-12 md:py-16">
-      <div className="grid gap-4 md:grid-cols-3">
+      <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3 text-center">
+        A infraestrutura por trás do split
+      </p>
+      <div className="grid gap-4 md:grid-cols-3 mt-4">
         <div className="flex items-start gap-3 rounded-lg border border-slate-100 bg-white p-5 shadow-soft">
           <ShieldCheck className="h-8 w-8 flex-none text-accent-600" aria-hidden />
           <div>
@@ -12,7 +15,8 @@ export function TrustBadges() {
               Infraestrutura Cappta
             </p>
             <p className="text-sm text-muted leading-snug">
-              +14 anos de mercado, +R$ 7 bi/ano processados.
+              +R$ 7 bi/ano processados em +14 anos de mercado. A mesma base
+              de adquirentes consolidados.
             </p>
           </div>
         </div>
@@ -24,7 +28,8 @@ export function TrustBadges() {
               Regulado pelo BACEN
             </p>
             <p className="text-sm text-muted leading-snug">
-              Operação sob a regulação do Banco Central do Brasil.
+              Operação sob a regulação do Banco Central do Brasil — não é
+              gambiarra, é norma do mercado de adquirência.
             </p>
           </div>
         </div>
@@ -36,18 +41,13 @@ export function TrustBadges() {
               Parecer Jurídico
             </p>
             <p className="text-sm text-muted leading-snug mb-2">
-              Barcellos Tucunduva Advogados.
+              Barcellos Tucunduva Advogados. Resumo aqui, integral no
+              WhatsApp comercial.
             </p>
             <LegalOpinionModal />
           </div>
         </div>
       </div>
-
-      <p className="text-center text-sm text-muted mt-8 max-w-3xl mx-auto text-balance">
-        A SplitTech opera sobre infraestrutura Cappta, com mais de 14 anos de
-        mercado e mais de R$ 7 bilhões processados por ano, regulada pelo Banco
-        Central do Brasil.
-      </p>
     </section>
   );
 }
