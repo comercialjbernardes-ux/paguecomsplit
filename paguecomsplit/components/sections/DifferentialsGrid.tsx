@@ -11,39 +11,39 @@ const ITEMS = [
   {
     icon: CreditCard,
     title: "Parcelamento em 21x",
-    desc: "Maior prazo do mercado para o seu cliente fechar a venda.",
+    desc: "O maior prazo do mercado. Seu cliente fecha a venda sem reclamar de parcela alta.",
   },
   {
     icon: CircleDollarSign,
-    title: "Taxa zero",
-    desc: "Sem mensalidade, sem taxa de adesão. Você paga só pela transação.",
+    title: "Maquininha grátis",
+    desc: "Você paga só pela transação. Sem taxa de adesão, sem mensalidade.",
   },
   {
     icon: Calendar,
     title: "Recebimento D+1",
-    desc: "Dinheiro na sua conta no dia seguinte à venda.",
+    desc: "Dinheiro na sua conta no dia seguinte à venda. Caixa que respira.",
   },
   {
     icon: Smartphone,
-    title: "PIX + aproximação",
-    desc: "Todas as bandeiras e meios de pagamento em uma maquininha.",
+    title: "PIX, aproximação e todas as bandeiras",
+    desc: "Uma maquininha, todos os meios de pagamento — incluindo PIX grátis.",
   },
   {
     icon: Link2,
     title: "Link de pagamento",
-    desc: "Vendas sem maquininha quando você precisar — WhatsApp, redes sociais.",
+    desc: "Repasses geridos na origem mesmo quando a venda é remota — WhatsApp, redes sociais, e-mail.",
   },
   {
     icon: Scale,
-    title: "Segurança jurídica",
-    desc: "Operação amparada por parecer da Barcellos Tucunduva Advogados.",
+    title: "Cancele quando quiser",
+    desc: "Operação amparada por parecer da Barcellos Tucunduva Advogados. Sem fidelidade, sem multa.",
   },
 ];
 
 export function DifferentialsGrid() {
   return (
     <section className="bg-white border-y border-slate-100">
-      <div className="container-page py-16 md:py-24">
+      <div className="container-page py-12 md:py-16">
         <div className="max-w-2xl mb-10">
           <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
             Diferenciais

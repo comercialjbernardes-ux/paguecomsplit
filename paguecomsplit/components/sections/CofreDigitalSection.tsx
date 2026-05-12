@@ -19,47 +19,46 @@ export function CofreDigitalSection({ example, thirdParty }: Props) {
   const savings = taxWithout - taxWith;
 
   return (
-    <section className="container-page py-16 md:py-24">
-      <div className="max-w-2xl mb-12">
+    <section className="container-page py-12 md:py-16">
+      <div className="max-w-2xl mb-10">
         <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
           Cofre Digital
         </p>
         <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-3 text-balance">
-          Antes do imposto incidir, o dinheiro do terceiro já saiu.
+          Cada parte é separada antes de gerar imposto.
         </h2>
         <p className="text-muted text-pretty">
-          Compare o mesmo pagamento, com e sem split, usando números do seu
-          segmento.
+          Mesmo pagamento, dois caminhos. Os números abaixo são do seu segmento.
         </p>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
         <FlowColumn
           tone="warm"
-          tag="Sem split"
-          title="Hoje você tributa tudo"
+          tag="Hoje: bitributação"
+          title="Você tributa tudo, inclusive a parte do parceiro"
           steps={[
             `Cliente paga ${formatBRL(monthlyRevenue, true)}`,
-            "Tudo entra na sua conta",
-            `Simples incide sobre ${formatBRL(monthlyRevenue, true)} (${formatPercent(example.tax_rate)})`,
+            "Tudo entra como sua receita",
+            `DAS incide sobre ${formatBRL(monthlyRevenue, true)} (${formatPercent(example.tax_rate)})`,
             `Imposto: ${formatBRL(taxWithout)}`,
             `Você repassa ${formatBRL(monthlyRepasse)} para ${thirdParty} depois`,
           ]}
           footer={{
-            label: "Lucro líquido depois do repasse",
+            label: "Lucro líquido após o repasse",
             value: formatBRL(monthlyMargin - taxWithout),
           }}
         />
 
         <FlowColumn
           tone="accent"
-          tag="Com Cofre Digital"
-          title="Cada um tributa o que é seu"
+          tag="Com gestão de agenda"
+          title="Cada parte é separada antes do DAS incidir"
           steps={[
             `Cliente paga ${formatBRL(monthlyRevenue, true)}`,
-            `Split automático: ${formatBRL(monthlyMargin)} sua conta`,
-            `${formatBRL(monthlyRepasse)} vai direto para ${thirdParty}`,
-            `Simples incide só sobre ${formatBRL(monthlyMargin)}`,
+            `A divisão é gerida na origem: ${formatBRL(monthlyMargin)} sua`,
+            `${formatBRL(monthlyRepasse)} segue direto para ${thirdParty}`,
+            `DAS incide só sobre ${formatBRL(monthlyMargin)}`,
             `Imposto: ${formatBRL(taxWith)}`,
           ]}
           footer={{
@@ -84,8 +83,8 @@ export function CofreDigitalSection({ example, thirdParty }: Props) {
           + {formatBRL(savings)}
         </p>
         <p className="text-sm text-text/70 mt-2 max-w-md mx-auto text-pretty">
-          O dinheiro do terceiro nunca passa pela sua tributação — porque,
-          juridicamente, ele nunca foi receita sua.
+          O dinheiro do seu parceiro nunca virou sua receita tributável.
+          Você passa a pagar DAS só sobre o que de fato é seu.
         </p>
       </motion.div>
     </section>
