@@ -1,5 +1,3 @@
-import Link from "next/link";
-import { ArrowRight, Building2 } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { SegmentGrid } from "@/components/SegmentGrid";
@@ -9,7 +7,7 @@ import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { HomeHero } from "@/components/sections/HomeHero";
 import { SplitExplainer } from "@/components/sections/SplitExplainer";
 import { HomeHowItWorks } from "@/components/sections/HomeHowItWorks";
-import { Button } from "@/components/ui/button";
+import { RepresentantesTeaser } from "@/components/sections/RepresentantesTeaser";
 
 const HOME_WHATSAPP =
   "Olá! Vi o paguecomsplit.com.br e quero entender como o split reduz meu imposto.";
@@ -101,29 +99,7 @@ export default function HomePage() {
         <TrustBadges />
 
         {/* 8. Representantes teaser */}
-        <section className="container-page py-12 md:py-16">
-          <div className="rounded-2xl bg-gradient-to-br from-primary-600 to-primary-800 text-white p-8 md:p-12 flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
-            <Building2 className="h-12 w-12 text-accent-300 flex-none" aria-hidden />
-            <div className="flex-1">
-              <p className="text-xs font-bold uppercase tracking-widest text-accent-300 mb-2">
-                Para representantes
-              </p>
-              <h2 className="font-display text-2xl md:text-3xl font-bold mb-2 text-balance">
-                Você é consultor, contador ou trabalha com vendas B2B?
-              </h2>
-              <p className="text-white/70 text-pretty">
-                Distribua uma solução que vende sozinha. Cada cliente que você
-                cadastra gera comissão recorrente enquanto ele usa o sistema.
-              </p>
-            </div>
-            <Button asChild variant="default" size="lg" className="flex-none">
-              <Link href="/representantes">
-                Conhecer o modelo
-                <ArrowRight className="h-4 w-4" aria-hidden />
-              </Link>
-            </Button>
-          </div>
-        </section>
+        <RepresentantesTeaser />
       </main>
       <Footer />
     </>
