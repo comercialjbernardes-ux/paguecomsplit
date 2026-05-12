@@ -85,6 +85,7 @@ export default function SegmentPage({ params }: { params: Params }) {
             <EconomySimulator
               defaults={segment.example}
               segmentName={segment.name}
+              defaultSegmentSlug={segment.slug}
               whatsappMessage={segment.whatsapp_message}
             />
           </div>

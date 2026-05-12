@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { TrendingDown, Zap } from "lucide-react";
+import { TrendingDown, Zap, ArrowRight } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
   Select,
@@ -11,8 +11,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CTAWhatsApp } from "@/components/CTAWhatsApp";
-import { SIMPLES_TAX_RATES, type SegmentExample } from "@/lib/segments";
+import { Button } from "@/components/ui/button";
+import { DiagnosticDialog } from "@/components/DiagnosticDialog";
+import { segments, type SegmentExample } from "@/lib/segments";
+import {
+  ANEXOS,
+  REVENUE_BANDS,
+  SEGMENT_ANEXO,
+  computeEffectiveRate,
+  type AnexoKey,
+  type RevenueBand,
+} from "@/lib/simplesTaxRates";
 import { formatBRL, formatPercent, cn } from "@/lib/utils";
 
 type Props = {
@@ -20,64 +29,112 @@ type Props = {
   segmentName?: string;
   whatsappMessage?: string;
   className?: string;
+  defaultSegmentSlug?: string;
 };
 
-const DEFAULT_VALUES: SegmentExample = {
-  annual_revenue: 600_000,
-  repasse_percent: 40,
-  repasse_value: 240_000,
-  tax_rate: 0.06,
-  annual_savings: 14_400,
-  monthly_savings: 1_200,
-};
-
-const MIN_MONTHLY = 10_000;
-const MAX_MONTHLY = 200_000;
-const STEP_MONTHLY = 1_000;
+const DEFAULT_SEGMENT_SLUG = "estetica";
+const DEFAULT_BAND_ID = "30-60k";
+const DIAG_OPEN_DELAY_MS = 5_000;
+const DIAG_SESSION_KEY = "pcs_diag_seen";
 
 export function EconomySimulator({
   defaults,
   segmentName,
   whatsappMessage,
   className,
+  defaultSegmentSlug,
 }: Props) {
-  const seed = defaults ?? DEFAULT_VALUES;
+  // Estado inicial: prioriza prop, depois default
+  const initialSegment = defaultSegmentSlug ?? DEFAULT_SEGMENT_SLUG;
+  const initialAnexo: AnexoKey = SEGMENT_ANEXO[initialSegment] ?? "III";
+  const initialBand: RevenueBand =
+    REVENUE_BANDS.find((b) => b.id === DEFAULT_BAND_ID) ?? REVENUE_BANDS[2];
 
-  const initialMonthly = Math.max(
-    MIN_MONTHLY,
-    Math.min(MAX_MONTHLY, Math.round(seed.annual_revenue / 12 / 1000) * 1000)
-  );
-
-  const [monthlyRevenue, setMonthlyRevenue] = useState<number>(initialMonthly);
+  const [segmentSlug, setSegmentSlug] = useState<string>(initialSegment);
+  const [bandId, setBandId] = useState<string>(initialBand.id);
+  const [anexo, setAnexo] = useState<AnexoKey>(initialAnexo);
   const [repassePercent, setRepassePercent] = useState<number>(
-    seed.repasse_percent
+    defaults?.repasse_percent ?? 40
   );
-  const [taxRate, setTaxRate] = useState<number>(seed.tax_rate);
+
+  // Quando o segmento muda, atualizar anexo e repasse padrao
+  useEffect(() => {
+    const seg = segments.find((s) => s.slug === segmentSlug);
+    if (!seg) return;
+    setAnexo(SEGMENT_ANEXO[segmentSlug] ?? "III");
+    setRepassePercent(seg.example.repasse_percent);
+  }, [segmentSlug]);
+
+  const band = useMemo(
+    () => REVENUE_BANDS.find((b) => b.id === bandId) ?? initialBand,
+    [bandId, initialBand]
+  );
 
   const calc = useMemo(() => {
-    const annualRevenue = monthlyRevenue * 12;
+    const annualRevenue = band.annualRevenue;
+    const monthlyRevenue = band.monthlyMid;
     const repasse = annualRevenue * (repassePercent / 100);
-    const taxedWithout = annualRevenue * taxRate;
-    const taxedWith = (annualRevenue - repasse) * taxRate;
-    const annualSavings = taxedWithout - taxedWith;
+    const effectiveRate = computeEffectiveRate(annualRevenue, anexo);
+    const taxedWithout = annualRevenue * effectiveRate;
+    const taxedWith = (annualRevenue - repasse) * effectiveRate;
+    const annualSavings = Math.max(0, taxedWithout - taxedWith);
     const monthlySavings = annualSavings / 12;
     return {
       annualRevenue,
+      monthlyRevenue,
       repasse,
+      effectiveRate,
       taxedWithout,
       taxedWith,
       annualSavings,
       monthlySavings,
     };
-  }, [monthlyRevenue, repassePercent, taxRate]);
+  }, [band, anexo, repassePercent]);
 
   const maxBar = Math.max(calc.taxedWithout, 1);
   const widthWithout = 100;
   const widthWith = Math.max(2, (calc.taxedWith / maxBar) * 100);
 
+  const segmentObj = useMemo(
+    () => segments.find((s) => s.slug === segmentSlug),
+    [segmentSlug]
+  );
+
+  const displaySegmentName = segmentName ?? segmentObj?.name;
+
   const message =
     whatsappMessage ??
-    `Ola! Simulei no paguecomsplit.com.br e ${segmentName ? `no meu segmento (${segmentName})` : "no meu caso"} a economia foi de ${formatBRL(calc.monthlySavings)}/mes. Quero saber mais.`;
+    `Ola! Simulei no paguecomsplit.com.br e ${displaySegmentName ? `no meu segmento (${displaySegmentName})` : "no meu caso"} a economia foi de ${formatBRL(calc.monthlySavings)}/mes. Quero saber mais.`;
+
+  // Diagnostic dialog state
+  const [diagOpen, setDiagOpen] = useState(false);
+  const autoOpenTriggered = useRef(false);
+
+  // Auto-abre o diagnostico apos N segundos com economia > 0 (uma vez por sessao)
+  useEffect(() => {
+    if (autoOpenTriggered.current) return;
+    if (typeof window === "undefined") return;
+    const seen = window.sessionStorage.getItem(DIAG_SESSION_KEY);
+    if (seen) {
+      autoOpenTriggered.current = true;
+      return;
+    }
+    if (calc.monthlySavings <= 0) return;
+    const timer = window.setTimeout(() => {
+      setDiagOpen(true);
+      window.sessionStorage.setItem(DIAG_SESSION_KEY, "1");
+      autoOpenTriggered.current = true;
+    }, DIAG_OPEN_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [calc.monthlySavings]);
+
+  function openDiagManually() {
+    setDiagOpen(true);
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem(DIAG_SESSION_KEY, "1");
+    }
+    autoOpenTriggered.current = true;
+  }
 
   return (
     <div
@@ -86,21 +143,60 @@ export function EconomySimulator({
         className
       )}
     >
-      <div className="grid gap-8 md:grid-cols-2">
+      <div className="grid gap-8 lg:grid-cols-2">
         {/* Inputs */}
-        <div className="space-y-6">
-          <Field label="Faturamento mensal" value={formatBRL(monthlyRevenue)}>
-            <Slider
-              min={MIN_MONTHLY}
-              max={MAX_MONTHLY}
-              step={STEP_MONTHLY}
-              value={[monthlyRevenue]}
-              onValueChange={(v) => setMonthlyRevenue(v[0] ?? MIN_MONTHLY)}
-            />
-            <div className="flex justify-between text-xs text-muted mt-2">
-              <span>{formatBRL(MIN_MONTHLY)}</span>
-              <span>{formatBRL(MAX_MONTHLY)}+</span>
-            </div>
+        <div className="space-y-5">
+          <Field label="Segmento" hint="Escolha o que mais se aproxima do seu negocio">
+            <Select value={segmentSlug} onValueChange={setSegmentSlug}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione" />
+              </SelectTrigger>
+              <SelectContent>
+                {segments.map((s) => (
+                  <SelectItem key={s.slug} value={s.slug}>
+                    {s.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field
+            label="Faturamento mensal"
+            value={`~ ${formatBRL(calc.monthlyRevenue, true)}`}
+            hint="Faixas reais do Simples Nacional"
+          >
+            <Select value={bandId} onValueChange={setBandId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione a faixa" />
+              </SelectTrigger>
+              <SelectContent>
+                {REVENUE_BANDS.map((b) => (
+                  <SelectItem key={b.id} value={b.id}>
+                    {b.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+
+          <Field
+            label="Anexo do Simples Nacional"
+            value={formatPercent(calc.effectiveRate)}
+            hint={ANEXOS[anexo].description}
+          >
+            <Select value={anexo} onValueChange={(v) => setAnexo(v as AnexoKey)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Anexo" />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.keys(ANEXOS) as AnexoKey[]).map((k) => (
+                  <SelectItem key={k} value={k}>
+                    {ANEXOS[k].label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </Field>
 
           <Field
@@ -120,24 +216,6 @@ export function EconomySimulator({
               <span>80%</span>
             </div>
           </Field>
-
-          <Field label="Aliquota Simples Nacional" value={formatPercent(taxRate)}>
-            <Select
-              value={String(taxRate)}
-              onValueChange={(v) => setTaxRate(Number(v))}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a faixa" />
-              </SelectTrigger>
-              <SelectContent>
-                {SIMPLES_TAX_RATES.map((r) => (
-                  <SelectItem key={r.value} value={String(r.value)}>
-                    {r.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
         </div>
 
         {/* Outputs */}
@@ -145,7 +223,7 @@ export function EconomySimulator({
           <div className="flex items-center gap-2 text-accent-300 mb-3">
             <TrendingDown className="h-5 w-5" aria-hidden />
             <span className="text-xs font-bold uppercase tracking-widest">
-              Sua economia
+              Sua economia estimada
             </span>
           </div>
 
@@ -161,7 +239,11 @@ export function EconomySimulator({
           </motion.p>
 
           <p className="text-sm text-white/70 mt-2">
-            Equivale a <strong className="text-white">{formatBRL(calc.annualSavings)}</strong> por ano deixando de pagar imposto sobre dinheiro que não é seu.
+            Equivale a{" "}
+            <strong className="text-white">
+              {formatBRL(calc.annualSavings)}
+            </strong>{" "}
+            por ano deixando de pagar imposto sobre dinheiro que não é seu.
           </p>
 
           <div className="h-px bg-white/10 my-5" />
@@ -185,21 +267,40 @@ export function EconomySimulator({
             />
           </div>
 
-          <div className="mt-auto pt-6">
-            <CTAWhatsApp
-              message={message}
-              label="Quero essa economia"
+          <div className="mt-auto pt-6 space-y-2.5">
+            <Button
+              type="button"
               variant="default"
               size="lg"
               className="w-full"
-            />
-            <p className="flex items-center gap-1.5 justify-center text-xs text-white/60 mt-3">
+              onClick={openDiagManually}
+            >
+              Quero um diagnóstico preciso
+              <ArrowRight className="h-4 w-4" aria-hidden />
+            </Button>
+            <p className="flex items-center gap-1.5 justify-center text-xs text-white/60">
               <Zap className="h-3.5 w-3.5" aria-hidden />
               Cálculo estimado · revise com seu contador
             </p>
           </div>
         </div>
       </div>
+
+      <DiagnosticDialog
+        open={diagOpen}
+        onOpenChange={setDiagOpen}
+        context={{
+          segment: segmentSlug,
+          segmentName: segmentObj?.name,
+          revenueBandId: band.id,
+          revenueBandLabel: band.label,
+          monthlySavings: Math.round(calc.monthlySavings),
+          annualSavings: Math.round(calc.annualSavings),
+        }}
+      />
+
+      {/* WhatsApp inline (alternativa, fora do dialog) — usa o message */}
+      <p className="sr-only">{message}</p>
     </div>
   );
 }
@@ -211,17 +312,19 @@ function Field({
   children,
 }: {
   label: string;
-  value: string;
+  value?: string;
   hint?: string;
   children: React.ReactNode;
 }) {
   return (
     <div>
-      <div className="flex items-baseline justify-between mb-2">
+      <div className="flex items-baseline justify-between mb-2 gap-3">
         <span className="text-sm font-semibold text-text">{label}</span>
-        <span className="font-display text-lg font-bold text-primary-600">
-          {value}
-        </span>
+        {value ? (
+          <span className="font-display text-base font-bold text-primary-600 tabular-nums">
+            {value}
+          </span>
+        ) : null}
       </div>
       {children}
       {hint ? <p className="text-xs text-muted mt-2">{hint}</p> : null}
