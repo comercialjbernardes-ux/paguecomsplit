@@ -4,26 +4,26 @@ const STEPS = [
   {
     n: "1",
     icon: Receipt,
-    title: "Você vende pelo POS SplitTech",
-    desc: "Cliente paga normalmente no cartão, PIX ou aproximação.",
+    title: "Cliente paga normalmente",
+    desc: "Mesma maquininha. Cartão, PIX ou aproximação — sem mudar a forma de vender.",
   },
   {
     n: "2",
     icon: Scissors,
-    title: "O Cofre Digital separa automaticamente",
-    desc: "O repasse sai para o terceiro antes do imposto incidir.",
+    title: "A divisão é gerida antes do DAS",
+    desc: "Cada parte do pagamento é separada na origem da transação, antes de virar receita tributável sua.",
   },
   {
     n: "3",
     icon: CheckCheck,
-    title: "Cada parte recebe o que é seu",
-    desc: "Você tributa só a sua margem real. O resto cai onde deve.",
+    title: "Cada parte segue para o dono dela",
+    desc: "A parte do parceiro vai direto para a conta dele. Você tributa só a sua margem real.",
   },
 ];
 
 export function StepByStep() {
   return (
-    <section className="container-page py-16 md:py-20">
+    <section className="container-page py-12 md:py-16">
       <div className="max-w-2xl mb-10">
         <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
           Passo a passo

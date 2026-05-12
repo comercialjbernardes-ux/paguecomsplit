@@ -69,17 +69,18 @@ export default function SegmentPage({ params }: { params: Params }) {
 
         {/* 3. Simulador */}
         <section id="simulador" className="bg-white border-y border-slate-100">
-          <div className="container-page py-16 md:py-24">
+          <div className="container-page py-12 md:py-16">
             <div className="max-w-2xl mb-10">
               <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
                 Simulador
               </p>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-3 text-balance">
-                Quanto você está pagando a mais?
+                Quanto você está perdendo de DAS por mês?
               </h2>
               <p className="text-muted text-pretty">
-                Ajuste os números para o seu negócio. Já carregamos os valores
-                típicos de {segment.name.toLowerCase()} para você só calibrar.
+                Já carregamos os valores típicos de{" "}
+                {segment.name.toLowerCase()}. Você só ajusta o seu faturamento
+                e vê o resultado.
               </p>
             </div>
             <EconomySimulator
@@ -113,22 +114,23 @@ export default function SegmentPage({ params }: { params: Params }) {
 
         {/* 9. Formulario de captura */}
         <section className="bg-bg">
-          <div className="container-page py-16 md:py-24">
+          <div className="container-page py-12 md:py-16">
             <div className="grid gap-10 lg:grid-cols-5">
               <div className="lg:col-span-2">
                 <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-                  Fale com um especialista
+                  Falar com um especialista
                 </p>
                 <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-4 text-balance">
-                  Quando o assunto é o seu caixa, vale conversar.
+                  Não seja mais tributado pela receita do parceiro.
                 </h2>
                 <p className="text-text/70 leading-relaxed mb-6 text-pretty">
-                  Preencha ao lado ou chame direto no WhatsApp. Sem cobrança,
-                  sem compromisso — só uma análise honesta do seu caso.
+                  Preencha ao lado ou chame direto no WhatsApp. A gente refaz
+                  o cálculo com a sua folha real e o seu Anexo correto — sem
+                  custo, sem compromisso.
                 </p>
                 <CTAWhatsApp
                   message={segment.whatsapp_message}
-                  label="Chamar no WhatsApp"
+                  label="Quero falar com especialista"
                   size="lg"
                 />
               </div>
@@ -140,12 +142,12 @@ export default function SegmentPage({ params }: { params: Params }) {
         </section>
 
         {/* Outros segmentos */}
-        <section className="container-page py-16">
+        <section className="container-page py-12 md:py-16">
           <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
             Outros segmentos
           </p>
           <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-600 mb-8">
-            O split também resolve para…
+            O split também tira do DAS:
           </h2>
           <SegmentGrid highlightSlug={segment.slug} />
         </section>
@@ -181,9 +183,9 @@ function SegmentJsonLd({ segment }: { segment: Segment }) {
         acceptedAnswer: {
           "@type": "Answer",
           text: segment.pain +
-            " Com o Cofre Digital, o repasse a " +
+            " Com o Cofre Digital, cada parte é separada antes de gerar imposto — a parte de " +
             segment.third_party.toLowerCase() +
-            " sai antes do imposto incidir — você tributa só sua margem.",
+            " vai direto para o dono dela e você tributa só a sua margem real.",
         },
       },
       {

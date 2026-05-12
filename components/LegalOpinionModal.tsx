@@ -13,24 +13,24 @@ import {
 
 const SUMMARY_POINTS = [
   {
-    title: "O que é",
+    title: "Quem assinou",
     body:
-      "Parecer técnico emitido pelo escritório Barcellos Tucunduva Advogados sobre a estrutura jurídica e tributária do split de pagamento operado pela SplitTech (infraestrutura Cappta).",
+      "O escritório Barcellos Tucunduva Advogados analisou a estrutura do split operado pela SplitTech sobre infraestrutura Cappta e emitiu parecer técnico-tributário sobre o tema.",
   },
   {
-    title: "O que o parecer fundamenta",
+    title: "O que o parecer conclui",
     body:
-      "Que o repasse direto a terceiros via split, antes da liquidação na conta do estabelecimento, não compõe a receita bruta do contribuinte para fins de apuração do Simples Nacional, desde que o terceiro seja parte contratada e identificada.",
+      "Quando a parte do parceiro é separada na origem da transação (antes do dinheiro liquidar na sua conta), ela não compõe a sua receita bruta para fins de Simples Nacional — desde que o parceiro esteja formalmente contratado e identificado.",
   },
   {
-    title: "Por que isso importa",
+    title: "O que isso muda no seu caixa",
     body:
-      "Você só tributa o que efetivamente é seu. O valor que pertence a parceiros, autônomos e fornecedores cai direto na conta deles — fora do seu DAS.",
+      "Você passa a tributar só a sua margem real. O dinheiro do parceiro nunca entra como sua receita — e nunca entra no seu DAS.",
   },
   {
-    title: "Limites e responsabilidades",
+    title: "O que você precisa fazer",
     body:
-      "O parecer pressupõe contratos formais com cada terceiro e segregação consistente dos valores. Não substitui a análise do seu contador para o caso concreto.",
+      "Manter contrato formal com cada parceiro envolvido na divisão. O parecer cobre a estrutura; o seu contador valida os números do caso concreto.",
   },
 ];
 
