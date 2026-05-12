@@ -30,7 +30,7 @@ type FlowRow = {
 const ROWS: FlowRow[] = [
   {
     tone: "warm",
-    tag: "Sem split",
+    tag: "Hoje: bitributação",
     nodes: [
       {
         icon: Wallet,
@@ -39,13 +39,13 @@ const ROWS: FlowRow[] = [
       },
       {
         icon: ArrowDown,
-        title: "Tudo cai na sua conta",
-        sub: "Você precisa repassar depois",
+        title: "Tudo entra como sua receita",
+        sub: "Você repassa depois ao parceiro",
       },
       {
         icon: Receipt,
-        title: "Imposto sobre R$ 6.000",
-        sub: "DAS = R$ 360 (6%)",
+        title: "DAS sobre R$ 6.000",
+        sub: "Imposto sobre dinheiro que não era seu",
         emphasis: "R$ 360 de DAS",
       },
     ],
@@ -61,18 +61,18 @@ const ROWS: FlowRow[] = [
       },
       {
         icon: Split,
-        title: "Split automático",
-        sub: "R$ 2.400 sua · R$ 3.600 terceiro",
+        title: "A divisão é gerida na origem",
+        sub: "R$ 2.400 sua · R$ 3.600 do parceiro",
       },
       {
         icon: CheckCircle2,
-        title: "Imposto só sobre R$ 2.400",
-        sub: "DAS = R$ 144 (6%)",
+        title: "DAS só sobre R$ 2.400",
+        sub: "Você tributa só a sua margem real",
         emphasis: "R$ 144 de DAS",
       },
     ],
   },
-] as const;
+];
 
 const TONES = {
   warm: {
@@ -109,23 +109,23 @@ export function HomeHowItWorks() {
               Como funciona
             </p>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-3 text-balance">
-              O Cofre Digital separa o que é seu do que é de terceiros.
+              Cada parte é separada antes de gerar imposto.
             </h2>
             <p className="text-text/80 leading-relaxed text-pretty">
-              No POS SplitTech, cada pagamento é dividido automaticamente. A
-              parte do terceiro (parceiro, fornecedor, autônomo) cai direto na
-              conta dele — fora do seu DAS. Você passa a tributar só a sua
-              margem real.
+              Mesma maquininha, mesma operação. A SplitTech administra a divisão
+              do pagamento <strong>antes</strong> do DAS incidir — a parte do
+              parceiro (fornecedor, autônomo) vai direto para a conta dele e
+              você passa a tributar só a sua margem real.
             </p>
           </div>
           <div className="md:col-span-5 md:pt-2">
-            <div className="rounded-xl bg-primary-50 border border-primary-100 p-5">
-              <p className="text-xs font-bold uppercase tracking-widest text-primary-600 mb-1">
-                Mesma maquininha
+            <div className="rounded-xl bg-accent-50 border border-accent-200 p-5">
+              <p className="text-xs font-bold uppercase tracking-widest text-accent-700 mb-1">
+                Resultado prático
               </p>
               <p className="text-sm text-text/80 leading-relaxed">
-                Um único pagamento, dois caminhos diferentes. Veja em uma
-                operação real de R$ 6.000:
+                Não seja mais tributado pela receita do parceiro. Veja a mesma
+                operação de R$ 6.000 lado a lado:
               </p>
             </div>
           </div>
@@ -216,7 +216,7 @@ export function HomeHowItWorks() {
           </div>
           <Button asChild variant="primary" size="lg" className="flex-none">
             <Link href="/como-funciona">
-              Entender em detalhes
+              Ver como administramos o split
               <ArrowRight className="h-4 w-4" aria-hidden />
             </Link>
           </Button>

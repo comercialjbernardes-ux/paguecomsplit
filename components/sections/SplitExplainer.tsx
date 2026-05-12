@@ -1,15 +1,15 @@
-import { ShieldCheck, Zap, Receipt } from "lucide-react";
+import { ShieldCheck, Clock, Receipt } from "lucide-react";
 
 const BULLETS = [
   {
     icon: ShieldCheck,
     title: "Compliance BACEN",
-    desc: "Operação regulada pelo Banco Central via Cappta — não é gambiarra, é a prática padrão do mercado de adquirência.",
+    desc: "Operação regulada pelo Banco Central via Cappta — a infraestrutura que processa +R$ 7 bi/ano em transações.",
   },
   {
-    icon: Zap,
-    title: "Automático em tempo real",
-    desc: "Cada pagamento já entra dividido. Sem planilha, sem repasse manual, sem PIX-de-último-dia para o seu parceiro.",
+    icon: Clock,
+    title: "Gerido na origem da transação",
+    desc: "A divisão é administrada antes do pagamento virar receita sua. Sem planilha, sem PIX-de-último-dia para o parceiro.",
   },
   {
     icon: Receipt,
@@ -27,13 +27,12 @@ export function SplitExplainer() {
             O que é split de pagamento?
           </p>
           <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-4 text-balance">
-            Em vez de tudo cair na sua conta, o pagamento já entra dividido.
+            Evite bitributação.
           </h2>
           <p className="text-text/80 leading-relaxed text-pretty max-w-2xl">
-            Quando o cliente passa o cartão, o sistema separa{" "}
-            <strong>na hora</strong> a parte que é sua da parte que é do
-            terceiro (parceiro, fornecedor, autônomo). Cada um recebe direto na
-            sua conta. Você só tributa o que de fato é seu.
+            Quando o cliente passa o cartão, cada parte da transação já segue
+            para o dono dela — <strong>antes</strong> do dinheiro virar receita
+            tributável. Você só paga DAS sobre a sua margem real.
           </p>
         </div>
 

@@ -15,17 +15,17 @@ const BULLETS = [
   {
     icon: Coins,
     title: "Comissão por ativação",
-    desc: "Valor fixo a cada cliente que ativa a maquininha SplitTech.",
+    desc: "Valor fixo a cada cliente que ativa a maquininha SplitTech. Pago no mês da ativação.",
   },
   {
     icon: Repeat,
     title: "Recorrência mensal",
-    desc: "% sobre o volume processado enquanto o cliente continuar ativo.",
+    desc: "Percentual sobre o volume processado por cada cliente, todo mês, enquanto ele estiver ativo.",
   },
   {
     icon: InfinityIcon,
     title: "Sem teto",
-    desc: "Sua receita escala junto com o tamanho da sua carteira.",
+    desc: "Sua carteira cresce, sua receita cresce. Sem limite de clientes, sem limite de comissão.",
   },
 ] as const;
 
@@ -36,7 +36,7 @@ export function RepresentantesTeaser() {
     FALLBACK_JULIO;
 
   const julioMessage =
-    "Ola Julio! Vim do paguecomsplit.com.br e quero entender o programa de representantes da SplitTech.";
+    "Oi Julio, vim do paguecomsplit.com.br e quero entender o programa de representantes da SplitTech.";
   const julioHref = buildWhatsAppHref(julioNumber, julioMessage);
 
   return (
@@ -49,12 +49,12 @@ export function RepresentantesTeaser() {
               Para representantes e contadores
             </p>
             <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-extrabold mb-4 text-balance leading-tight">
-              Distribua uma solução que vende sozinha.
+              Você apresenta. O cliente vê o número. Você fecha.
             </h2>
             <p className="text-white/75 text-pretty mb-6 max-w-xl leading-relaxed">
-              Sem produto pra entregar, sem suporte pra fazer. Você só
-              apresenta o split, mostra a economia, e recebe enquanto o
-              cliente usa.
+              Vender split é vender economia certa. Você mostra o cálculo
+              do DAS, o cliente vê quanto está perdendo todo mês, e decide.
+              Sem produto pra entregar, sem suporte pra fazer.
             </p>
 
             <ul className="grid sm:grid-cols-3 gap-3" role="list">
@@ -87,9 +87,11 @@ export function RepresentantesTeaser() {
                 10 clientes ativos
               </p>
               <p className="text-sm text-white/75 leading-relaxed">
-                = comissão fixa de ativação{" "}
-                <strong className="text-white">+ recorrência mensal</strong>{" "}
-                sobre o volume processado por cada um deles, todo mês.
+                Faturando R$ 50k/mês cada ={" "}
+                <strong className="text-white">comissão fixa de ativação</strong>{" "}
+                +{" "}
+                <strong className="text-white">recorrência sobre o volume</strong>{" "}
+                que passa pela maquininha de cada um, todo mês.
               </p>
             </div>
 
