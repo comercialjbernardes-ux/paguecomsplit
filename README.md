@@ -50,6 +50,7 @@ Veja `.env.local.example`. Resumo:
 | Var | Obrigatória | O que faz |
 |-----|-------------|-----------|
 | `NEXT_PUBLIC_WHATSAPP_NUMBER` | sim em prod | Número de destino dos botões de CTA (formato `5511999998888`) |
+| `NEXT_PUBLIC_WHATSAPP_JULIO` | recomendado | WhatsApp do Julio para o programa de representantes; fallback no número acima se vazio |
 | `NEXT_PUBLIC_SITE_URL` | recomendado | URL base usada em metadata, sitemap, OG, canonicals |
 | `LEAD_WEBHOOK_URL` | sim em prod | Endpoint que recebe os leads via POST JSON |
 | `LEAD_WEBHOOK_TOKEN` | opcional | Enviado como header `X-Webhook-Token` para o webhook |
