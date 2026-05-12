@@ -21,13 +21,16 @@ export function HomeHero({ whatsappMessage }: HomeHeroProps) {
             </p>
 
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary-600 leading-[1.05] tracking-tight text-balance">
-              Pare de tributar a receita do seu parceiro.
+              O dinheiro do seu parceiro não é seu.{" "}
+              <span className="text-warm-500">Por que tributar</span> como se
+              fosse?
             </h1>
 
             <p className="mt-5 text-lg md:text-xl text-text/80 max-w-xl text-pretty">
-              Você fatura R$ 30k–R$ 360k/mês? A SplitTech administra a divisão
-              do pagamento <strong>antes do DAS incidir</strong> — cada parte
-              vai para o dono dela e você tributa só a sua margem real.
+              A SplitTech administra a divisão do pagamento{" "}
+              <strong>antes do DAS incidir</strong> — cada parte vai para o
+              dono dela e você tributa só a sua margem real. Não seja mais
+              tributado pela receita do seu parceiro.
             </p>
 
             <p className="mt-5 text-sm font-semibold text-primary-600/80">
