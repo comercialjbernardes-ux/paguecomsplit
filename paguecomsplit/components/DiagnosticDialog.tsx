@@ -57,7 +57,7 @@ export function DiagnosticDialog({ open, onOpenChange, context }: Props) {
 
   function buildWhatsAppMessage(name: string) {
     const parts: string[] = [
-      `Ola! Sou ${name}, simulei no paguecomsplit.com.br.`,
+      `Oi, sou ${name}, simulei no paguecomsplit.com.br.`,
     ];
     if (context.segmentName) parts.push(`Segmento: ${context.segmentName}.`);
     if (context.revenueBandLabel)
@@ -68,7 +68,7 @@ export function DiagnosticDialog({ open, onOpenChange, context }: Props) {
           context.annualSavings ?? context.monthlySavings * 12
         )}/ano).`
       );
-    parts.push("Quero um diagnostico mais preciso.");
+    parts.push("Quero o diagnostico com a minha folha real.");
     return parts.join(" ");
   }
 
@@ -139,11 +139,11 @@ export function DiagnosticDialog({ open, onOpenChange, context }: Props) {
           <DialogTitle className="font-display text-2xl font-extrabold text-primary-600">
             {context.monthlySavings
               ? `Você pode economizar ${formatBRL(context.monthlySavings)}/mês`
-              : "Receba um diagnóstico do seu caso"}
+              : "Um especialista refaz o cálculo com seus números reais."}
           </DialogTitle>
           <DialogDescription>
-            Deixe seu WhatsApp que um especialista refaz o cálculo com os
-            números reais do seu negócio — sem custo e sem compromisso.
+            Deixe seu WhatsApp. A gente refaz o cálculo com a sua folha real
+            e o seu Anexo correto — sem custo, sem compromisso.
           </DialogDescription>
         </DialogHeader>
 

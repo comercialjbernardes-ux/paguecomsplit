@@ -104,7 +104,7 @@ export function EconomySimulator({
 
   const message =
     whatsappMessage ??
-    `Ola! Simulei no paguecomsplit.com.br e ${displaySegmentName ? `no meu segmento (${displaySegmentName})` : "no meu caso"} a economia foi de ${formatBRL(calc.monthlySavings)}/mes. Quero saber mais.`;
+    `Oi, simulei no paguecomsplit.com.br${displaySegmentName ? ` (segmento: ${displaySegmentName})` : ""} e a economia foi de ${formatBRL(calc.monthlySavings)}/mes. Quero entender melhor como funciona.`;
 
   // Diagnostic dialog state
   const [diagOpen, setDiagOpen] = useState(false);
@@ -146,7 +146,7 @@ export function EconomySimulator({
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Inputs */}
         <div className="space-y-5">
-          <Field label="Segmento" hint="Escolha o que mais se aproxima do seu negocio">
+          <Field label="Segmento" hint="Cada segmento ja vem com Anexo e repasse tipico pre-preenchidos">
             <Select value={segmentSlug} onValueChange={setSegmentSlug}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
@@ -200,9 +200,9 @@ export function EconomySimulator({
           </Field>
 
           <Field
-            label="% repassado a terceiros"
+            label="% que pertence ao parceiro / fornecedor / autonomo"
             value={`${repassePercent}%`}
-            hint="Parte da receita que pertence a parceiros, fornecedores ou autonomos"
+            hint="A parte da receita que hoje passa pela sua conta antes de ir para o dono dela"
           >
             <Slider
               min={5}
@@ -280,7 +280,7 @@ export function EconomySimulator({
             </Button>
             <p className="flex items-center gap-1.5 justify-center text-xs text-white/60">
               <Zap className="h-3.5 w-3.5" aria-hidden />
-              Cálculo estimado · revise com seu contador
+              Cálculo estimado — seu contador pode confirmar com os números reais.
             </p>
           </div>
         </div>

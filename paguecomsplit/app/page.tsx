@@ -10,7 +10,7 @@ import { HomeHowItWorks } from "@/components/sections/HomeHowItWorks";
 import { RepresentantesTeaser } from "@/components/sections/RepresentantesTeaser";
 
 const HOME_WHATSAPP =
-  "Olá! Vi o paguecomsplit.com.br e quero entender como o split reduz meu imposto.";
+  "Oi, vi o paguecomsplit.com.br e quero entender como deixar de pagar DAS sobre a receita do meu parceiro.";
 
 export default function HomePage() {
   return (
@@ -33,21 +33,21 @@ export default function HomePage() {
               Bitributação silenciosa
             </p>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-center text-balance max-w-3xl mx-auto">
-              Negócios do Simples pagam imposto sobre dinheiro que repassam a terceiros — duas vezes.
+              Você paga DAS sobre dinheiro que repassa. O seu parceiro paga DAS sobre o mesmo dinheiro. Isso é bitributação.
             </h2>
 
             <div className="mt-10 grid gap-8 md:grid-cols-3">
               <StatBlock
                 value={50}
                 suffix="%+"
-                label="Redução tributária possível"
-                desc="dependendo do % de repasse e da faixa do Simples"
+                label="Redução possível no DAS"
+                desc="dependendo do % que pertence ao parceiro e da sua faixa do Simples"
               />
               <StatBlock
                 value={2}
                 suffix="×"
-                label="Imposto sobre o mesmo R$"
-                desc="o terceiro tributa o repasse dele e você tributa o mesmo dinheiro de novo"
+                label="Você + seu parceiro pagam"
+                desc="o mesmo R$ que passou na maquininha vira imposto duas vezes — uma na sua conta, outra na do parceiro"
               />
               <StatBlock
                 value={14}
@@ -66,11 +66,11 @@ export default function HomePage() {
               Simulador
             </p>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-3 text-balance">
-              Quanto você está pagando a mais?
+              Quanto você está perdendo de DAS por mês?
             </h2>
             <p className="text-muted text-pretty">
-              Ajuste os números para o seu negócio e veja a diferença em tempo
-              real. Cálculo client-side, sem cadastro.
+              Escolha seu segmento e veja o resultado em tempo real. O
+              simulador respeita as faixas reais do Simples Nacional.
             </p>
           </div>
           <EconomySimulator whatsappMessage={HOME_WHATSAPP} />
@@ -81,14 +81,14 @@ export default function HomePage() {
           <div className="container-page py-12 md:py-16">
             <div className="max-w-2xl mb-8">
               <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-                Aprofunde no seu segmento
+                Aprofunde no seu caso
               </p>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-3 text-balance">
-                Clique no seu tipo de negócio e veja o cálculo já calibrado.
+                Cada segmento, uma dor específica.
               </h2>
               <p className="text-muted text-pretty">
-                Cada landing page traz a dor específica do seu segmento — com
-                exemplo numérico real e depoimento, quando aplicável.
+                Veja o cálculo já calibrado para o seu negócio, com o exemplo
+                real e depoimento, quando aplicável.
               </p>
             </div>
             <SegmentGrid />
