@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" fill="none" role="img" aria-label="Maquininha de cartao com split de pagamento dividindo o valor para voce e para o terceiro">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#E6FBF4"/>
+      <stop offset="1" stop-color="#FFFFFF"/>
+    </linearGradient>
+    <linearGradient id="terminalGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#102A43"/>
+      <stop offset="1" stop-color="#0A2540"/>
+    </linearGradient>
+    <linearGradient id="screenGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1F3A5A"/>
+      <stop offset="1" stop-color="#0F2440"/>
+    </linearGradient>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="14" stdDeviation="18" flood-color="#0A2540" flood-opacity="0.18"/>
+    </filter>
+  </defs>
+
+  <!-- Fundo arredondado -->
+  <rect width="480" height="480" rx="32" fill="url(#bgGrad)"/>
+
+  <!-- Bolhas decorativas -->
+  <circle cx="64" cy="80" r="44" fill="#00C896" opacity="0.10"/>
+  <circle cx="420" cy="380" r="60" fill="#0A2540" opacity="0.06"/>
+  <circle cx="380" cy="80" r="22" fill="#FF6B35" opacity="0.12"/>
+
+  <!-- Maquininha (terminal) -->
+  <g filter="url(#softShadow)">
+    <rect x="160" y="120" width="160" height="240" rx="22" fill="url(#terminalGrad)"/>
+
+    <!-- Tela -->
+    <rect x="178" y="140" width="124" height="84" rx="10" fill="url(#screenGrad)"/>
+    <text x="240" y="172" text-anchor="middle" fill="#7CE8C7" font-family="ui-sans-serif, system-ui, sans-serif" font-size="11" font-weight="700" letter-spacing="2">SPLIT ATIVO</text>
+    <text x="240" y="200" text-anchor="middle" fill="#FFFFFF" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="800">R$ 6.000,00</text>
+
+    <!-- Teclado -->
+    <g fill="#FFFFFF">
+      <rect x="186" y="240" width="32" height="20" rx="4" opacity="0.95"/>
+      <rect x="224" y="240" width="32" height="20" rx="4" opacity="0.95"/>
+      <rect x="262" y="240" width="32" height="20" rx="4" opacity="0.95"/>
+      <rect x="186" y="268" width="32" height="20" rx="4" opacity="0.95"/>
+      <rect x="224" y="268" width="32" height="20" rx="4" opacity="0.95"/>
+      <rect x="262" y="268" width="32" height="20" rx="4" opacity="0.95"/>
+      <rect x="186" y="296" width="32" height="20" rx="4" opacity="0.95"/>
+      <rect x="224" y="296" width="32" height="20" rx="4" opacity="0.95"/>
+      <rect x="262" y="296" width="32" height="20" rx="4" opacity="0.95"/>
+    </g>
+
+    <!-- Botao confirma verde -->
+    <rect x="200" y="328" width="80" height="20" rx="6" fill="#00C896"/>
+    <text x="240" y="343" text-anchor="middle" fill="#FFFFFF" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="800">CONFIRMAR</text>
+  </g>
+
+  <!-- Setas e badges do split -->
+  <!-- Seta para Sua margem (verde, em cima) -->
+  <g>
+    <path d="M 320 175 C 360 165, 390 155, 420 130" stroke="#00C896" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 6" fill="none"/>
+    <rect x="346" y="92" width="118" height="58" rx="14" fill="#FFFFFF" stroke="#00C896" stroke-width="2"/>
+    <text x="405" y="115" text-anchor="middle" fill="#0A2540" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">SUA MARGEM</text>
+    <text x="405" y="138" text-anchor="middle" fill="#00C896" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="800">R$ 2.400</text>
+  </g>
+
+  <!-- Seta para Terceiro (azul, em baixo) -->
+  <g>
+    <path d="M 320 305 C 360 320, 390 340, 420 360" stroke="#0A2540" stroke-width="4" stroke-linecap="round" stroke-dasharray="2 6" fill="none"/>
+    <rect x="346" y="332" width="118" height="58" rx="14" fill="#FFFFFF" stroke="#0A2540" stroke-width="2"/>
+    <text x="405" y="355" text-anchor="middle" fill="#0A2540" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">TERCEIRO</text>
+    <text x="405" y="378" text-anchor="middle" fill="#0A2540" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="800">R$ 3.600</text>
+  </g>
+
+  <!-- Etiqueta do total (esquerda) -->
+  <g>
+    <rect x="20" y="216" width="118" height="58" rx="14" fill="#FFFFFF" stroke="#94A3B8" stroke-width="2" stroke-dasharray="3 4"/>
+    <text x="79" y="239" text-anchor="middle" fill="#475569" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="700" letter-spacing="1.5">CLIENTE PAGA</text>
+    <text x="79" y="262" text-anchor="middle" fill="#0A2540" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="800">R$ 6.000</text>
+  </g>
+  <path d="M 138 245 L 160 245" stroke="#94A3B8" stroke-width="3" stroke-linecap="round" stroke-dasharray="2 5"/>
+</svg>
