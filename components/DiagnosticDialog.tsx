@@ -223,8 +223,7 @@ export function DiagnosticDialog({ open, onOpenChange, context }: Props) {
             )}
 
             <p className="text-[11px] text-muted text-center text-pretty">
-              Você só recebe contato pelo WhatsApp. Sem e-mail marketing, sem
-              ligação automática.
+              Você só recebe contato pelo WhatsApp. Sem spam, sem ligação de robô.
             </p>
           </form>
         )}

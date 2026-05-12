@@ -7,7 +7,7 @@ export function Footer() {
   const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "5511999998888";
   const waHref = buildWhatsAppHref(
     number,
-    "Olá! Quero falar com a SplitTech sobre o split de pagamento."
+    "Oi, quero falar com a SplitTech sobre o split de pagamento."
   );
 
   return (
@@ -16,11 +16,11 @@ export function Footer() {
         <div className="grid gap-10 md:grid-cols-3 lg:grid-cols-4">
           <div className="lg:col-span-2">
             <p className="font-display text-2xl font-extrabold text-white mb-2">
-              paguecomsplit.com.br
+              paguecom<span className="text-accent-300">split</span>
             </p>
             <p className="text-sm leading-relaxed max-w-md">
-              Pare de pagar imposto sobre dinheiro que não é seu. Split de
-              pagamento sobre infraestrutura Cappta, regulado pelo BACEN.
+              Cada parte é separada antes de gerar imposto. Split de pagamento
+              sobre infraestrutura Cappta, regulado pelo BACEN.
             </p>
             <a
               href={waHref}
@@ -29,7 +29,7 @@ export function Footer() {
               className="inline-flex items-center gap-2 mt-5 rounded-lg bg-accent text-white px-4 py-2 text-sm font-semibold hover:bg-accent-600 transition-colors"
             >
               <MessageCircle className="h-4 w-4" aria-hidden />
-              Falar no WhatsApp
+              Quero economizar
             </a>
           </div>
 
