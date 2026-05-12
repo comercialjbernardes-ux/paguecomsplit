@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, TrendingDown, Building2 } from "lucide-react";
+import { ArrowRight, Building2 } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { SegmentGrid } from "@/components/SegmentGrid";
@@ -8,6 +8,7 @@ import { TrustBadges } from "@/components/TrustBadges";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { HomeHero } from "@/components/sections/HomeHero";
 import { SplitExplainer } from "@/components/sections/SplitExplainer";
+import { HomeHowItWorks } from "@/components/sections/HomeHowItWorks";
 import { Button } from "@/components/ui/button";
 
 const HOME_WHATSAPP =
@@ -24,49 +25,8 @@ export default function HomePage() {
         {/* 2. O que e split */}
         <SplitExplainer />
 
-        {/* 3. Como funciona */}
-        <section className="bg-white">
-          <div className="container-page py-12 md:py-16">
-            <div className="grid md:grid-cols-2 gap-10 items-center">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-                  Como funciona
-                </p>
-                <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-4 text-balance">
-                  O Cofre Digital separa o que é seu do que é de terceiros.
-                </h2>
-                <p className="text-text/80 leading-relaxed mb-4">
-                  No POS SplitTech, cada pagamento é dividido automaticamente.
-                  A parte do terceiro (parceiro, fornecedor, autônomo) cai
-                  direto na conta dele — fora do seu DAS.
-                </p>
-                <p className="text-text/80 leading-relaxed mb-6">
-                  Você passa a tributar só a sua margem real. O resto é
-                  contabilizado onde deve ser: na pessoa certa.
-                </p>
-                <Button asChild variant="primary" size="lg">
-                  <Link href="/como-funciona">
-                    Entender em detalhes
-                    <ArrowRight className="h-4 w-4" aria-hidden />
-                  </Link>
-                </Button>
-              </div>
-
-              <div className="grid gap-4">
-                <FlowCard tone="warm" title="Sem split">
-                  Cliente paga R$ 6.000 → tudo entra na sua conta → imposto
-                  incide sobre R$ 6.000 → você repassa depois → tributou
-                  receita que nunca foi sua.
-                </FlowCard>
-                <FlowCard tone="accent" title="Com Cofre Digital">
-                  Cliente paga R$ 6.000 → split automático separa R$ 2.400 sua
-                  / R$ 3.600 do terceiro → imposto incide só sobre R$ 2.400 →
-                  cada parte tributa o que é dela.
-                </FlowCard>
-              </div>
-            </div>
-          </div>
-        </section>
+        {/* 3. Como funciona — diagrama */}
+        <HomeHowItWorks />
 
         {/* 4. Bitributacao silenciosa (numeros) */}
         <section className="bg-primary-600 text-white">
@@ -196,33 +156,3 @@ function StatBlock({
   );
 }
 
-function FlowCard({
-  tone,
-  title,
-  children,
-}: {
-  tone: "warm" | "accent";
-  title: string;
-  children: React.ReactNode;
-}) {
-  const styles =
-    tone === "warm"
-      ? "border-warm-500/30 bg-warm-500/5"
-      : "border-accent-500/30 bg-accent-50";
-  const dot = tone === "warm" ? "bg-warm-500" : "bg-accent-500";
-  const titleColor = tone === "warm" ? "text-warm-600" : "text-accent-700";
-  const icon = tone === "warm" ? null : <TrendingDown className="h-5 w-5" aria-hidden />;
-
-  return (
-    <div className={`rounded-xl border-2 p-5 ${styles}`}>
-      <div className="flex items-center gap-2 mb-2">
-        <span className={`h-2.5 w-2.5 rounded-full ${dot}`} aria-hidden />
-        <span className={`font-display text-sm font-bold uppercase tracking-widest ${titleColor}`}>
-          {title}
-        </span>
-        {icon ? <span className={titleColor}>{icon}</span> : null}
-      </div>
-      <p className="text-sm text-text/80 leading-relaxed">{children}</p>
-    </div>
-  );
-}
