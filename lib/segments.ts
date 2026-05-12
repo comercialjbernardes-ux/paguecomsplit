@@ -34,11 +34,11 @@ export const segments: Segment[] = [
   {
     slug: "restaurante",
     name: "Restaurantes",
-    headline: "Restaurante, pague com split.",
+    headline: "Restaurantes: a gorjeta do garçom fora do seu DAS.",
     pain: "Você está pagando imposto sobre a gorjeta do seu garçom.",
     third_party: "Gorjeta dos garçons (10%)",
     hook_question:
-      "Você sabia que a gorjeta do garçom aumenta seu faturamento tributável no Simples?",
+      "Quanto da gorjeta do seu garçom virou DAS este ano?",
     example: {
       annual_revenue: 480000,
       repasse_percent: 10,
@@ -48,11 +48,11 @@ export const segments: Segment[] = [
       monthly_savings: 240,
     },
     whatsapp_message:
-      "Olá! Vi o site paguecomsplit.com.br e quero saber como reduzir imposto no meu restaurante.",
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar a gorjeta do garçom do meu DAS.",
     meta_title:
-      "Split de Pagamento para Restaurantes | Reduza Impostos no Simples Nacional",
+      "Split de Pagamento para Restaurantes | Gorjeta fora do DAS",
     meta_description:
-      "Pare de pagar imposto sobre a gorjeta dos seus garçons. Conheça o split de pagamento da SplitTech e economize no Simples Nacional.",
+      "A gorjeta do seu garçom não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
     keywords: [
       "split pagamento restaurante",
       "reduzir imposto restaurante simples nacional",
@@ -62,12 +62,12 @@ export const segments: Segment[] = [
   {
     slug: "veterinaria",
     name: "Veterinárias",
-    headline: "Veterinária, pague com split.",
+    headline: "Veterinárias: o honorário do parceiro fora do seu DAS.",
     pain:
-      "O honorário do veterinário parceiro está inflando seu faturamento tributável.",
+      "O honorário do veterinário parceiro infla seu faturamento tributável.",
     third_party: "Veterinários autônomos parceiros",
     hook_question:
-      "Você tributa o honorário do veterinário que atende no seu espaço como se fosse sua receita?",
+      "Quanto do honorário do veterinário parceiro entrou no seu DAS?",
     example: {
       annual_revenue: 360000,
       repasse_percent: 55,
@@ -77,11 +77,11 @@ export const segments: Segment[] = [
       monthly_savings: 990,
     },
     whatsapp_message:
-      "Olá! Vi o site paguecomsplit.com.br e quero saber como reduzir imposto na minha veterinária.",
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar o honorário do veterinário parceiro do meu faturamento tributável.",
     meta_title:
-      "Split de Pagamento para Veterinárias | Reduza Impostos no Simples Nacional",
+      "Split de Pagamento para Veterinárias | Honorário fora do DAS",
     meta_description:
-      "Pare de pagar imposto sobre os honorários dos veterinários parceiros. Split de pagamento SplitTech para clínicas veterinárias.",
+      "O honorário do veterinário parceiro não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
     keywords: [
       "split pagamento veterinaria",
       "reduzir imposto clinica veterinaria",
@@ -91,13 +91,13 @@ export const segments: Segment[] = [
   {
     slug: "estetica",
     name: "Clínicas de Estética",
-    headline: "Clínica de estética, pague com split.",
+    headline: "Estética: cada profissional parceira fora do seu DAS.",
     pain:
-      "Cada profissional parceira que trabalha com você eleva seu DAS indevidamente.",
+      "Cada profissional parceira eleva seu DAS indevidamente.",
     third_party:
       "Profissionais parceiros (nail, lash, design de sobrancelha, etc.)",
     hook_question:
-      "Cada profissional que trabalha no seu espaço está custando imposto a mais no seu DAS?",
+      "Quantas profissionais parceiras estão inflando seu DAS hoje?",
     example: {
       annual_revenue: 330000,
       repasse_percent: 60,
@@ -107,11 +107,11 @@ export const segments: Segment[] = [
       monthly_savings: 2358,
     },
     whatsapp_message:
-      "Olá! Vi o site paguecomsplit.com.br e quero saber como reduzir imposto na minha clínica de estética.",
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar as profissionais parceiras do meu DAS.",
     meta_title:
-      "Split de Pagamento para Clínicas de Estética | Reduza Impostos no Simples",
+      "Split de Pagamento para Clínicas de Estética | DAS só sobre o que é seu",
     meta_description:
-      "Pare de pagar imposto sobre o faturamento das suas profissionais parceiras. Split de pagamento SplitTech para estética.",
+      "Cada profissional parceira tributa o que é dela. A SplitTech administra a divisão antes do DAS incidir — você não paga mais imposto pela receita do outro.",
     keywords: [
       "split pagamento estetica",
       "reduzir imposto clinica estetica",
@@ -121,12 +121,12 @@ export const segments: Segment[] = [
   {
     slug: "odontologia",
     name: "Odontologia",
-    headline: "Odontologia, pague com split.",
+    headline: "Odontologia: o protético e o especialista fora do seu DAS.",
     pain:
-      "O trabalho do protético e dos especialistas terceirizados está no seu DAS.",
+      "O trabalho do protético e dos especialistas está no seu DAS.",
     third_party: "Especialistas terceirizados e laboratórios protéticos",
     hook_question:
-      "Você paga imposto sobre o valor do trabalho protético como se fosse sua receita?",
+      "Quanto o trabalho do protético custa no seu DAS todo mês?",
     example: {
       annual_revenue: 600000,
       repasse_percent: 40,
@@ -136,11 +136,11 @@ export const segments: Segment[] = [
       monthly_savings: 1200,
     },
     whatsapp_message:
-      "Olá! Vi o site paguecomsplit.com.br e quero saber como reduzir imposto no meu consultório odontológico.",
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar o protético e os especialistas do meu DAS.",
     meta_title:
-      "Split de Pagamento para Odontologia | Reduza Impostos no Simples Nacional",
+      "Split de Pagamento para Odontologia | Protético fora do DAS",
     meta_description:
-      "Pare de tributar o trabalho do protético e especialistas terceirizados. Split de pagamento SplitTech para clínicas odontológicas.",
+      "O trabalho do protético e dos especialistas não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
     keywords: [
       "split pagamento odontologia",
       "reduzir imposto consultorio dentista",
@@ -150,12 +150,12 @@ export const segments: Segment[] = [
   {
     slug: "petshop",
     name: "Petshops",
-    headline: "Petshop, pague com split.",
+    headline: "Petshops: banho e tosa do parceiro fora da sua receita.",
     pain:
-      "O banho e tosa do parceiro está inflando seu faturamento tributável.",
+      "O banho e tosa do parceiro infla seu faturamento tributável.",
     third_party: "Groomers e veterinários parceiros",
     hook_question:
-      "O serviço do groomer parceiro aumenta seu faturamento tributável no Simples?",
+      "Quanto o banho e tosa do parceiro custa no seu DAS?",
     example: {
       annual_revenue: 240000,
       repasse_percent: 50,
@@ -165,11 +165,11 @@ export const segments: Segment[] = [
       monthly_savings: 600,
     },
     whatsapp_message:
-      "Olá! Vi o site paguecomsplit.com.br e quero saber como reduzir imposto no meu petshop.",
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar o banho e tosa do parceiro do meu DAS.",
     meta_title:
-      "Split de Pagamento para Petshops | Reduza Impostos no Simples Nacional",
+      "Split de Pagamento para Petshops | Banho e tosa fora do DAS",
     meta_description:
-      "Pare de pagar imposto sobre o serviço dos seus parceiros de banho e tosa. Split de pagamento SplitTech para petshops.",
+      "O banho e tosa do parceiro não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
     keywords: [
       "split pagamento petshop",
       "reduzir imposto petshop simples nacional",
@@ -179,12 +179,12 @@ export const segments: Segment[] = [
   {
     slug: "oficina",
     name: "Oficinas Mecânicas",
-    headline: "Oficina mecânica, pague com split.",
+    headline: "Oficinas: as peças repassadas não são sua receita tributável.",
     pain:
-      "As peças que você repassa ao cliente estão no seu faturamento tributável.",
+      "As peças que você repassa ao cliente entram como sua receita.",
     third_party: "Fornecedores de peças e mecânicos parceiros",
     hook_question:
-      "Você tributa as peças que repassa para o cliente como se fossem sua receita de serviço?",
+      "Quanto das peças que você repassa entrou no seu DAS?",
     example: {
       annual_revenue: 420000,
       repasse_percent: 55,
@@ -194,11 +194,11 @@ export const segments: Segment[] = [
       monthly_savings: 1155,
     },
     whatsapp_message:
-      "Olá! Vi o site paguecomsplit.com.br e quero saber como reduzir imposto na minha oficina mecânica.",
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar as peças repassadas da minha receita tributável.",
     meta_title:
-      "Split de Pagamento para Oficinas Mecânicas | Reduza Impostos no Simples",
+      "Split de Pagamento para Oficinas Mecânicas | Peças fora da receita",
     meta_description:
-      "Pare de tributar as peças repassadas ao cliente. Split de pagamento SplitTech para oficinas mecânicas.",
+      "As peças que você repassa não são sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
     keywords: [
       "split pagamento oficina mecanica",
       "reduzir imposto oficina simples nacional",
@@ -208,11 +208,11 @@ export const segments: Segment[] = [
   {
     slug: "construcao",
     name: "Material de Construção",
-    headline: "Construção, pague com split.",
-    pain: "O serviço do empreiteiro parceiro está entrando como sua receita.",
+    headline: "Construção: o serviço do empreiteiro fora do seu DAS.",
+    pain: "O serviço do empreiteiro parceiro entra como sua receita.",
     third_party: "Empreiteiros e mão de obra terceirizada",
     hook_question:
-      "O serviço do empreiteiro que você indica entra como receita sua no Simples?",
+      "Quanto do serviço do empreiteiro entrou no seu DAS este ano?",
     example: {
       annual_revenue: 720000,
       repasse_percent: 45,
@@ -222,11 +222,11 @@ export const segments: Segment[] = [
       monthly_savings: 1620,
     },
     whatsapp_message:
-      "Olá! Vi o site paguecomsplit.com.br e quero saber como reduzir imposto no meu negócio de material de construção.",
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar o empreiteiro parceiro do meu DAS.",
     meta_title:
-      "Split de Pagamento para Material de Construção | Reduza Impostos no Simples",
+      "Split de Pagamento para Material de Construção | Empreiteiro fora do DAS",
     meta_description:
-      "Pare de tributar mão de obra terceirizada como receita própria. Split de pagamento SplitTech para material de construção.",
+      "O empreiteiro parceiro tributa o trabalho dele. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
     keywords: [
       "split pagamento construcao",
       "reduzir imposto material construcao simples nacional",
