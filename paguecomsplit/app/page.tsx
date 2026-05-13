@@ -5,6 +5,7 @@ import { EconomySimulator } from "@/components/EconomySimulator";
 import { TrustBadges } from "@/components/TrustBadges";
 import { AnimatedNumber } from "@/components/AnimatedNumber";
 import { HomeHero } from "@/components/sections/HomeHero";
+import { NarrativaPonte } from "@/components/sections/NarrativaPonte";
 import { SplitExplainer } from "@/components/sections/SplitExplainer";
 import { HomeHowItWorks } from "@/components/sections/HomeHowItWorks";
 import { RepresentantesTeaser } from "@/components/sections/RepresentantesTeaser";
@@ -19,6 +20,9 @@ export default function HomePage() {
       <main>
         {/* 1. Hero (com imagem) */}
         <HomeHero whatsappMessage={HOME_WHATSAPP} />
+
+        {/* 1.5 Narrativa-ponte (tom conversa, prepara terreno) */}
+        <NarrativaPonte />
 
         {/* 2. O que e split */}
         <SplitExplainer />
@@ -50,10 +54,10 @@ export default function HomePage() {
                 desc="o mesmo R$ que passou na maquininha vira imposto duas vezes — uma na sua conta, outra na do parceiro"
               />
               <StatBlock
-                value={14}
-                suffix=" anos"
-                label="de infraestrutura Cappta"
-                desc="mais de R$ 7 bi processados por ano, regulado pelo BACEN"
+                value={22104}
+                prefix="R$ "
+                label="Economia anual média"
+                desc="exemplo calibrado para quem fatura R$ 45k/mês com 40% do faturamento pertencendo a parceiros (Anexo III, faixa 3)"
               />
             </div>
           </div>
