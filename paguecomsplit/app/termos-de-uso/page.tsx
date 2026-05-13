@@ -97,7 +97,7 @@ export default function TermosDeUsoPage() {
           ))}
 
           <p className="mt-12 pt-6 border-t border-slate-100 text-xs text-muted">
-            SplitTech · paguecomsplit.com.br · CNPJ em processo de registro.
+            SplitTech · paguecomsplit.com.br · CNPJ: {process.env.NEXT_PUBLIC_CNPJ || "38.180.982/0001-13"}.
             Dúvidas: contato@paguecomsplit.com.br.
           </p>
         </article>
