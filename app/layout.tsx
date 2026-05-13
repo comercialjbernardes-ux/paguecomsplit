@@ -37,10 +37,11 @@ export const metadata: Metadata = {
       "Split de pagamento que tira a receita do parceiro do seu DAS. A SplitTech administra a divisão antes do imposto incidir — você tributa só a sua margem real.",
     images: [
       {
-        url: "/og-default.svg",
+        url: "/og-image.png",
         width: 1200,
         height: 630,
         alt: "paguecomsplit — Split de pagamento que tira a receita do parceiro do seu DAS",
+        type: "image/png",
       },
     ],
   },
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
     title: "Pague com Split | Reduza o DAS no Simples Nacional",
     description:
       "Split de pagamento que tira a receita do parceiro do seu DAS. Você tributa só a sua margem real.",
-    images: ["/og-default.svg"],
+    images: ["/og-image.png"],
   },
   robots: { index: true, follow: true },
 };
