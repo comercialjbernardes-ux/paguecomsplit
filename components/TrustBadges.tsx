@@ -12,7 +12,15 @@ export function TrustBadges() {
           <ShieldCheck className="h-8 w-8 flex-none text-accent-600" aria-hidden />
           <div>
             <p className="font-display text-sm font-bold text-primary-600">
-              Infraestrutura Cappta
+              Infraestrutura{" "}
+              <a
+                href="https://www.cappta.com.br"
+                target="_blank"
+                rel="noopener noreferrer external"
+                className="underline hover:text-accent-700"
+              >
+                Cappta
+              </a>
             </p>
             <p className="text-sm text-muted leading-snug">
               +R$ 7 bi/ano processados em +14 anos de mercado. A mesma base
@@ -25,7 +33,15 @@ export function TrustBadges() {
           <Landmark className="h-8 w-8 flex-none text-accent-600" aria-hidden />
           <div>
             <p className="font-display text-sm font-bold text-primary-600">
-              Regulado pelo BACEN
+              Regulado pelo{" "}
+              <a
+                href="https://www.bcb.gov.br"
+                target="_blank"
+                rel="noopener noreferrer external"
+                className="underline hover:text-accent-700"
+              >
+                BACEN
+              </a>
             </p>
             <p className="text-sm text-muted leading-snug">
               Operação sob a regulação do Banco Central do Brasil — não é
@@ -41,8 +57,16 @@ export function TrustBadges() {
               Parecer Jurídico
             </p>
             <p className="text-sm text-muted leading-snug mb-2">
-              Barcellos Tucunduva Advogados. Resumo aqui, integral no
-              WhatsApp comercial.
+              Emitido pelo escritório{" "}
+              <a
+                href="https://www.btlaw.com.br"
+                target="_blank"
+                rel="noopener noreferrer external"
+                className="underline hover:text-accent-700"
+              >
+                Barcellos Tucunduva Advogados
+              </a>
+              . Resumo aqui, integral no WhatsApp comercial.
             </p>
             <LegalOpinionModal />
           </div>

@@ -4,7 +4,7 @@ const BULLETS = [
   {
     icon: ShieldCheck,
     title: "Compliance BACEN",
-    desc: "Operação regulada pelo Banco Central via Cappta — a infraestrutura que processa +R$ 7 bi/ano em transações.",
+    desc: "Operação regulada pelo Banco Central. Split de pagamento é a prática padrão do mercado de adquirência para repasses a múltiplos beneficiários.",
   },
   {
     icon: Clock,
@@ -27,12 +27,13 @@ export function SplitExplainer() {
             O que é split de pagamento?
           </p>
           <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-4 text-balance">
-            Evite bitributação.
+            Split de pagamento é a gestão da divisão antes da tributação.
           </h2>
           <p className="text-text/80 leading-relaxed text-pretty max-w-2xl">
             Quando o cliente passa o cartão, cada parte da transação já segue
             para o dono dela — <strong>antes</strong> do dinheiro virar receita
-            tributável. Você só paga DAS sobre a sua margem real.
+            tributável. Você só paga DAS sobre a sua margem real.{" "}
+            <strong>Evite bitributação.</strong>
           </p>
         </div>
 
