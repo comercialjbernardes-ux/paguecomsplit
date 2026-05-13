@@ -27,7 +27,7 @@ export function SplitExplainer() {
             O que é split de pagamento?
           </p>
           <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-4 text-balance">
-            Split de pagamento é a gestão da divisão antes da tributação.
+            A divisão ocorre antes da tributação.
           </h2>
           <p className="text-text/80 leading-relaxed text-pretty max-w-2xl">
             Quando o cliente passa o cartão, cada parte da transação já segue
