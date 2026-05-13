@@ -1,3 +1,5 @@
+"use client";
+
 import { MessageCircle } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { buildWhatsAppHref } from "@/lib/utils";

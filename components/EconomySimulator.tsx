@@ -35,7 +35,6 @@ type Props = {
 
 const DEFAULT_SEGMENT_SLUG = "estetica";
 const DEFAULT_BAND_ID = "30-60k";
-const DIAG_OPEN_DELAY_MS = 5_000;
 const DIAG_SESSION_KEY = "pcs_diag_seen";
 const POPUP_OPEN_DELAY_MS = 2_500;
 const POPUP_SESSION_KEY = "pcs_popup_seen";
