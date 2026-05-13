@@ -1,0 +1,87 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="paguecomsplit - Pague com Split">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#F4FAFD"/>
+      <stop offset="1" stop-color="#E6FBF4"/>
+    </linearGradient>
+    <linearGradient id="terminal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#102A43"/>
+      <stop offset="1" stop-color="#0A2540"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="20" stdDeviation="24" flood-color="#0A2540" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+
+  <!-- Bolhas decorativas -->
+  <circle cx="120" cy="120" r="80" fill="#00C896" opacity="0.08"/>
+  <circle cx="1080" cy="510" r="120" fill="#0A2540" opacity="0.05"/>
+  <circle cx="1020" cy="120" r="36" fill="#FF6B35" opacity="0.10"/>
+
+  <!-- Conteudo: lado esquerdo texto, lado direito maquininha -->
+
+  <!-- Eyebrow badge -->
+  <g transform="translate(80, 130)">
+    <rect width="240" height="40" rx="20" fill="#FF6B35" fill-opacity="0.12" stroke="#FF6B35" stroke-opacity="0.3" stroke-width="1.5"/>
+    <text x="120" y="26" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="800" fill="#C2410C" letter-spacing="2">EVITE BITRIBUTACAO</text>
+  </g>
+
+  <!-- Headline -->
+  <text x="80" y="240" font-family="ui-sans-serif, system-ui, sans-serif" font-size="58" font-weight="800" fill="#0A2540">O dinheiro do seu parceiro</text>
+  <text x="80" y="306" font-family="ui-sans-serif, system-ui, sans-serif" font-size="58" font-weight="800" fill="#0A2540">não é seu. <tspan fill="#FF6B35">Por que tributar</tspan></text>
+  <text x="80" y="372" font-family="ui-sans-serif, system-ui, sans-serif" font-size="58" font-weight="800" fill="#0A2540">como se fosse?</text>
+
+  <!-- Subhead -->
+  <text x="80" y="430" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" fill="#475569">Split de pagamento que tira a receita do</text>
+  <text x="80" y="462" font-family="ui-sans-serif, system-ui, sans-serif" font-size="22" fill="#475569">parceiro do seu DAS. Antes do imposto incidir.</text>
+
+  <!-- Microprova -->
+  <text x="80" y="540" font-family="ui-sans-serif, system-ui, sans-serif" font-size="16" font-weight="700" fill="#0A2540" opacity="0.7">Cappta · +R$ 7 bi/ano · Regulado BACEN</text>
+
+  <!-- Logo (canto inferior) -->
+  <text x="80" y="585" font-family="ui-sans-serif, system-ui, sans-serif" font-size="20" font-weight="800" fill="#0A2540">paguecom<tspan fill="#00C896">split</tspan></text>
+
+  <!-- Maquininha (lado direito) -->
+  <g transform="translate(820, 130)" filter="url(#shadow)">
+    <rect width="280" height="380" rx="32" fill="url(#terminal)"/>
+
+    <!-- Tela -->
+    <rect x="28" y="32" width="224" height="140" rx="12" fill="#1F3A5A"/>
+    <text x="140" y="78" text-anchor="middle" fill="#7CE8C7" font-family="ui-sans-serif, system-ui, sans-serif" font-size="13" font-weight="700" letter-spacing="2">SPLIT ATIVO</text>
+    <text x="140" y="124" text-anchor="middle" fill="#FFFFFF" font-family="ui-sans-serif, system-ui, sans-serif" font-size="36" font-weight="800">R$ 6.000,00</text>
+    <text x="140" y="152" text-anchor="middle" fill="#94A3B8" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12">Anexo III · faixa 3</text>
+
+    <!-- Teclado -->
+    <g fill="#FFFFFF" opacity="0.95">
+      <rect x="40" y="200" width="56" height="32" rx="6"/>
+      <rect x="112" y="200" width="56" height="32" rx="6"/>
+      <rect x="184" y="200" width="56" height="32" rx="6"/>
+      <rect x="40" y="244" width="56" height="32" rx="6"/>
+      <rect x="112" y="244" width="56" height="32" rx="6"/>
+      <rect x="184" y="244" width="56" height="32" rx="6"/>
+      <rect x="40" y="288" width="56" height="32" rx="6"/>
+      <rect x="112" y="288" width="56" height="32" rx="6"/>
+      <rect x="184" y="288" width="56" height="32" rx="6"/>
+    </g>
+
+    <!-- Botao confirma -->
+    <rect x="76" y="340" width="128" height="28" rx="8" fill="#00C896"/>
+    <text x="140" y="360" text-anchor="middle" fill="#FFFFFF" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="800">CONFIRMAR</text>
+  </g>
+
+  <!-- Setas + badges do split -->
+  <g>
+    <path d="M 1100 220 C 1140 200, 1170 175, 1170 130" stroke="#00C896" stroke-width="5" stroke-linecap="round" stroke-dasharray="3 7" fill="none"/>
+    <rect x="1100" y="60" width="80" height="56" rx="14" fill="#FFFFFF" stroke="#00C896" stroke-width="2"/>
+    <text x="1140" y="84" text-anchor="middle" fill="#0A2540" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="800" letter-spacing="1.5">SUA</text>
+    <text x="1140" y="106" text-anchor="middle" fill="#00C896" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="800">2.400</text>
+  </g>
+  <g>
+    <path d="M 1100 420 C 1140 450, 1170 475, 1170 520" stroke="#0A2540" stroke-width="5" stroke-linecap="round" stroke-dasharray="3 7" fill="none"/>
+    <rect x="1100" y="530" width="80" height="56" rx="14" fill="#FFFFFF" stroke="#0A2540" stroke-width="2"/>
+    <text x="1140" y="554" text-anchor="middle" fill="#0A2540" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" font-weight="800" letter-spacing="1.5">PARCEIRO</text>
+    <text x="1140" y="576" text-anchor="middle" fill="#0A2540" font-family="ui-sans-serif, system-ui, sans-serif" font-size="18" font-weight="800">3.600</text>
+  </g>
+</svg>

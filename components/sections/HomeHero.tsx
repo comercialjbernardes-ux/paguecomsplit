@@ -63,6 +63,7 @@ export function HomeHero({ whatsappMessage }: HomeHeroProps) {
                 width={480}
                 height={480}
                 priority
+                fetchPriority="high"
                 className="w-full h-auto"
               />
             </div>

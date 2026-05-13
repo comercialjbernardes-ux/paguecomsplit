@@ -21,20 +21,35 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Pague com Split | Reduza Impostos no Simples Nacional",
+    default: "Pague com Split | Reduza o DAS no Simples Nacional",
     template: "%s | paguecomsplit.com.br",
   },
   description:
-    "Pare de pagar imposto sobre dinheiro que não é seu. Split de pagamento que separa repasses antes do Simples Nacional incidir.",
+    "Split de pagamento que tira a receita do parceiro do seu DAS. A SplitTech administra a divisão antes do imposto incidir — você tributa só a sua margem real.",
   metadataBase: new URL("https://paguecomsplit.com.br"),
   openGraph: {
     type: "website",
     locale: "pt_BR",
     siteName: "paguecomsplit.com.br",
     url: "https://paguecomsplit.com.br",
-    title: "Pague com Split | Reduza Impostos no Simples Nacional",
+    title: "Pague com Split | Reduza o DAS no Simples Nacional",
     description:
-      "Pare de pagar imposto sobre dinheiro que não é seu. Split de pagamento que separa repasses antes do Simples Nacional incidir.",
+      "Split de pagamento que tira a receita do parceiro do seu DAS. A SplitTech administra a divisão antes do imposto incidir — você tributa só a sua margem real.",
+    images: [
+      {
+        url: "/og-default.svg",
+        width: 1200,
+        height: 630,
+        alt: "paguecomsplit — Split de pagamento que tira a receita do parceiro do seu DAS",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Pague com Split | Reduza o DAS no Simples Nacional",
+    description:
+      "Split de pagamento que tira a receita do parceiro do seu DAS. Você tributa só a sua margem real.",
+    images: ["/og-default.svg"],
   },
   robots: { index: true, follow: true },
 };

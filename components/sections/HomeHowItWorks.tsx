@@ -131,7 +131,42 @@ export function HomeHowItWorks() {
           </div>
         </div>
 
-        {/* Diagrama */}
+        {/* Tabela semantica (sr-only para crawlers e leitores de tela) */}
+        <table className="sr-only">
+          <caption>
+            Comparativo de DAS sobre uma operação de R$ 6.000, Anexo III faixa 3
+            do Simples Nacional (alíquota nominal 13,5%)
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Cenário</th>
+              <th scope="col">Receita tributável</th>
+              <th scope="col">DAS pago</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Hoje (sem split, bitributação)</th>
+              <td>R$ 6.000</td>
+              <td>R$ 810</td>
+            </tr>
+            <tr>
+              <th scope="row">Com Cofre Digital (split antes do DAS)</th>
+              <td>R$ 2.400</td>
+              <td>R$ 324</td>
+            </tr>
+          </tbody>
+          <tfoot>
+            <tr>
+              <th scope="row" colSpan={2}>
+                Economia por cliente
+              </th>
+              <td>R$ 486</td>
+            </tr>
+          </tfoot>
+        </table>
+
+        {/* Diagrama visual */}
         <div className="space-y-5">
           {ROWS.map((row, rowIdx) => {
             const t = TONES[row.tone];
