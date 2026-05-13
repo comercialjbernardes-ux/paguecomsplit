@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { segments } from "@/lib/segments";
+import { getAllPosts } from "@/lib/blog";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://paguecomsplit.com.br";
@@ -43,9 +44,26 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const segmentRoutes: MetadataRoute.Sitemap = segments.map((s) => ({
     url: `${SITE_URL}/${s.slug}`,
     lastModified: now,
-    changeFrequency: "weekly",
+    changeFrequency: "weekly" as const,
     priority: 0.9,
   }));
 
-  return [...staticRoutes, ...segmentRoutes];
+  const blogIndex: MetadataRoute.Sitemap = [
+    {
+      url: `${SITE_URL}/blog`,
+      lastModified: now,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    },
+  ];
+
+  const blogPosts = getAllPosts();
+  const blogPostRoutes: MetadataRoute.Sitemap = blogPosts.map((p) => ({
+    url: `${SITE_URL}/blog/${p.slug}`,
+    lastModified: new Date(p.updatedAt ?? p.publishedAt),
+    changeFrequency: "monthly" as const,
+    priority: 0.6,
+  }));
+
+  return [...staticRoutes, ...segmentRoutes, ...blogIndex, ...blogPostRoutes];
 }
