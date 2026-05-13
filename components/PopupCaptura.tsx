@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { segments } from "@/lib/segments";
 import { buildWhatsAppHref } from "@/lib/utils";
+import { trackEvent } from "@/components/Analytics";
 
 const REVENUE_OPTIONS = [
   { value: "ate-30k", label: "Até R$ 30k/mês" },
@@ -60,12 +61,19 @@ export function PopupCaptura({
     }
     parts.push("Quero o diagnóstico com os meus números reais.");
     const href = buildWhatsAppHref(number, parts.join(" "));
+    trackEvent("submit_popup", { segmento });
     onOpenChange(false);
     window.open(href, "_blank", "noopener,noreferrer");
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(v) => {
+        if (v) trackEvent("abertura_popup");
+        onOpenChange(v);
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="inline-flex items-center gap-2 text-accent-600 mb-1">
