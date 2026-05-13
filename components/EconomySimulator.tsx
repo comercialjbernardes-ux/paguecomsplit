@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { DiagnosticDialog } from "@/components/DiagnosticDialog";
+import { PopupCaptura } from "@/components/PopupCaptura";
 import { segments, type SegmentExample } from "@/lib/segments";
 import {
   ANEXOS,
@@ -36,6 +37,8 @@ const DEFAULT_SEGMENT_SLUG = "estetica";
 const DEFAULT_BAND_ID = "30-60k";
 const DIAG_OPEN_DELAY_MS = 5_000;
 const DIAG_SESSION_KEY = "pcs_diag_seen";
+const POPUP_OPEN_DELAY_MS = 2_500;
+const POPUP_SESSION_KEY = "pcs_popup_seen";
 
 export function EconomySimulator({
   defaults,
@@ -159,9 +162,13 @@ export function EconomySimulator({
     whatsappMessage ??
     `Oi, simulei no paguecomsplit.com.br${displaySegmentName ? ` (segmento: ${displaySegmentName})` : ""} e a economia foi de ${formatBRL(calc.monthlySavings)}/mês. Quero entender melhor como funciona.`;
 
-  // Diagnostic dialog state
+  // Diagnostic dialog state (manual trigger via button)
   const [diagOpen, setDiagOpen] = useState(false);
   const autoOpenTriggered = useRef(false);
+
+  // PopupCaptura state (auto-trigger 2.5s após economia > 0, 1x por sessão)
+  const [popupOpen, setPopupOpen] = useState(false);
+  const popupTriggered = useRef(false);
 
   // Auto-abre o diagnostico apos N segundos com economia > 0 (uma vez por sessao)
   useEffect(() => {
@@ -178,6 +185,24 @@ export function EconomySimulator({
       window.sessionStorage.setItem(DIAG_SESSION_KEY, "1");
       autoOpenTriggered.current = true;
     }, DIAG_OPEN_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [calc.monthlySavings]);
+
+  // Auto-abre PopupCaptura após 2.5s com economia > 0 (1x por sessão)
+  useEffect(() => {
+    if (popupTriggered.current) return;
+    if (typeof window === "undefined") return;
+    const seen = window.sessionStorage.getItem(POPUP_SESSION_KEY);
+    if (seen) {
+      popupTriggered.current = true;
+      return;
+    }
+    if (calc.monthlySavings <= 0) return;
+    const timer = window.setTimeout(() => {
+      setPopupOpen(true);
+      window.sessionStorage.setItem(POPUP_SESSION_KEY, "1");
+      popupTriggered.current = true;
+    }, POPUP_OPEN_DELAY_MS);
     return () => window.clearTimeout(timer);
   }, [calc.monthlySavings]);
 
@@ -333,7 +358,7 @@ export function EconomySimulator({
             </Button>
             <p className="flex items-center gap-1.5 justify-center text-xs text-white/60">
               <Zap className="h-3.5 w-3.5" aria-hidden />
-              Cálculo baseado nas alíquotas reais do Simples Nacional · Diagnóstico exato para o seu CNPJ no atendimento.
+              Cálculo baseado nas alíquotas reais do Simples Nacional. Diagnóstico exato para o seu CNPJ em 15 minutos — sem compromisso.
             </p>
           </div>
         </div>
@@ -350,6 +375,13 @@ export function EconomySimulator({
           monthlySavings: Math.round(calc.monthlySavings),
           annualSavings: Math.round(calc.annualSavings),
         }}
+      />
+
+      <PopupCaptura
+        open={popupOpen}
+        onOpenChange={setPopupOpen}
+        defaultSegment={segmentSlug}
+        monthlySavings={Math.round(calc.monthlySavings)}
       />
 
       {/* WhatsApp inline (alternativa, fora do dialog) — usa o message */}
