@@ -3,6 +3,46 @@ import { MessageCircle } from "lucide-react";
 import { segments } from "@/lib/segments";
 import { buildWhatsAppHref } from "@/lib/utils";
 
+function InstagramIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <rect x="2" y="2" width="20" height="20" rx="5" />
+      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+    </svg>
+  );
+}
+
+function LinkedinIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z" />
+      <rect x="2" y="9" width="4" height="12" />
+      <circle cx="4" cy="4" r="2" />
+    </svg>
+  );
+}
+
 export function Footer() {
   const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "5511999998888";
   const waHref = buildWhatsAppHref(
@@ -66,8 +106,40 @@ export function Footer() {
                   Para representantes
                 </Link>
               </li>
+              <li>
+                <Link href="/politica-de-privacidade" className="hover:text-white">
+                  Política de Privacidade
+                </Link>
+              </li>
+              <li>
+                <Link href="/termos-de-uso" className="hover:text-white">
+                  Termos de Uso
+                </Link>
+              </li>
             </ul>
-            <p className="text-xs text-white/50 mt-6 leading-relaxed">
+
+            <div className="mt-5 flex items-center gap-3">
+              <a
+                href="https://www.instagram.com/paguecomsplit/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="Instagram SplitTech"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                <InstagramIcon className="h-4 w-4" />
+              </a>
+              <a
+                href="https://www.linkedin.com/company/splittech-br/"
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label="LinkedIn SplitTech"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+              >
+                <LinkedinIcon className="h-4 w-4" />
+              </a>
+            </div>
+
+            <p className="text-xs text-white/50 mt-5 leading-relaxed">
               Horário comercial:
               <br />
               Seg a sex, 9h–18h
@@ -77,10 +149,18 @@ export function Footer() {
 
         <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-white/50">
           <p>
-            © {new Date().getFullYear()} SplitTech. Operação sobre infraestrutura
+            © {new Date().getFullYear()} SplitTech · Operação sobre infraestrutura
             Cappta, regulada pelo Banco Central do Brasil.
           </p>
-          <p>CNPJ a confirmar · paguecomsplit.com.br</p>
+          <p>
+            CNPJ em processo de registro ·{" "}
+            <a
+              href="mailto:contato@paguecomsplit.com.br"
+              className="hover:text-white"
+            >
+              contato@paguecomsplit.com.br
+            </a>
+          </p>
         </div>
       </div>
     </footer>
