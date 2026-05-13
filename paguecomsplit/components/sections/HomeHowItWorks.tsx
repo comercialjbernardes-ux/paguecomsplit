@@ -2,6 +2,7 @@
 
 import { Fragment } from "react";
 import Link from "next/link";
+import { DiagramaSplit } from "@/components/DiagramaSplit";
 import { motion } from "framer-motion";
 import {
   ArrowRight,
@@ -129,6 +130,11 @@ export function HomeHowItWorks() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Diagrama SVG animado */}
+        <div className="mb-10">
+          <DiagramaSplit />
         </div>
 
         {/* Tabela semantica (sr-only para crawlers e leitores de tela) */}
