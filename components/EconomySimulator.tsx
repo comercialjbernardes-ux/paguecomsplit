@@ -170,23 +170,8 @@ export function EconomySimulator({
   const [popupOpen, setPopupOpen] = useState(false);
   const popupTriggered = useRef(false);
 
-  // Auto-abre o diagnostico apos N segundos com economia > 0 (uma vez por sessao)
-  useEffect(() => {
-    if (autoOpenTriggered.current) return;
-    if (typeof window === "undefined") return;
-    const seen = window.sessionStorage.getItem(DIAG_SESSION_KEY);
-    if (seen) {
-      autoOpenTriggered.current = true;
-      return;
-    }
-    if (calc.monthlySavings <= 0) return;
-    const timer = window.setTimeout(() => {
-      setDiagOpen(true);
-      window.sessionStorage.setItem(DIAG_SESSION_KEY, "1");
-      autoOpenTriggered.current = true;
-    }, DIAG_OPEN_DELAY_MS);
-    return () => window.clearTimeout(timer);
-  }, [calc.monthlySavings]);
+  // DiagnosticDialog é acionado APENAS pelo botão manual — sem auto-open.
+  // O auto-open está no PopupCaptura (2.5s) para evitar dois popups.
 
   // Auto-abre PopupCaptura após 2.5s com economia > 0 (1x por sessão)
   useEffect(() => {
