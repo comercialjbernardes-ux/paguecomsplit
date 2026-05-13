@@ -18,6 +18,10 @@ const FAQS = [
     q: "Quanto dá pra economizar?",
     a: "Depende do seu % de repasse e da sua faixa do Simples. No exemplo médio (faturamento R$ 45k/mês, 40% pertencendo a parceiros, Anexo III faixa 3), a economia anual passa de R$ 22 mil. Use o simulador acima para o seu caso.",
   },
+  {
+    q: "O split de pagamento é regulado pelo BACEN?",
+    a: "Sim. A operação roda sobre infraestrutura Cappta (mais de 14 anos de mercado, mais de R$ 7 bilhões processados por ano), regulada pelo Banco Central do Brasil. Há também parecer técnico-tributário do escritório Barcellos Tucunduva sobre a estrutura.",
+  },
 ] as const;
 
 const FAQ_JSON_LD = {
