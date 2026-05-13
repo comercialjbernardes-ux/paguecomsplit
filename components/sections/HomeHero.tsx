@@ -8,6 +8,26 @@ type HomeHeroProps = {
   whatsappMessage: string;
 };
 
+// F3 — A/B test feature flag (ativar quando Google Ads tiver tráfego suficiente)
+// NEXT_PUBLIC_HERO_VARIANT=A → "Pare de tributar a receita do seu parceiro."
+// NEXT_PUBLIC_HERO_VARIANT=B → "Reduza até 50% do seu DAS sem mudar nada na operação."
+const HERO_VARIANT = process.env.NEXT_PUBLIC_HERO_VARIANT ?? "A";
+
+const H1_VARIANTS: Record<string, React.ReactNode> = {
+  A: (
+    <>
+      Pare de tributar a{" "}
+      <span className="text-warm-500">receita do seu parceiro.</span>
+    </>
+  ),
+  B: (
+    <>
+      Reduza até <span className="text-warm-500">50% do seu DAS</span> sem
+      mudar nada na operação.
+    </>
+  ),
+};
+
 export function HomeHero({ whatsappMessage }: HomeHeroProps) {
   return (
     <section className="gradient-hero">
@@ -21,8 +41,7 @@ export function HomeHero({ whatsappMessage }: HomeHeroProps) {
             </p>
 
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary-600 leading-[1.05] tracking-tight text-balance">
-              Pare de tributar a{" "}
-              <span className="text-warm-500">receita do seu parceiro.</span>
+              {H1_VARIANTS[HERO_VARIANT] ?? H1_VARIANTS["A"]}
             </h1>
 
             <p className="mt-5 text-lg md:text-xl text-text/80 max-w-xl text-pretty">
