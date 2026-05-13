@@ -21,9 +21,8 @@ export function HomeHero({ whatsappMessage }: HomeHeroProps) {
             </p>
 
             <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary-600 leading-[1.05] tracking-tight text-balance">
-              O dinheiro do seu parceiro não é seu.{" "}
-              <span className="text-warm-500">Por que tributar</span> como se
-              fosse?
+              Pare de tributar a{" "}
+              <span className="text-warm-500">receita do seu parceiro.</span>
             </h1>
 
             <p className="mt-5 text-lg md:text-xl text-text/80 max-w-xl text-pretty">
