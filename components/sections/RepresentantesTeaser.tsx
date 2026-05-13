@@ -9,7 +9,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppHref } from "@/lib/utils";
 
-const FALLBACK_JULIO = "5511999998888";
+const FALLBACK_JULIO = "553195719123";
 
 const BULLETS = [
   {

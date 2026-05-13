@@ -11,7 +11,7 @@ type CTAWhatsAppProps = {
   showIcon?: boolean;
 };
 
-const FALLBACK_NUMBER = "5511999998888";
+const FALLBACK_NUMBER = "553195719123";
 
 export function CTAWhatsApp({
   message,

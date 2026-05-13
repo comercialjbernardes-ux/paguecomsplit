@@ -44,7 +44,7 @@ function LinkedinIcon({ className }: { className?: string }) {
 }
 
 export function Footer() {
-  const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "5511999998888";
+  const number = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "553195719123";
   const waHref = buildWhatsAppHref(
     number,
     "Oi, quero falar com a SplitTech sobre o split de pagamento."

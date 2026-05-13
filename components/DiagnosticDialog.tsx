@@ -18,7 +18,7 @@ import { diagnosticSchema, type DiagnosticInput } from "@/lib/schemas";
 import { readRep } from "./RepTracker";
 import { buildWhatsAppHref, formatBRL } from "@/lib/utils";
 
-const FALLBACK_NUMBER = "5511999998888";
+const FALLBACK_NUMBER = "553195719123";
 
 type DiagnosticContext = {
   segment?: string;
