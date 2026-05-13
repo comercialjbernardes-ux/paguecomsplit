@@ -27,6 +27,8 @@ export function Analytics() {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
+  const ahrefsKey =
+    process.env.NEXT_PUBLIC_AHREFS_KEY || "814MJ82gad3xu39Np4IWJQ";
 
   return (
     <>
@@ -79,6 +81,15 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
             fbq('track', 'PageView');
           `}
         </Script>
+      ) : null}
+
+      {/* Ahrefs Web Analytics */}
+      {ahrefsKey ? (
+        <Script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key={ahrefsKey}
+          strategy="afterInteractive"
+        />
       ) : null}
     </>
   );
