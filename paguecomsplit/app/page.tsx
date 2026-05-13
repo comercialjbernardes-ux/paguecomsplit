@@ -10,6 +10,10 @@ import { SplitExplainer } from "@/components/sections/SplitExplainer";
 import { HomeHowItWorks } from "@/components/sections/HomeHowItWorks";
 import { HomeMicroFaq } from "@/components/sections/HomeMicroFaq";
 import { RepresentantesTeaser } from "@/components/sections/RepresentantesTeaser";
+import { segments } from "@/lib/segments";
+
+const SITE_URL =
+  process.env.NEXT_PUBLIC_SITE_URL || "https://paguecomsplit.com.br";
 
 const HOME_WHATSAPP =
   "Oi, vi o paguecomsplit.com.br e quero entender como deixar de pagar DAS sobre a receita do meu parceiro.";
@@ -96,7 +100,9 @@ export default function HomePage() {
                 real e depoimento, quando aplicável.
               </p>
             </div>
-            <SegmentGrid />
+            <nav aria-label="Segmentos atendidos">
+              <SegmentGrid />
+            </nav>
           </div>
         </section>
 
@@ -110,6 +116,28 @@ export default function HomePage() {
         <RepresentantesTeaser />
       </main>
       <Footer />
+
+      {/* ItemList JSON-LD — sitelinks / navegação de segmentos */}
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "ItemList",
+            name: "Segmentos atendidos pelo Split de Pagamento SplitTech",
+            itemListOrder: "https://schema.org/ItemListOrderAscending",
+            numberOfItems: segments.length,
+            itemListElement: segments.map((s, i) => ({
+              "@type": "ListItem",
+              position: i + 1,
+              name: s.name,
+              url: `${SITE_URL}/${s.slug}`,
+              description: s.pain,
+            })),
+          }),
+        }}
+      />
     </>
   );
 }

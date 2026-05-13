@@ -61,6 +61,24 @@ export default function SegmentPage({ params }: { params: Params }) {
       <SegmentJsonLd segment={segment} />
       <NavBar />
       <main>
+        {/* Breadcrumb */}
+        <nav
+          aria-label="Breadcrumb"
+          className="container-page pt-4 pb-0"
+        >
+          <ol className="flex items-center gap-1.5 text-xs text-muted">
+            <li>
+              <a href="/" className="hover:text-primary-600 transition-colors">
+                paguecomsplit.com.br
+              </a>
+            </li>
+            <li aria-hidden className="text-muted/40">/</li>
+            <li>
+              <span className="font-semibold text-primary-600">{segment.name}</span>
+            </li>
+          </ol>
+        </nav>
+
         {/* 1. Hero */}
         <SegmentHero segment={segment} />
 
@@ -212,8 +230,27 @@ function SegmentJsonLd({ segment }: { segment: Segment }) {
     ],
   };
 
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: segment.name,
+        item: `${SITE_URL}/${segment.slug}`,
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        // eslint-disable-next-line react/no-danger
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }}
+      />
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
