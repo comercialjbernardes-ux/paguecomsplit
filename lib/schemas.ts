@@ -28,12 +28,20 @@ export const leadSchema = z.object({
   rep: z.string().max(64).optional(),
 });
 
+const cnpjRegex = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/;
+
 export const diagnosticSchema = z.object({
   name: nameSchema,
   whatsapp: z
     .string()
     .trim()
     .regex(whatsappRegex, "Informe um WhatsApp valido com DDD"),
+  cnpj: z
+    .string()
+    .trim()
+    .regex(cnpjRegex, "CNPJ invalido (formato 00.000.000/0000-00)")
+    .optional()
+    .or(z.literal("")),
   segment: z.enum(segmentSlugs).optional(),
   monthly_revenue_band: z.string().max(32).optional(),
   estimated_monthly_savings: z.number().nonnegative().optional(),

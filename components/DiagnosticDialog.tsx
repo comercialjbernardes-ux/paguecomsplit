@@ -55,10 +55,11 @@ export function DiagnosticDialog({ open, onOpenChange, context }: Props) {
     },
   });
 
-  function buildWhatsAppMessage(name: string) {
+  function buildWhatsAppMessage(name: string, cnpj?: string) {
     const parts: string[] = [
       `Oi, sou ${name}, simulei no paguecomsplit.com.br.`,
     ];
+    if (cnpj) parts.push(`CNPJ: ${cnpj}.`);
     if (context.segmentName) parts.push(`Segmento: ${context.segmentName}.`);
     if (context.revenueBandLabel)
       parts.push(`Faturamento: ${context.revenueBandLabel}.`);
@@ -100,7 +101,10 @@ export function DiagnosticDialog({ open, onOpenChange, context }: Props) {
       // Redireciona para WhatsApp com mensagem preenchida
       const number =
         process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || FALLBACK_NUMBER;
-      const href = buildWhatsAppHref(number, buildWhatsAppMessage(values.name));
+      const href = buildWhatsAppHref(
+        number,
+        buildWhatsAppMessage(values.name, values.cnpj || undefined)
+      );
       // Pequeno delay para mostrar sucesso antes do redirect
       setTimeout(() => {
         window.open(href, "_blank", "noopener,noreferrer");
@@ -194,6 +198,28 @@ export function DiagnosticDialog({ open, onOpenChange, context }: Props) {
                   {errors.whatsapp.message}
                 </p>
               )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="diag-cnpj">
+                CNPJ <span className="text-muted font-normal">(opcional)</span>
+              </Label>
+              <Input
+                id="diag-cnpj"
+                inputMode="numeric"
+                placeholder="00.000.000/0000-00"
+                {...register("cnpj")}
+                aria-invalid={!!errors.cnpj}
+              />
+              {errors.cnpj && (
+                <p className="text-xs text-warm-600" role="alert">
+                  {errors.cnpj.message}
+                </p>
+              )}
+              <p className="text-[11px] text-muted">
+                Acelera o diagnóstico — a gente já puxa o seu Anexo correto e
+                a faixa real do Simples.
+              </p>
             </div>
 
             <Button
