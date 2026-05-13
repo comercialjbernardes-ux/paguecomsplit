@@ -153,7 +153,7 @@ export function Footer() {
             Cappta, regulada pelo Banco Central do Brasil.
           </p>
           <p>
-            CNPJ em processo de registro ·{" "}
+            CNPJ: {process.env.NEXT_PUBLIC_CNPJ || "38.180.982/0001-13"} ·{" "}
             <a
               href="mailto:contato@paguecomsplit.com.br"
               className="hover:text-white"
