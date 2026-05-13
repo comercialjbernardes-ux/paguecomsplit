@@ -1,6 +1,7 @@
 import { MessageCircle } from "lucide-react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { buildWhatsAppHref } from "@/lib/utils";
+import { trackEvent } from "@/components/Analytics";
 
 type CTAWhatsAppProps = {
   message: string;
@@ -31,6 +32,7 @@ export function CTAWhatsApp({
         target="_blank"
         rel="noopener noreferrer"
         aria-label={`${label} via WhatsApp`}
+        onClick={() => trackEvent("clique_whatsapp")}
       >
         {showIcon ? <MessageCircle className="h-5 w-5" aria-hidden /> : null}
         {label}

@@ -34,7 +34,7 @@ export const segments: Segment[] = [
   {
     slug: "restaurante",
     name: "Restaurantes",
-    headline: "Restaurantes: a gorjeta do garçom fora do seu DAS.",
+    headline: "Restaurante: pare de pagar imposto sobre a gorjeta do seu garçom.",
     pain: "Você está pagando imposto sobre a gorjeta do seu garçom.",
     third_party: "Gorjeta dos garçons (10%)",
     hook_question:
@@ -91,7 +91,7 @@ export const segments: Segment[] = [
   {
     slug: "estetica",
     name: "Clínicas de Estética",
-    headline: "Estética: cada profissional parceira fora do seu DAS.",
+    headline: "Clínica de estética: pare de pagar imposto sobre a receita da sua parceira.",
     pain:
       "Cada profissional parceira eleva seu DAS indevidamente.",
     third_party:
@@ -179,7 +179,7 @@ export const segments: Segment[] = [
   {
     slug: "oficina",
     name: "Oficinas Mecânicas",
-    headline: "Oficinas: as peças repassadas não são sua receita tributável.",
+    headline: "Oficina mecânica: pare de tributar as peças que você repassa ao cliente.",
     pain:
       "As peças que você repassa ao cliente entram como sua receita.",
     third_party: "Fornecedores de peças e mecânicos parceiros",
