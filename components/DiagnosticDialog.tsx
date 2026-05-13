@@ -64,11 +64,11 @@ export function DiagnosticDialog({ open, onOpenChange, context }: Props) {
       parts.push(`Faturamento: ${context.revenueBandLabel}.`);
     if (context.monthlySavings)
       parts.push(
-        `Economia estimada: ${formatBRL(context.monthlySavings)}/mes (~${formatBRL(
+        `Economia estimada: ${formatBRL(context.monthlySavings)}/mês (~${formatBRL(
           context.annualSavings ?? context.monthlySavings * 12
         )}/ano).`
       );
-    parts.push("Quero o diagnostico com a minha folha real.");
+    parts.push("Quero o diagnóstico com a minha folha real.");
     return parts.join(" ");
   }
 

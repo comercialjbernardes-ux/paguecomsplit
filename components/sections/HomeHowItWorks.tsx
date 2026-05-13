@@ -46,7 +46,7 @@ const ROWS: FlowRow[] = [
         icon: Receipt,
         title: "DAS sobre R$ 6.000",
         sub: "Imposto sobre dinheiro que não era seu",
-        emphasis: "R$ 360 de DAS",
+        emphasis: "R$ 810 de DAS",
       },
     ],
   },
@@ -68,7 +68,7 @@ const ROWS: FlowRow[] = [
         icon: CheckCircle2,
         title: "DAS só sobre R$ 2.400",
         sub: "Você tributa só a sua margem real",
-        emphasis: "R$ 144 de DAS",
+        emphasis: "R$ 324 de DAS",
       },
     ],
   },
@@ -206,12 +206,20 @@ export function HomeHowItWorks() {
               Economia nesta única transação
             </p>
             <p className="font-display text-3xl md:text-4xl font-extrabold text-accent-700 leading-tight">
-              R$ 216 / cliente
+              R$ 486 / cliente
             </p>
             <p className="text-sm text-text/70 mt-1 text-pretty max-w-xl">
               Multiplique pelo número de operações do seu negócio no mês.
               Costuma render entre <strong>R$ 1.000 e R$ 5.000/mês</strong> de
               economia, dependendo do segmento e da faixa do Simples.
+            </p>
+            <p className="text-xs text-muted mt-2">
+              Exemplo baseado no <strong>Anexo III, faixa 3</strong> (R$ 360k–720k/ano,
+              alíquota nominal 13,5%). Para o seu caso real, use o{" "}
+              <a href="#simulador" className="underline hover:text-primary-600">
+                simulador abaixo
+              </a>
+              .
             </p>
           </div>
           <Button asChild variant="primary" size="lg" className="flex-none">

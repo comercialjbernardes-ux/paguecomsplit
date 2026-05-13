@@ -104,7 +104,7 @@ export function EconomySimulator({
 
   const message =
     whatsappMessage ??
-    `Oi, simulei no paguecomsplit.com.br${displaySegmentName ? ` (segmento: ${displaySegmentName})` : ""} e a economia foi de ${formatBRL(calc.monthlySavings)}/mes. Quero entender melhor como funciona.`;
+    `Oi, simulei no paguecomsplit.com.br${displaySegmentName ? ` (segmento: ${displaySegmentName})` : ""} e a economia foi de ${formatBRL(calc.monthlySavings)}/mês. Quero entender melhor como funciona.`;
 
   // Diagnostic dialog state
   const [diagOpen, setDiagOpen] = useState(false);
@@ -146,7 +146,7 @@ export function EconomySimulator({
       <div className="grid gap-8 lg:grid-cols-2">
         {/* Inputs */}
         <div className="space-y-5">
-          <Field label="Segmento" hint="Cada segmento ja vem com Anexo e repasse tipico pre-preenchidos">
+          <Field label="Segmento" hint="Cada segmento já vem com Anexo e repasse típico pré-preenchidos">
             <Select value={segmentSlug} onValueChange={setSegmentSlug}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione" />
@@ -200,7 +200,7 @@ export function EconomySimulator({
           </Field>
 
           <Field
-            label="% que pertence ao parceiro / fornecedor / autonomo"
+            label="% que pertence ao parceiro / fornecedor / autônomo"
             value={`${repassePercent}%`}
             hint="A parte da receita que hoje passa pela sua conta antes de ir para o dono dela"
           >
@@ -280,7 +280,7 @@ export function EconomySimulator({
             </Button>
             <p className="flex items-center gap-1.5 justify-center text-xs text-white/60">
               <Zap className="h-3.5 w-3.5" aria-hidden />
-              Cálculo estimado — seu contador pode confirmar com os números reais.
+              Cálculo baseado nas alíquotas reais do Simples Nacional · Diagnóstico exato para o seu CNPJ no atendimento.
             </p>
           </div>
         </div>
