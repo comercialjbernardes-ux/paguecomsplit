@@ -44,7 +44,9 @@ export function EconomySimulator({
   className,
   defaultSegmentSlug,
 }: Props) {
-  // Estado inicial: prioriza prop, depois default
+  // Estado inicial: prop ou default. URL params sao lidos apos hidratacao
+  // via window.location.search (evita o requirement de Suspense do
+  // useSearchParams em paginas estaticas).
   const initialSegment = defaultSegmentSlug ?? DEFAULT_SEGMENT_SLUG;
   const initialAnexo: AnexoKey = SEGMENT_ANEXO[initialSegment] ?? "III";
   const initialBand: RevenueBand =
@@ -57,13 +59,64 @@ export function EconomySimulator({
     defaults?.repasse_percent ?? 40
   );
 
-  // Quando o segmento muda, atualizar anexo e repasse padrao
+  // Apos hidratacao, le os parametros da URL (?sim_*) e aplica
+  const hydratedFromUrl = useRef(false);
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const pSeg = params.get("sim_segmento");
+    const pBand = params.get("sim_faixa");
+    const pAnexo = params.get("sim_anexo");
+    const pRep = params.get("sim_repasse");
+
+    let mutated = false;
+    if (pSeg && segments.find((s) => s.slug === pSeg)) {
+      setSegmentSlug(pSeg);
+      mutated = true;
+    }
+    if (pBand && REVENUE_BANDS.some((b) => b.id === pBand)) {
+      setBandId(pBand);
+      mutated = true;
+    }
+    if (pAnexo && (pAnexo === "I" || pAnexo === "III" || pAnexo === "V")) {
+      setAnexo(pAnexo);
+      mutated = true;
+    }
+    if (pRep && Number.isFinite(Number(pRep))) {
+      setRepassePercent(Math.min(80, Math.max(5, Number(pRep))));
+      mutated = true;
+    }
+    hydratedFromUrl.current = mutated;
+  }, []);
+
+  // Quando o segmento muda, atualizar anexo e repasse padrao
+  // (a primeira mudanca apos URL-hydration nao reseta, para preservar URL params)
+  const isFirstSegmentChange = useRef(true);
+  useEffect(() => {
+    if (isFirstSegmentChange.current) {
+      isFirstSegmentChange.current = false;
+      if (hydratedFromUrl.current) return;
+    }
     const seg = segments.find((s) => s.slug === segmentSlug);
     if (!seg) return;
     setAnexo(SEGMENT_ANEXO[segmentSlug] ?? "III");
     setRepassePercent(seg.example.repasse_percent);
   }, [segmentSlug]);
+
+  // Sincroniza estado -> URL (replaceState, sem scroll, debounced)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    params.set("sim_segmento", segmentSlug);
+    params.set("sim_faixa", bandId);
+    params.set("sim_anexo", anexo);
+    params.set("sim_repasse", String(repassePercent));
+    const url = `${window.location.pathname}?${params.toString()}#simulador`;
+    const handle = window.setTimeout(() => {
+      window.history.replaceState(null, "", url);
+    }, 500);
+    return () => window.clearTimeout(handle);
+  }, [segmentSlug, bandId, anexo, repassePercent]);
 
   const band = useMemo(
     () => REVENUE_BANDS.find((b) => b.id === bandId) ?? initialBand,
