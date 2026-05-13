@@ -8,6 +8,7 @@ import { HomeHero } from "@/components/sections/HomeHero";
 import { NarrativaPonte } from "@/components/sections/NarrativaPonte";
 import { SplitExplainer } from "@/components/sections/SplitExplainer";
 import { HomeHowItWorks } from "@/components/sections/HomeHowItWorks";
+import { HomeMicroFaq } from "@/components/sections/HomeMicroFaq";
 import { RepresentantesTeaser } from "@/components/sections/RepresentantesTeaser";
 
 const HOME_WHATSAPP =
@@ -101,6 +102,9 @@ export default function HomePage() {
 
         {/* 7. Trust */}
         <TrustBadges />
+
+        {/* 7.5 Micro-FAQ (alimenta FAQPage schema) */}
+        <HomeMicroFaq />
 
         {/* 8. Representantes teaser */}
         <RepresentantesTeaser />
