@@ -77,21 +77,56 @@ export function RepresentantesTeaser() {
             </ul>
           </div>
 
-          {/* Lado direito: exemplo + CTAs */}
+          {/* Lado direito: card do Julio (E-E-A-T humano) + CTAs */}
           <div className="lg:col-span-5">
             <div className="rounded-xl bg-white/5 border border-white/10 p-5 mb-5">
+              <div className="flex items-center gap-4 mb-4">
+                {/* Avatar com iniciais */}
+                <div
+                  className="flex-none h-14 w-14 rounded-full bg-accent-300 text-primary-700 flex items-center justify-center font-display text-xl font-extrabold shadow-soft"
+                  aria-hidden
+                >
+                  JB
+                </div>
+                <div>
+                  <p className="font-display text-base font-extrabold leading-tight">
+                    Julio Bernardes
+                  </p>
+                  <p className="text-xs text-accent-300 font-semibold">
+                    Diretor Comercial · SplitTech
+                  </p>
+                  <a
+                    href="https://www.linkedin.com/in/comercialjbernardes/"
+                    target="_blank"
+                    rel="noopener noreferrer external"
+                    className="inline-flex items-center gap-1 text-xs text-white/70 hover:text-white mt-0.5"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="h-3 w-3"
+                      aria-hidden
+                    >
+                      <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.37V9h3.4v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z" />
+                    </svg>
+                    LinkedIn
+                  </a>
+                </div>
+              </div>
+
               <p className="text-xs font-bold uppercase tracking-widest text-accent-300 mb-2">
                 Exemplo de carteira
               </p>
-              <p className="font-display text-2xl md:text-3xl font-extrabold leading-tight mb-1">
-                10 clientes ativos
-              </p>
-              <p className="text-sm text-white/75 leading-relaxed">
-                Faturando R$ 50k/mês cada ={" "}
+              <p className="text-sm text-white/85 leading-relaxed mb-1">
+                10 clientes faturando R$ 50k/mês cada ={" "}
                 <strong className="text-white">comissão fixa de ativação</strong>{" "}
-                +{" "}
-                <strong className="text-white">recorrência sobre o volume</strong>{" "}
-                que passa pela maquininha de cada um, todo mês.
+                + <strong className="text-white">recorrência mensal</strong>{" "}
+                sobre o volume processado por cada um deles.
+              </p>
+              <p className="text-xs text-white/60 leading-relaxed">
+                Valores das comissões fechados em conversa com o Julio,
+                ajustados ao seu perfil (consultor, contador, vendedor).
               </p>
             </div>
 
@@ -101,7 +136,7 @@ export function RepresentantesTeaser() {
                   href={julioHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Falar com o Julio no WhatsApp"
+                  aria-label="Falar com o Julio Bernardes no WhatsApp"
                 >
                   <MessageCircle className="h-4 w-4" aria-hidden />
                   Falar com o Julio no WhatsApp
