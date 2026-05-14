@@ -93,7 +93,7 @@ export default function SegmentPage({ params }: { params: Params }) {
                 Simulador
               </p>
               <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-3 text-balance">
-                Quanto você está perdendo de DAS por mês?
+                Quanto você poderia economizar por mês?
               </h2>
               <p className="text-muted text-pretty">
                 Já carregamos os valores típicos de{" "}
