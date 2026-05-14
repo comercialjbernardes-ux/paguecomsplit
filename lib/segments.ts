@@ -232,6 +232,93 @@ export const segments: Segment[] = [
       "reduzir imposto material construcao simples nacional",
     ],
   },
+  {
+    slug: "vestuario",
+    name: "Vestuário",
+    headline: "Vestuário: a comissão da vendedora parceira fora do seu DAS.",
+    pain:
+      "A comissão das vendedoras e representantes comerciais entra como sua receita tributável.",
+    third_party: "Vendedoras comissionadas e representantes comerciais",
+    hook_question:
+      "Quanto da comissão das suas vendedoras entrou no seu DAS este ano?",
+    example: {
+      annual_revenue: 480000,
+      repasse_percent: 25,
+      repasse_value: 120000,
+      tax_rate: 0.073,
+      annual_savings: 8760,
+      monthly_savings: 730,
+    },
+    whatsapp_message:
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar a comissão das vendedoras do meu DAS.",
+    meta_title:
+      "Split de Pagamento para Vestuário | Comissão fora do DAS",
+    meta_description:
+      "A comissão das vendedoras parceiras não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
+    keywords: [
+      "split pagamento vestuario",
+      "reduzir imposto loja roupa simples nacional",
+      "maquininha vestuario comissao vendedora",
+    ],
+  },
+  {
+    slug: "academia",
+    name: "Academias",
+    headline: "Academia: o cachê do personal trainer parceiro fora do seu DAS.",
+    pain:
+      "O cachê dos personal trainers e instrutores parceiros infla seu faturamento tributável.",
+    third_party: "Personal trainers e instrutores parceiros",
+    hook_question:
+      "Quanto do cachê dos seus personal trainers entrou no seu DAS?",
+    example: {
+      annual_revenue: 300000,
+      repasse_percent: 50,
+      repasse_value: 150000,
+      tax_rate: 0.06,
+      annual_savings: 9000,
+      monthly_savings: 750,
+    },
+    whatsapp_message:
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar o cachê dos personal trainers do meu DAS.",
+    meta_title:
+      "Split de Pagamento para Academias | Personal trainer fora do DAS",
+    meta_description:
+      "O cachê do personal trainer parceiro não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
+    keywords: [
+      "split pagamento academia",
+      "reduzir imposto academia simples nacional",
+      "maquininha academia personal trainer",
+    ],
+  },
+  {
+    slug: "industria",
+    name: "Indústria",
+    headline: "Indústria: a matéria-prima do fornecedor fora da sua receita tributável.",
+    pain:
+      "A matéria-prima e os serviços terceirizados entram na sua receita e inflam o seu DAS.",
+    third_party: "Fornecedores de matéria-prima e serviços terceirizados",
+    hook_question:
+      "Quanto da matéria-prima repassada entrou no seu DAS este ano?",
+    example: {
+      annual_revenue: 600000,
+      repasse_percent: 45,
+      repasse_value: 270000,
+      tax_rate: 0.073,
+      annual_savings: 19710,
+      monthly_savings: 1643,
+    },
+    whatsapp_message:
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar a matéria-prima terceirizada do meu DAS.",
+    meta_title:
+      "Split de Pagamento para Indústria | Matéria-prima fora do DAS",
+    meta_description:
+      "A matéria-prima do fornecedor não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
+    keywords: [
+      "split pagamento industria",
+      "reduzir imposto industria simples nacional",
+      "maquininha industria fornecedor",
+    ],
+  },
 ];
 
 export function getSegmentBySlug(slug: string): Segment | undefined {
