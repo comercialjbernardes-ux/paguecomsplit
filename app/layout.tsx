@@ -55,11 +55,23 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+const AHREFS_KEY =
+  process.env.NEXT_PUBLIC_AHREFS_KEY || "814MJ82gad3xu39Np4IWJQ";
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" className={`${sora.variable} ${jakarta.variable}`}>
+      {/* Ahrefs Web Analytics — tag nativa no <head> para detecção correta pelo bot */}
+      <head>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key={AHREFS_KEY}
+          async
+        />
+      </head>
       <body className="min-h-screen bg-bg text-text antialiased">
         <OrganizationJsonLd />
         <RepTracker />

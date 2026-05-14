@@ -27,9 +27,6 @@ export function Analytics() {
   const gaId = process.env.NEXT_PUBLIC_GA_ID;
   const gtmId = process.env.NEXT_PUBLIC_GTM_ID;
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
-  const ahrefsKey =
-    process.env.NEXT_PUBLIC_AHREFS_KEY || "814MJ82gad3xu39Np4IWJQ";
-
   return (
     <>
       {/* Google Tag Manager — preferido quando GTM_ID está definido */}
@@ -83,14 +80,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         </Script>
       ) : null}
 
-      {/* Ahrefs Web Analytics — afterInteractive com data-key via spread para compatibilidade TS */}
-      {ahrefsKey ? (
-        <Script
-          src="https://analytics.ahrefs.com/analytics.js"
-          strategy="afterInteractive"
-          {...({ "data-key": ahrefsKey } as Record<string, string>)}
-        />
-      ) : null}
     </>
   );
 }
