@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Navy rounded-square background -->
+  <rect width="32" height="32" rx="7" fill="#0A2540"/>
+  <!-- Entry line (neutral) -->
+  <path d="M4 16 L10.5 16" stroke="#94a3b8" strokeWidth="2.8" strokeLinecap="round"/>
+  <!-- Fork node -->
+  <circle cx="13" cy="16" r="2.8" fill="white"/>
+  <!-- Upper branch — teal (Sua conta) -->
+  <path d="M15 14.2 L28 7.5" stroke="#00C896" strokeWidth="2.8" strokeLinecap="round"/>
+  <!-- Lower branch — warm orange (Conta do parceiro) -->
+  <path d="M15 17.8 L28 24.5" stroke="#FF6B35" strokeWidth="2.8" strokeLinecap="round"/>
+</svg>
