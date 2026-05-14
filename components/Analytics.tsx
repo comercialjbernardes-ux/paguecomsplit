@@ -83,12 +83,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
         </Script>
       ) : null}
 
-      {/* Ahrefs Web Analytics — beforeInteractive para o bot de verificação detectar no HTML */}
+      {/* Ahrefs Web Analytics — afterInteractive com data-key via spread para compatibilidade TS */}
       {ahrefsKey ? (
         <Script
           src="https://analytics.ahrefs.com/analytics.js"
-          data-key={ahrefsKey}
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
+          {...({ "data-key": ahrefsKey } as Record<string, string>)}
         />
       ) : null}
     </>
