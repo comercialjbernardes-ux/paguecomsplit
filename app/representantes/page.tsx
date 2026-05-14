@@ -1,13 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Coins,
-  Repeat,
-  Infinity as InfinityIcon,
-  Link2,
-  Share2,
-  LineChart,
-  ArrowRight,
-} from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { RepresentanteForm } from "@/components/RepresentanteForm";
@@ -31,47 +23,16 @@ export const metadata: Metadata = {
   },
 };
 
-const MODEL = [
+const MODALITIES = [
   {
-    icon: Coins,
-    title: "Comissão por ativação",
-    desc: "Valor fixo a cada cliente que ativa a maquininha SplitTech. Pago no mês da ativação.",
+    number: "1",
+    title: "Indicação",
+    desc: "Para o representante que deseja apenas indicar clientes. Existe um plano específico para esse modelo, simples e objetivo.",
   },
   {
-    icon: Repeat,
-    title: "Recorrência mensal",
-    desc: "Percentual sobre o volume processado por cada cliente, todo mês, enquanto ele estiver ativo.",
-  },
-  {
-    icon: InfinityIcon,
-    title: "Sem teto",
-    desc: "Sua carteira cresce, sua receita cresce. Sem limite de clientes, sem limite de comissão.",
-  },
-];
-
-const DISTRIBUTION = [
-  "Você recebe links segmentados exclusivos (ex.: paguecomsplit.com.br/estetica?rep=seu-codigo)",
-  "Envia para o prospect certo, no canal certo (WhatsApp, indicação, redes sociais)",
-  "O prospect simula a economia, vê o número e fala com você ou com o nosso time",
-  "O lead já entra na sua carteira",
-  "Você acompanha conversões e comissões no painel",
-];
-
-const MATERIAL = [
-  {
-    icon: Link2,
-    title: "Links rastreados por segmento",
-    desc: "Um link por segmento com o seu código embutido. Toda conversão entra na sua carteira.",
-  },
-  {
-    icon: Share2,
-    title: "Roteiros e copies prontos",
-    desc: "Posts, copies para WhatsApp e roteiros de abordagem prontos por segmento.",
-  },
-  {
-    icon: LineChart,
-    title: "Simulador como ferramenta de venda",
-    desc: "Em reunião, o cliente vê quanto perde de DAS por mês. O número fecha a venda sozinho.",
+    number: "2",
+    title: "Representação Comercial",
+    desc: "Para o representante que quer atuar de forma ativa, representando a empresa. Um plano estruturado para quem quer ir além da indicação.",
   },
 ];
 
@@ -106,26 +67,27 @@ export default function RepresentantesPage() {
           </div>
         </section>
 
-        {/* 2. Modelo de negocio */}
+        {/* 2. Modalidades */}
         <section className="container-page py-12 md:py-16">
           <div className="max-w-2xl mb-10">
             <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-              Modelo de negócio
+              Modalidades de parceria
             </p>
             <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 text-balance">
-              Você ganha na ativação. E na recorrência, todo mês.
+              Trabalhamos com duas modalidades de parceria.
             </h2>
           </div>
-          <ul className="grid gap-5 md:grid-cols-3" role="list">
-            {MODEL.map((m) => (
+
+          <ul className="grid gap-5 md:grid-cols-2 max-w-3xl" role="list">
+            {MODALITIES.map((m) => (
               <li
                 key={m.title}
                 className="rounded-xl border border-slate-100 bg-white p-6 shadow-soft"
               >
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent-50 text-accent-600 mb-4">
-                  <m.icon className="h-6 w-6" aria-hidden />
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent-500 text-white font-display font-bold text-lg mb-4">
+                  {m.number}
                 </span>
-                <h3 className="font-display text-lg font-bold text-primary-600 mb-2">
+                <h3 className="font-display text-xl font-bold text-primary-600 mb-2">
                   {m.title}
                 </h3>
                 <p className="text-sm text-muted leading-relaxed text-pretty">
@@ -136,69 +98,25 @@ export default function RepresentantesPage() {
           </ul>
         </section>
 
-        {/* 3. Como funciona a distribuicao */}
+        {/* 3. Entrevista + CTA */}
         <section className="bg-white border-y border-slate-100">
-          <div className="container-page py-12 md:py-16">
-            <div className="max-w-2xl mb-10">
-              <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-                Distribuição
-              </p>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 text-balance">
-                Como funciona o fluxo na prática.
-              </h2>
-            </div>
-
-            <ol className="space-y-4 max-w-3xl">
-              {DISTRIBUTION.map((step, i) => (
-                <li
-                  key={i}
-                  className="flex gap-4 rounded-xl bg-bg p-4 border border-slate-100"
-                >
-                  <span
-                    className="flex-none inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-500 text-white font-display font-bold text-sm"
-                    aria-hidden
-                  >
-                    {i + 1}
-                  </span>
-                  <p className="text-text/80 leading-relaxed pt-1 text-pretty">
-                    {step}
-                  </p>
-                </li>
-              ))}
-            </ol>
-          </div>
-        </section>
-
-        {/* 4. Material de apoio */}
-        <section className="container-page py-12 md:py-16">
-          <div className="max-w-2xl mb-10">
-            <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-              Material de apoio
+          <div className="container-page py-12 md:py-16 max-w-3xl">
+            <p className="text-text/80 leading-relaxed text-pretty mb-2">
+              Em ambas as modalidades, é necessário passar por uma{" "}
+              <strong className="text-primary-600">entrevista prévia</strong>.
             </p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 text-balance">
-              Você não vende sozinho.
-            </h2>
+            <p className="text-text/80 leading-relaxed text-pretty mb-8">
+              Entre em contato e descubra qual modalidade é melhor para você.
+            </p>
+            <CTAWhatsApp
+              message="Oi, quero entender as modalidades de representação da SplitTech e descobrir qual é melhor para mim."
+              label="Quero entrar em contato"
+              size="lg"
+            />
           </div>
-
-          <ul className="grid gap-5 md:grid-cols-3" role="list">
-            {MATERIAL.map((m) => (
-              <li
-                key={m.title}
-                className="rounded-xl border border-slate-100 bg-white p-6"
-              >
-                <m.icon className="h-8 w-8 text-primary-600 mb-3" aria-hidden />
-                <h3 className="font-display text-lg font-bold text-primary-600 mb-2">
-                  {m.title}
-                </h3>
-                <p className="text-sm text-muted leading-relaxed text-pretty">
-                  {m.desc}
-                </p>
-              </li>
-            ))}
-          </ul>
         </section>
 
-        {/* 5. Form de cadastro */}
+        {/* 4. Form de cadastro */}
         <section className="bg-bg">
           <div className="container-page py-12 md:py-16">
             <div className="grid gap-10 lg:grid-cols-5">
@@ -207,15 +125,14 @@ export default function RepresentantesPage() {
                   Cadastro de representante
                 </p>
                 <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-4 text-balance">
-                  Comece em 1 dia útil.
+                  Deixe seus dados.
                 </h2>
                 <p className="text-text/70 leading-relaxed mb-6 text-pretty">
-                  Depois do cadastro, o time comercial entra em contato para
-                  alinhar valores, gerar seus links rastreados e te enviar o
-                  material de apoio.
+                  Preencha o formulário e o time comercial entra em contato
+                  para alinhar a modalidade ideal e os próximos passos.
                 </p>
                 <p className="inline-flex items-center gap-2 text-sm text-accent-700 font-semibold">
-                  Adesão grátis · cancele quando quiser
+                  Entrevista prévia obrigatória
                   <ArrowRight className="h-4 w-4" aria-hidden />
                 </p>
               </div>
