@@ -10,6 +10,9 @@ import {
   Dog,
   Wrench,
   HardHat,
+  Shirt,
+  Dumbbell,
+  Factory,
   ArrowRight,
   type LucideIcon,
 } from "lucide-react";
@@ -24,6 +27,9 @@ const ICONS: Record<string, LucideIcon> = {
   petshop: Dog,
   oficina: Wrench,
   construcao: HardHat,
+  vestuario: Shirt,
+  academia: Dumbbell,
+  industria: Factory,
 };
 
 type Props = {

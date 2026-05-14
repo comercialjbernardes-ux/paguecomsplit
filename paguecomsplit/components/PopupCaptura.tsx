@@ -55,6 +55,7 @@ export function PopupCaptura({
     const parts: string[] = ["Oi, simulei no paguecomsplit.com.br."];
     if (nome) parts.push(`Meu nome é ${nome}.`);
     if (segObj) parts.push(`Segmento: ${segObj.name}.`);
+    else if (segmento === "outros") parts.push("Segmento: Outro.");
     if (faturamento) {
       const rev = REVENUE_OPTIONS.find((r) => r.value === faturamento);
       if (rev) parts.push(`Faturamento: ${rev.label}.`);
@@ -131,6 +132,7 @@ export function PopupCaptura({
                     {s.name}
                   </SelectItem>
                 ))}
+                <SelectItem value="outros">Outros</SelectItem>
               </SelectContent>
             </Select>
           </div>
