@@ -1,31 +1,20 @@
 import Link from "next/link";
-import {
-  Coins,
-  Repeat,
-  Infinity as InfinityIcon,
-  ArrowRight,
-  MessageCircle,
-} from "lucide-react";
+import { ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppHref } from "@/lib/utils";
 
 const FALLBACK_JULIO = "553195719123";
 
-const BULLETS = [
+const MODALITIES = [
   {
-    icon: Coins,
-    title: "Comissão por ativação",
-    desc: "Valor fixo a cada cliente que ativa a maquininha SplitTech. Pago no mês da ativação.",
+    number: "1",
+    title: "Indicação",
+    desc: "Plano simples e objetivo para quem quer apenas indicar clientes.",
   },
   {
-    icon: Repeat,
-    title: "Recorrência mensal",
-    desc: "Percentual sobre o volume processado por cada cliente, todo mês, enquanto ele estiver ativo.",
-  },
-  {
-    icon: InfinityIcon,
-    title: "Sem teto",
-    desc: "Sua carteira cresce, sua receita cresce. Sem limite de clientes, sem limite de comissão.",
+    number: "2",
+    title: "Representação Comercial",
+    desc: "Plano estruturado para quem quer atuar ativamente e ir além da indicação.",
   },
 ] as const;
 
@@ -49,28 +38,27 @@ export function RepresentantesTeaser() {
               Para representantes e contadores
             </p>
             <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-extrabold mb-4 text-balance leading-tight">
-              Você apresenta. O cliente vê o número. Você fecha.
+              Trabalhamos com duas modalidades de parceria.
             </h2>
             <p className="text-white/75 text-pretty mb-6 max-w-xl leading-relaxed">
-              Vender split é vender economia certa. Você mostra o cálculo
-              do DAS, o cliente vê quanto está perdendo todo mês, e decide.
-              Sem produto pra entregar, sem suporte pra fazer.
+              Em ambas as modalidades, é necessário passar por uma entrevista
+              prévia. Entre em contato e descubra qual é melhor para você.
             </p>
 
-            <ul className="grid sm:grid-cols-3 gap-3" role="list">
-              {BULLETS.map((b) => (
+            <ul className="grid sm:grid-cols-2 gap-3" role="list">
+              {MODALITIES.map((m) => (
                 <li
-                  key={b.title}
+                  key={m.title}
                   className="rounded-xl bg-white/5 border border-white/10 p-4"
                 >
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-accent-300/15 text-accent-300 mb-2.5">
-                    <b.icon className="h-4 w-4" aria-hidden />
+                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-accent-300/20 text-accent-300 font-display font-bold text-base mb-2.5">
+                    {m.number}
                   </span>
                   <p className="font-display text-sm font-bold mb-1">
-                    {b.title}
+                    {m.title}
                   </p>
                   <p className="text-xs text-white/65 leading-relaxed">
-                    {b.desc}
+                    {m.desc}
                   </p>
                 </li>
               ))}
