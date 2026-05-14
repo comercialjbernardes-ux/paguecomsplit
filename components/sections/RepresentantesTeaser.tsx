@@ -3,30 +3,28 @@ import { ArrowRight, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { buildWhatsAppHref } from "@/lib/utils";
 
-const FALLBACK_JULIO = "553195719123";
+const FALLBACK_NUMBER = "553195719123";
 
 const MODALITIES = [
   {
     number: "1",
     title: "Indicação",
-    desc: "Plano simples e objetivo para quem quer apenas indicar clientes.",
+    desc: "Você indica o cliente e pronto. Existe um plano criado especialmente para esse perfil, sem complicações.",
   },
   {
     number: "2",
     title: "Representação Comercial",
-    desc: "Plano estruturado para quem quer atuar ativamente e ir além da indicação.",
+    desc: "Para quem quer ir além e representar a empresa de forma ativa. Um plano robusto para quem enxerga o potencial do negócio.",
   },
 ] as const;
 
 export function RepresentantesTeaser() {
-  const julioNumber =
-    process.env.NEXT_PUBLIC_WHATSAPP_JULIO ||
-    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ||
-    FALLBACK_JULIO;
+  const number =
+    process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || FALLBACK_NUMBER;
 
-  const julioMessage =
-    "Oi Julio, vim do paguecomsplit.com.br e quero entender o programa de representantes da SplitTech.";
-  const julioHref = buildWhatsAppHref(julioNumber, julioMessage);
+  const waMessage =
+    "Oi, vim do paguecomsplit.com.br e quero entender as modalidades de parceria da SplitTech.";
+  const waHref = buildWhatsAppHref(number, waMessage);
 
   return (
     <section className="container-page py-12 md:py-16">
@@ -38,14 +36,11 @@ export function RepresentantesTeaser() {
               Para representantes e contadores
             </p>
             <h2 className="font-display text-2xl md:text-3xl lg:text-4xl font-extrabold mb-4 text-balance leading-tight">
-              Trabalhamos com duas modalidades de parceria.
+              Trabalhamos com duas modalidades de parceria — e uma delas pode
+              ser exatamente o que você procura.
             </h2>
-            <p className="text-white/75 text-pretty mb-6 max-w-xl leading-relaxed">
-              Em ambas as modalidades, é necessário passar por uma entrevista
-              prévia. Entre em contato e descubra qual é melhor para você.
-            </p>
 
-            <ul className="grid sm:grid-cols-2 gap-3" role="list">
+            <ul className="grid sm:grid-cols-2 gap-3 mt-6" role="list">
               {MODALITIES.map((m) => (
                 <li
                   key={m.title}
@@ -65,69 +60,31 @@ export function RepresentantesTeaser() {
             </ul>
           </div>
 
-          {/* Lado direito: card do Julio (E-E-A-T humano) + CTAs */}
+          {/* Lado direito: CTA */}
           <div className="lg:col-span-5">
             <div className="rounded-xl bg-white/5 border border-white/10 p-5 mb-5">
-              <div className="flex items-center gap-4 mb-4">
-                {/* Avatar com iniciais */}
-                <div
-                  className="flex-none h-14 w-14 rounded-full bg-accent-300 text-primary-700 flex items-center justify-center font-display text-xl font-extrabold shadow-soft"
-                  aria-hidden
-                >
-                  JB
-                </div>
-                <div>
-                  <p className="font-display text-base font-extrabold leading-tight">
-                    Julio Bernardes
-                  </p>
-                  <p className="text-xs text-accent-300 font-semibold">
-                    Diretor Comercial · SplitTech
-                  </p>
-                  <a
-                    href="https://www.linkedin.com/in/comercialjbernardes/"
-                    target="_blank"
-                    rel="noopener noreferrer external"
-                    className="inline-flex items-center gap-1 text-xs text-white/70 hover:text-white mt-0.5"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="h-3 w-3"
-                      aria-hidden
-                    >
-                      <path d="M20.45 20.45h-3.55v-5.57c0-1.33-.03-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.37V9h3.4v1.56h.05c.47-.9 1.63-1.85 3.36-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.06 2.06 0 1 1 0-4.12 2.06 2.06 0 0 1 0 4.12zM7.12 20.45H3.56V9h3.56v11.45z" />
-                    </svg>
-                    LinkedIn
-                  </a>
-                </div>
-              </div>
-
-              <p className="text-xs font-bold uppercase tracking-widest text-accent-300 mb-2">
-                Exemplo de carteira
+              <p className="text-xs font-bold uppercase tracking-widest text-accent-300 mb-3">
+                Como começar
               </p>
               <p className="text-sm text-white/85 leading-relaxed mb-1">
-                10 clientes faturando R$ 50k/mês cada ={" "}
-                <strong className="text-white">comissão fixa de ativação</strong>{" "}
-                + <strong className="text-white">recorrência mensal</strong>{" "}
-                sobre o volume processado por cada um deles.
+                Em ambas as modalidades, o processo começa com uma{" "}
+                <strong className="text-white">entrevista prévia</strong>.
               </p>
-              <p className="text-xs text-white/60 leading-relaxed">
-                Valores das comissões fechados em conversa com o Julio,
-                ajustados ao seu perfil (consultor, contador, vendedor).
+              <p className="text-sm text-white/65 leading-relaxed mt-3">
+                Entre em contato e descubra qual modalidade é melhor para você.
               </p>
             </div>
 
             <div className="flex flex-col gap-2.5">
               <Button asChild variant="default" size="lg" className="w-full">
                 <a
-                  href={julioHref}
+                  href={waHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  aria-label="Falar com o Julio Bernardes no WhatsApp"
+                  aria-label="Entrar em contato via WhatsApp"
                 >
                   <MessageCircle className="h-4 w-4" aria-hidden />
-                  Falar com o Julio no WhatsApp
+                  Entrar em contato
                 </a>
               </Button>
               <Button

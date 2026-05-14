@@ -27,12 +27,12 @@ const MODALITIES = [
   {
     number: "1",
     title: "Indicação",
-    desc: "Para o representante que deseja apenas indicar clientes. Existe um plano específico para esse modelo, simples e objetivo.",
+    desc: "Você indica o cliente e pronto. Existe um plano criado especialmente para esse perfil, sem complicações.",
   },
   {
     number: "2",
     title: "Representação Comercial",
-    desc: "Para o representante que quer atuar de forma ativa, representando a empresa. Um plano estruturado para quem quer ir além da indicação.",
+    desc: "Para quem quer ir além e representar a empresa de forma ativa. Um plano robusto para quem enxerga o potencial do negócio.",
   },
 ];
 
