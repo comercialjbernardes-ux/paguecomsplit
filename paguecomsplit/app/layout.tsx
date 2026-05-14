@@ -56,7 +56,7 @@ export const metadata: Metadata = {
 };
 
 const AHREFS_KEY =
-  process.env.NEXT_PUBLIC_AHREFS_KEY || "814MJ82gad3xu39Np4IWJQ";
+  process.env.NEXT_PUBLIC_AHREFS_KEY || "814MJ82gad3xu39Np4lWJQ";
 
 export default function RootLayout({
   children,
