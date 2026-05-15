@@ -36,14 +36,30 @@ type Props = {
 };
 
 export function SegmentGrid({ className, highlightSlug }: Props) {
+  const total = segments.length;
+  // Quantos itens estão na última linha do grid lg (4 colunas)
+  const lastRowCountLg = total % 4 === 0 ? 4 : total % 4;
+  const emptySlotsLg = (4 - lastRowCountLg) % 4;
+  const lgOffset = Math.floor(emptySlotsLg / 2); // centraliza a última linha
+  const firstOfLastRowIndex = total - lastRowCountLg;
+
   return (
     <ul className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-4", className)} role="list">
       {segments.map((s, i) => {
         const Icon = ICONS[s.slug] ?? Sparkles;
         const highlighted = highlightSlug === s.slug;
         const bgClass = `seg-bg-${((i % 7) + 1)}`;
+        const isFirstOfLastRow = i === firstOfLastRowIndex && lgOffset > 0;
+        const colStartClass =
+          isFirstOfLastRow && lgOffset === 1
+            ? "lg:col-start-2"
+            : isFirstOfLastRow && lgOffset === 2
+            ? "lg:col-start-3"
+            : isFirstOfLastRow && lgOffset === 3
+            ? "lg:col-start-4"
+            : "";
         return (
-          <li key={s.slug}>
+          <li key={s.slug} className={colStartClass}>
             <Link
               href={`/${s.slug}`}
               className={cn(
