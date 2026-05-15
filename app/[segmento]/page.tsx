@@ -87,15 +87,15 @@ export default function SegmentPage({ params }: { params: Params }) {
 
         {/* 3. Simulador */}
         <section id="simulador" className="bg-white border-y border-slate-100">
-          <div className="container-page py-12 md:py-16">
-            <div className="max-w-2xl mb-10">
-              <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
+          <div className="container-page py-14 md:py-20">
+            <div className="max-w-2xl mx-auto text-center mb-12">
+              <p className="text-xs font-bold uppercase tracking-[.2em] text-accent-600 mb-3">
                 Simulador
               </p>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-3 text-balance">
+              <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-600 mb-4 text-balance leading-[1.05]">
                 Quanto você poderia economizar por mês?
               </h2>
-              <p className="text-muted text-pretty">
+              <p className="text-lg text-muted text-pretty">
                 Já carregamos os valores típicos de{" "}
                 {segment.name.toLowerCase()}. Você só ajusta o seu faturamento
                 e vê o resultado.
@@ -132,13 +132,13 @@ export default function SegmentPage({ params }: { params: Params }) {
 
         {/* 9. Formulario de captura */}
         <section className="bg-bg">
-          <div className="container-page py-12 md:py-16">
-            <div className="grid gap-10 lg:grid-cols-5">
+          <div className="container-page py-14 md:py-20">
+            <div className="grid gap-10 lg:grid-cols-5 items-start">
               <div className="lg:col-span-2">
-                <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
+                <p className="text-xs font-bold uppercase tracking-[.2em] text-accent-600 mb-3">
                   Falar com um especialista
                 </p>
-                <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-4 text-balance">
+                <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-4 text-balance leading-[1.05]">
                   Não seja mais tributado pela receita do parceiro.
                 </h2>
                 <p className="text-text/70 leading-relaxed mb-6 text-pretty">
@@ -160,13 +160,15 @@ export default function SegmentPage({ params }: { params: Params }) {
         </section>
 
         {/* Outros segmentos */}
-        <section className="container-page py-12 md:py-16">
-          <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-            Outros segmentos
-          </p>
-          <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-600 mb-8">
-            O split também tira do DAS:
-          </h2>
+        <section className="container-page py-14 md:py-20">
+          <div className="max-w-2xl mx-auto text-center mb-10">
+            <p className="text-xs font-bold uppercase tracking-[.2em] text-accent-600 mb-3">
+              Outros segmentos
+            </p>
+            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 text-balance leading-[1.05]">
+              O split também tira do DAS:
+            </h2>
+          </div>
           <SegmentGrid highlightSlug={segment.slug} />
         </section>
       </main>
