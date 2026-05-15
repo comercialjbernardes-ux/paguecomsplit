@@ -51,14 +51,17 @@ export function Footer() {
   );
 
   return (
-    <footer className="bg-primary-700 text-white/80 mt-24">
-      <div className="container-page py-12 md:py-16">
-        <div className="grid gap-10 md:grid-cols-3 lg:grid-cols-4">
+    <footer className="relative bg-gradient-to-b from-primary-700 to-primary-900 text-white/80 mt-12 overflow-hidden">
+      <div className="absolute -top-40 -right-20 w-96 h-96 rounded-full bg-accent-500/10 blur-3xl" aria-hidden />
+
+      <div className="relative container-page py-16 md:py-20">
+        <div className="grid gap-12 md:grid-cols-3 lg:grid-cols-4">
           <div className="lg:col-span-2">
-            <p className="font-display text-2xl font-extrabold text-white mb-2">
+            <p className="font-display text-2xl font-extrabold text-white mb-3 flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full bg-accent-400 shadow-[0_0_0_4px_rgba(0,200,150,.18)]" />
               paguecom<span className="text-accent-300">split</span>
             </p>
-            <p className="text-sm leading-relaxed max-w-md">
+            <p className="text-[15px] leading-relaxed max-w-md text-white/65">
               Cada parte é separada antes de gerar imposto. Split de pagamento
               sobre infraestrutura Cappta, regulado pelo BACEN.
             </p>
@@ -66,7 +69,7 @@ export function Footer() {
               href={waHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 mt-5 rounded-lg bg-accent text-white px-4 py-2 text-sm font-semibold hover:bg-accent-600 transition-colors"
+              className="btn btn-primary btn-md mt-6 cta-glow-primary cta-shimmer"
             >
               <MessageCircle className="h-4 w-4" aria-hidden />
               Quero economizar
@@ -74,16 +77,13 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-3">
+            <p className="text-[11px] font-bold uppercase tracking-[.25em] text-accent-300 mb-4">
               Segmentos
             </p>
-            <ul className="space-y-2 text-sm">
+            <ul className="space-y-2.5 text-sm">
               {segments.map((s) => (
                 <li key={s.slug}>
-                  <Link
-                    href={`/${s.slug}`}
-                    className="hover:text-white transition-colors"
-                  >
+                  <Link href={`/${s.slug}`} className="text-white/65 hover:text-white transition-colors">
                     {s.name}
                   </Link>
                 </li>
@@ -92,39 +92,23 @@ export function Footer() {
           </div>
 
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-white/60 mb-3">
+            <p className="text-[11px] font-bold uppercase tracking-[.25em] text-accent-300 mb-4">
               Institucional
             </p>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/como-funciona" className="hover:text-white">
-                  Como funciona
-                </Link>
-              </li>
-              <li>
-                <Link href="/representantes" className="hover:text-white">
-                  Para representantes
-                </Link>
-              </li>
-              <li>
-                <Link href="/politica-de-privacidade" className="hover:text-white">
-                  Política de Privacidade
-                </Link>
-              </li>
-              <li>
-                <Link href="/termos-de-uso" className="hover:text-white">
-                  Termos de Uso
-                </Link>
-              </li>
+            <ul className="space-y-2.5 text-sm">
+              <li><Link href="/como-funciona" className="text-white/65 hover:text-white transition-colors">Como funciona</Link></li>
+              <li><Link href="/representantes" className="text-white/65 hover:text-white transition-colors">Para representantes</Link></li>
+              <li><Link href="/politica-de-privacidade" className="text-white/65 hover:text-white transition-colors">Política de Privacidade</Link></li>
+              <li><Link href="/termos-de-uso" className="text-white/65 hover:text-white transition-colors">Termos de Uso</Link></li>
             </ul>
 
-            <div className="mt-5 flex items-center gap-3">
+            <div className="mt-6 flex items-center gap-2.5">
               <a
                 href="https://www.instagram.com/paguecomsplit/"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="Instagram SplitTech"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/[.06] border border-white/10 hover:bg-accent-500 hover:border-accent-400 transition-all hover:-translate-y-0.5"
               >
                 <InstagramIcon className="h-4 w-4" />
               </a>
@@ -133,13 +117,13 @@ export function Footer() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="LinkedIn SplitTech"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/[.06] border border-white/10 hover:bg-accent-500 hover:border-accent-400 transition-all hover:-translate-y-0.5"
               >
                 <LinkedinIcon className="h-4 w-4" />
               </a>
             </div>
 
-            <p className="text-xs text-white/50 mt-5 leading-relaxed">
+            <p className="text-xs text-white/50 mt-6 leading-relaxed">
               Horário comercial:
               <br />
               Seg a sex, 9h–18h
@@ -147,7 +131,7 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 pt-6 border-t border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-white/50">
+        <div className="mt-14 pt-6 border-t border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-3 text-xs text-white/45">
           <p>
             © {new Date().getFullYear()} SplitTech · Operação sobre infraestrutura
             Cappta, regulada pelo Banco Central do Brasil.
@@ -156,7 +140,7 @@ export function Footer() {
             CNPJ: {process.env.NEXT_PUBLIC_CNPJ || "38.180.982/0001-13"} ·{" "}
             <a
               href="mailto:contato@paguecomsplit.com.br"
-              className="hover:text-white"
+              className="hover:text-white transition-colors"
             >
               contato@paguecomsplit.com.br
             </a>

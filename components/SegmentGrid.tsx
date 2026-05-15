@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
   UtensilsCrossed,
   Stethoscope,
@@ -13,7 +12,6 @@ import {
   Shirt,
   Dumbbell,
   Factory,
-  ArrowRight,
   type LucideIcon,
 } from "lucide-react";
 import { segments } from "@/lib/segments";
@@ -39,50 +37,36 @@ type Props = {
 
 export function SegmentGrid({ className, highlightSlug }: Props) {
   return (
-    <ul
-      className={cn(
-        "grid gap-4 sm:grid-cols-2 lg:grid-cols-4",
-        className
-      )}
-      role="list"
-    >
+    <ul className={cn("grid gap-4 sm:grid-cols-2 lg:grid-cols-4", className)} role="list">
       {segments.map((s, i) => {
         const Icon = ICONS[s.slug] ?? Sparkles;
         const highlighted = highlightSlug === s.slug;
+        const bgClass = `seg-bg-${((i % 7) + 1)}`;
         return (
-          <motion.li
-            key={s.slug}
-            initial={{ opacity: 0, y: 12 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, margin: "-40px" }}
-            transition={{ duration: 0.35, delay: i * 0.04 }}
-          >
+          <li key={s.slug}>
             <Link
               href={`/${s.slug}`}
               className={cn(
-                "group relative flex h-full flex-col rounded-xl border bg-white p-5 shadow-soft transition-all hover:-translate-y-0.5 hover:border-accent-300 hover:shadow-card focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent",
-                highlighted
-                  ? "border-accent-500 ring-2 ring-accent-200"
-                  : "border-slate-100"
+                "seg-card",
+                bgClass,
+                highlighted && "ring-2 ring-accent-200"
               )}
             >
-              <div className="flex items-center justify-between mb-4">
-                <span className="inline-flex h-11 w-11 items-center justify-center rounded-lg bg-accent-50 text-accent-600 transition-colors group-hover:bg-accent-100">
-                  <Icon className="h-6 w-6" aria-hidden />
-                </span>
-                <ArrowRight
-                  className="h-4 w-4 text-muted opacity-0 transition-all group-hover:translate-x-1 group-hover:opacity-100"
-                  aria-hidden
-                />
+              <div className="seg-glow" />
+              <div className="seg-check">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               </div>
-              <h3 className="font-display text-lg font-bold text-primary-600 mb-1 leading-tight">
+              <span className="seg-icon mb-5">
+                <Icon className="h-6 w-6" aria-hidden />
+              </span>
+              <h3 className="font-display text-lg font-bold text-primary-600 mb-1.5 leading-tight">
                 {s.name}
               </h3>
-              <p className="text-sm text-muted leading-snug text-pretty">
-                {s.pain}
-              </p>
+              <p className="text-sm text-text/70 leading-relaxed text-pretty">{s.pain}</p>
             </Link>
-          </motion.li>
+          </li>
         );
       })}
     </ul>

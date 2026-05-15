@@ -38,6 +38,7 @@ const config: Config = {
           DEFAULT: "rgb(var(--color-accent-warm) / <alpha-value>)",
           500: "#FF6B35",
           600: "#E85A26",
+          700: "#C24A1F",
         },
         bg:      "rgb(var(--color-bg) / <alpha-value>)",
         surface: "rgb(var(--color-surface) / <alpha-value>)",
@@ -51,15 +52,18 @@ const config: Config = {
       borderRadius: {
         DEFAULT: "var(--radius)",
         lg: "calc(var(--radius) + 4px)",
-        xl: "calc(var(--radius) + 8px)",
+        xl: "14px",
+        "2xl": "20px",
+        "3xl": "28px",
       },
       boxShadow: {
         card: "0 1px 2px rgba(10, 37, 64, 0.04), 0 8px 24px -8px rgba(10, 37, 64, 0.10)",
         soft: "0 4px 16px -4px rgba(10, 37, 64, 0.08)",
+        pop:  "0 18px 48px -12px rgba(10,37,64,.22), 0 6px 16px -8px rgba(10,37,64,.16)",
       },
       keyframes: {
         "fade-in": {
-          "0%": { opacity: "0", transform: "translateY(8px)" },
+          "0%":   { opacity: "0", transform: "translateY(8px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
       },

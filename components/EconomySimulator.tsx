@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { TrendingDown, Zap, ArrowRight } from "lucide-react";
+import { TrendingDown, Zap, ArrowRight, Calculator } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import {
   Select,
@@ -46,9 +46,6 @@ export function EconomySimulator({
   className,
   defaultSegmentSlug,
 }: Props) {
-  // Estado inicial: prop ou default. URL params sao lidos apos hidratacao
-  // via window.location.search (evita o requirement de Suspense do
-  // useSearchParams em paginas estaticas).
   const initialSegment = defaultSegmentSlug ?? DEFAULT_SEGMENT_SLUG;
   const initialAnexo: AnexoKey = SEGMENT_ANEXO[initialSegment] ?? "III";
   const initialBand: RevenueBand =
@@ -61,7 +58,6 @@ export function EconomySimulator({
     defaults?.repasse_percent ?? 40
   );
 
-  // Apos hidratacao, le os parametros da URL (?sim_*) e aplica
   const hydratedFromUrl = useRef(false);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -72,18 +68,9 @@ export function EconomySimulator({
     const pRep = params.get("sim_repasse");
 
     let mutated = false;
-    if (pSeg && segments.find((s) => s.slug === pSeg)) {
-      setSegmentSlug(pSeg);
-      mutated = true;
-    }
-    if (pBand && REVENUE_BANDS.some((b) => b.id === pBand)) {
-      setBandId(pBand);
-      mutated = true;
-    }
-    if (pAnexo && (pAnexo === "I" || pAnexo === "III" || pAnexo === "V")) {
-      setAnexo(pAnexo);
-      mutated = true;
-    }
+    if (pSeg && segments.find((s) => s.slug === pSeg)) { setSegmentSlug(pSeg); mutated = true; }
+    if (pBand && REVENUE_BANDS.some((b) => b.id === pBand)) { setBandId(pBand); mutated = true; }
+    if (pAnexo && (pAnexo === "I" || pAnexo === "III" || pAnexo === "V")) { setAnexo(pAnexo); mutated = true; }
     if (pRep && Number.isFinite(Number(pRep))) {
       setRepassePercent(Math.min(80, Math.max(5, Number(pRep))));
       mutated = true;
@@ -91,8 +78,6 @@ export function EconomySimulator({
     hydratedFromUrl.current = mutated;
   }, []);
 
-  // Quando o segmento muda, atualizar anexo e repasse padrao
-  // (a primeira mudanca apos URL-hydration nao reseta, para preservar URL params)
   const isFirstSegmentChange = useRef(true);
   useEffect(() => {
     if (isFirstSegmentChange.current) {
@@ -105,7 +90,6 @@ export function EconomySimulator({
     setRepassePercent(seg.example.repasse_percent);
   }, [segmentSlug]);
 
-  // Sincroniza estado -> URL (replaceState, sem scroll, debounced)
   useEffect(() => {
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
@@ -134,16 +118,7 @@ export function EconomySimulator({
     const taxedWith = (annualRevenue - repasse) * effectiveRate;
     const annualSavings = Math.max(0, taxedWithout - taxedWith);
     const monthlySavings = annualSavings / 12;
-    return {
-      annualRevenue,
-      monthlyRevenue,
-      repasse,
-      effectiveRate,
-      taxedWithout,
-      taxedWith,
-      annualSavings,
-      monthlySavings,
-    };
+    return { annualRevenue, monthlyRevenue, repasse, effectiveRate, taxedWithout, taxedWith, annualSavings, monthlySavings };
   }, [band, anexo, repassePercent]);
 
   const maxBar = Math.max(calc.taxedWithout, 1);
@@ -154,25 +129,17 @@ export function EconomySimulator({
     () => segments.find((s) => s.slug === segmentSlug),
     [segmentSlug]
   );
-
   const displaySegmentName = segmentName ?? segmentObj?.name;
 
   const message =
     whatsappMessage ??
     `Oi, simulei no paguecomsplit.com.br${displaySegmentName ? ` (segmento: ${displaySegmentName})` : ""} e a economia foi de ${formatBRL(calc.monthlySavings)}/mês. Quero entender melhor como funciona.`;
 
-  // Diagnostic dialog state (manual trigger via button)
   const [diagOpen, setDiagOpen] = useState(false);
   const autoOpenTriggered = useRef(false);
-
-  // PopupCaptura state (auto-trigger 2.5s após economia > 0, 1x por sessão)
   const [popupOpen, setPopupOpen] = useState(false);
   const popupTriggered = useRef(false);
 
-  // DiagnosticDialog é acionado APENAS pelo botão manual — sem auto-open.
-  // O auto-open está no PopupCaptura (2.5s) para evitar dois popups.
-
-  // Auto-abre PopupCaptura após 2.5s com economia > 0 (1x por sessão)
   useEffect(() => {
     if (popupTriggered.current) return;
     if (typeof window === "undefined") return;
@@ -199,25 +166,43 @@ export function EconomySimulator({
   }
 
   return (
-    <div
-      className={cn(
-        "rounded-xl border border-slate-100 bg-white p-6 shadow-card md:p-8",
-        className
-      )}
-    >
-      <div className="grid gap-8 lg:grid-cols-2">
-        {/* Inputs */}
-        <div className="space-y-5">
+    <div className={cn("relative rounded-3xl overflow-hidden border border-slate-200/70 bg-white shadow-pop", className)}>
+      {/* TOP BAR */}
+      <div className="sim-topbar flex items-center justify-between px-6 md:px-8 py-5 border-b border-slate-200/70">
+        <div className="shimmer" />
+        <div className="relative flex items-center gap-4">
+          <span className="sim-icon-wrap">
+            <span className="sim-icon inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-accent-400 to-accent-600 text-white shadow-[0_8px_20px_-4px_rgba(0,200,150,.55)] ring-1 ring-white/30">
+              <Calculator className="h-5 w-5" aria-hidden />
+            </span>
+          </span>
+          <div>
+            <p className="font-display font-extrabold text-primary-600 text-[17px] leading-tight tracking-tight">
+              Simulador de Economia
+            </p>
+            <p className="text-xs text-muted mt-1">
+              Baseado nas alíquotas reais do Simples Nacional
+            </p>
+          </div>
+        </div>
+        <span className="live-badge relative hidden sm:inline-flex items-center gap-2 rounded-full bg-accent-500 text-white px-3.5 py-1.5 text-[11px] font-bold uppercase tracking-[.18em] z-[1]">
+          <span className="relative flex h-2 w-2">
+            <span className="absolute inset-0 rounded-full bg-white animate-ping opacity-80" />
+            <span className="relative h-2 w-2 rounded-full bg-white" />
+          </span>
+          Ao vivo
+        </span>
+      </div>
+
+      <div className="grid lg:grid-cols-12">
+        {/* INPUTS */}
+        <div className="lg:col-span-7 p-6 md:p-8 space-y-7">
           <Field label="Segmento" hint="Cada segmento já vem com Anexo e repasse típico pré-preenchidos">
             <Select value={segmentSlug} onValueChange={setSegmentSlug}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
               <SelectContent>
                 {segments.map((s) => (
-                  <SelectItem key={s.slug} value={s.slug}>
-                    {s.name}
-                  </SelectItem>
+                  <SelectItem key={s.slug} value={s.slug}>{s.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -229,14 +214,10 @@ export function EconomySimulator({
             hint="Faixas reais do Simples Nacional"
           >
             <Select value={bandId} onValueChange={setBandId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione a faixa" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Selecione a faixa" /></SelectTrigger>
               <SelectContent>
                 {REVENUE_BANDS.map((b) => (
-                  <SelectItem key={b.id} value={b.id}>
-                    {b.label}
-                  </SelectItem>
+                  <SelectItem key={b.id} value={b.id}>{b.label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -248,14 +229,10 @@ export function EconomySimulator({
             hint={ANEXOS[anexo].description}
           >
             <Select value={anexo} onValueChange={(v) => setAnexo(v as AnexoKey)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Anexo" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Anexo" /></SelectTrigger>
               <SelectContent>
                 {(Object.keys(ANEXOS) as AnexoKey[]).map((k) => (
-                  <SelectItem key={k} value={k}>
-                    {ANEXOS[k].label}
-                  </SelectItem>
+                  <SelectItem key={k} value={k}>{ANEXOS[k].label}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -280,70 +257,58 @@ export function EconomySimulator({
           </Field>
         </div>
 
-        {/* Outputs */}
-        <div className="rounded-xl bg-primary-600 text-white p-6 md:p-7 flex flex-col">
-          <div className="flex items-center gap-2 text-accent-300 mb-3">
-            <TrendingDown className="h-5 w-5" aria-hidden />
-            <span className="text-xs font-bold uppercase tracking-widest">
-              Sua economia estimada
-            </span>
-          </div>
+        {/* OUTPUTS (dark) */}
+        <div className="lg:col-span-5 relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white p-6 md:p-8 overflow-hidden">
+          <div className="absolute inset-0 pointer-events-none opacity-[.07]" aria-hidden style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.6) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.6) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+          <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-accent-500/25 blur-3xl" aria-hidden />
+          <div className="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-accent-500/15 blur-3xl" aria-hidden />
 
-          <motion.p
-            key={calc.monthlySavings}
-            initial={{ opacity: 0.5, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.25 }}
-            className="font-display text-4xl md:text-5xl font-extrabold leading-none"
-          >
-            {formatBRL(calc.monthlySavings)}
-            <span className="text-lg font-medium opacity-70"> /mês</span>
-          </motion.p>
+          <div className="relative flex flex-col h-full">
+            <div className="flex items-center gap-2 text-accent-300 mb-5">
+              <TrendingDown className="h-4 w-4" aria-hidden />
+              <span className="text-[11px] font-bold uppercase tracking-[.25em]">Sua economia estimada</span>
+            </div>
 
-          <p className="text-sm text-white/70 mt-2">
-            Equivale a{" "}
-            <strong className="text-white">
-              {formatBRL(calc.annualSavings)}
-            </strong>{" "}
-            por ano deixando de pagar imposto sobre dinheiro que não é seu.
-          </p>
-
-          <div className="h-px bg-white/10 my-5" />
-
-          <p className="text-xs uppercase tracking-widest text-white/60 mb-3">
-            Imposto pago hoje × com split
-          </p>
-
-          <div className="space-y-3">
-            <BarRow
-              label="Hoje (sem split)"
-              value={calc.taxedWithout}
-              width={widthWithout}
-              tone="danger"
-            />
-            <BarRow
-              label="Com Cofre Digital"
-              value={calc.taxedWith}
-              width={widthWith}
-              tone="success"
-            />
-          </div>
-
-          <div className="mt-auto pt-6 space-y-2.5">
-            <Button
-              type="button"
-              variant="default"
-              size="lg"
-              className="w-full"
-              onClick={openDiagManually}
+            <motion.p
+              key={calc.monthlySavings}
+              initial={{ opacity: 0.5, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="font-display text-[44px] md:text-[56px] xl:text-[64px] font-extrabold leading-[.95] tabular-nums tracking-tight"
             >
-              Quero um diagnóstico preciso
-              <ArrowRight className="h-4 w-4" aria-hidden />
-            </Button>
-            <p className="flex items-center gap-1.5 justify-center text-xs text-white/60">
-              <Zap className="h-3.5 w-3.5" aria-hidden />
-              Cálculo baseado nas alíquotas reais do Simples Nacional. Diagnóstico exato para o seu CNPJ em 15 minutos — sem compromisso.
+              {formatBRL(calc.monthlySavings)}
+              <span className="text-2xl font-medium text-white/55 tracking-normal"> /mês</span>
+            </motion.p>
+
+            <p className="text-sm text-white/70 mt-4 leading-relaxed">
+              Equivale a <strong className="text-accent-300 font-bold">{formatBRL(calc.annualSavings)}</strong> por ano deixando de pagar imposto sobre dinheiro que não é seu.
             </p>
+
+            <div className="h-px bg-white/10 my-6" />
+
+            <p className="text-[11px] uppercase tracking-[.25em] text-white/45 mb-4">Imposto pago hoje × com split</p>
+
+            <div className="space-y-4">
+              <BarRow label="Hoje (sem split)" value={calc.taxedWithout} width={widthWithout} tone="danger" />
+              <BarRow label="Com Cofre Digital" value={calc.taxedWith} width={widthWith} tone="success" />
+            </div>
+
+            <div className="mt-auto pt-8 space-y-3">
+              <Button
+                type="button"
+                variant="default"
+                size="lg"
+                className="w-full btn-primary cta-glow-primary cta-shimmer"
+                onClick={openDiagManually}
+              >
+                Quero um diagnóstico preciso
+                <ArrowRight className="h-4 w-4 arrow" aria-hidden />
+              </Button>
+              <p className="flex items-start gap-2 text-xs text-white/55 leading-relaxed">
+                <Zap className="h-3.5 w-3.5 mt-0.5 flex-none text-accent-300" aria-hidden />
+                Cálculo baseado nas alíquotas reais do Simples Nacional. Diagnóstico exato em 15 minutos — sem compromisso.
+              </p>
+            </div>
           </div>
         </div>
       </div>
@@ -368,7 +333,6 @@ export function EconomySimulator({
         monthlySavings={Math.round(calc.monthlySavings)}
       />
 
-      {/* WhatsApp inline (alternativa, fora do dialog) — usa o message */}
       <p className="sr-only">{message}</p>
     </div>
   );
@@ -388,9 +352,9 @@ function Field({
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2 gap-3">
-        <span className="text-sm font-semibold text-text">{label}</span>
+        <span className="text-sm font-semibold text-primary-600">{label}</span>
         {value ? (
-          <span className="font-display text-base font-bold text-primary-600 tabular-nums">
+          <span className="font-display text-base font-bold text-accent-700 tabular-nums">
             {value}
           </span>
         ) : null}
@@ -412,14 +376,18 @@ function BarRow({
   width: number;
   tone: "danger" | "success";
 }) {
-  const color = tone === "danger" ? "bg-warm-500" : "bg-accent-500";
+  const color = tone === "danger" ? "bg-gradient-to-r from-warm-600 to-warm-500" : "bg-gradient-to-r from-accent-600 to-accent-300";
+  const dotColor = tone === "danger" ? "bg-warm-500" : "bg-accent-400";
   return (
     <div>
-      <div className="flex justify-between text-sm mb-1">
-        <span className="text-white/80">{label}</span>
-        <span className="font-semibold tabular-nums">{formatBRL(value)}</span>
+      <div className="flex justify-between items-baseline text-sm mb-1.5">
+        <span className="text-white/80 inline-flex items-center gap-1.5">
+          <span className={cn("h-2 w-2 rounded-full", dotColor)} />
+          {label}
+        </span>
+        <span className="font-display font-bold tabular-nums text-base">{formatBRL(value)}</span>
       </div>
-      <div className="h-2.5 w-full rounded-full bg-white/10 overflow-hidden">
+      <div className="h-3 w-full rounded-full bg-white/10 overflow-hidden">
         <motion.div
           className={cn("h-full rounded-full", color)}
           initial={{ width: 0 }}
