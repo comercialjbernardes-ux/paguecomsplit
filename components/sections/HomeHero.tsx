@@ -116,7 +116,7 @@ export function HomeHero({ whatsappMessage }: HomeHeroProps) {
               <div className="hero-pop hero-pop-navy float-a hidden sm:block" style={{ top: "4%", left: "-20px" }}>
                 <p className="pop-eye text-accent-300">Cliente paga</p>
                 <p className="pop-val">R$ 6.000</p>
-                <p className="pop-sub">Cartão · PIX · link</p>
+                <p className="pop-sub">Cartão · PIX · link · boleto</p>
               </div>
 
               {/* POP B: sua margem */}

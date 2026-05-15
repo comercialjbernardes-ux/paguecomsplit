@@ -60,7 +60,7 @@ export function CofreDigitalSection({ example, thirdParty }: Props) {
               </h3>
 
               <ul className="space-y-4 mb-6" role="list">
-                <FlowStep tone="warm" icon={<Wallet className="h-4 w-4" />} title={`Cliente paga ${formatBRL(monthlyRevenue, true)}`} sub="Cartão · PIX · link" />
+                <FlowStep tone="warm" icon={<Wallet className="h-4 w-4" />} title={`Cliente paga ${formatBRL(monthlyRevenue, true)}`} sub="Cartão · PIX · link · boleto" />
                 <FlowStep tone="warm" icon={<ArrowDown className="h-4 w-4" />} title="Tudo entra como sua receita" sub={`Você repassa ${formatBRL(monthlyRepasse)} para ${partyShort} depois`} />
                 <FlowStep tone="warm" icon={<Receipt className="h-4 w-4" />} title={`DAS sobre ${formatBRL(monthlyRevenue, true)}`} sub={`Alíquota ${formatPercent(example.tax_rate)} sobre o bruto`} />
               </ul>

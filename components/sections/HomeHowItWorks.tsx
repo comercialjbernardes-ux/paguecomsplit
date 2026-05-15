@@ -68,7 +68,7 @@ export function HomeHowItWorks() {
               Tudo cai na sua conta — e tudo é tributado.
             </h3>
             <ul className="space-y-4 mb-7" role="list">
-              <Bullet tone="warm" icon={<Wallet className="h-4 w-4" />} title="Cliente paga R$ 6.000" sub="Cartão · PIX · link" />
+              <Bullet tone="warm" icon={<Wallet className="h-4 w-4" />} title="Cliente paga R$ 6.000" sub="Cartão · PIX · link · boleto" />
               <Bullet tone="warm" icon={<ArrowDown className="h-4 w-4" />} title="Tudo entra como sua receita" sub="Você repassa depois ao parceiro" />
               <Bullet tone="warm" icon={<Receipt className="h-4 w-4" />} title="DAS sobre R$ 6.000" sub="Imposto sobre dinheiro que não era seu" />
             </ul>
