@@ -17,8 +17,8 @@ const ITEMS = [
   },
   {
     icon: CircleDollarSign,
-    title: "Maquininha grátis",
-    desc: "Você paga só pela transação. Sem taxa de adesão, sem mensalidade.",
+    title: "Sem taxa de adesão",
+    desc: "Você paga só pela transação. Sem mensalidade, sem fidelidade.",
     bg: "linear-gradient(160deg, #EFF4F9 0%, #DCE6F0 100%)",
   },
   {

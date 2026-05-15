@@ -139,8 +139,31 @@ export function EconomySimulator({
   const autoOpenTriggered = useRef(false);
   const [popupOpen, setPopupOpen] = useState(false);
   const popupTriggered = useRef(false);
+  const [simulatorReached, setSimulatorReached] = useState(false);
+  const simulatorRef = useRef<HTMLDivElement>(null);
 
+  // Só dispara via evento de scroll real — nunca no carregamento
   useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    function onScroll() {
+      const el = simulatorRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      // Considera "atingido" quando o topo do simulador estiver a menos de 70% da altura da tela
+      if (rect.top < window.innerHeight * 0.7) {
+        setSimulatorReached(true);
+        window.removeEventListener("scroll", onScroll, { passive: true } as EventListenerOptions);
+      }
+    }
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll, { passive: true } as EventListenerOptions);
+  }, []);
+
+  // Abre popup só após o usuário ter rolado até o simulador
+  useEffect(() => {
+    if (!simulatorReached) return;
     if (popupTriggered.current) return;
     if (typeof window === "undefined") return;
     const seen = window.sessionStorage.getItem(POPUP_SESSION_KEY);
@@ -155,7 +178,7 @@ export function EconomySimulator({
       popupTriggered.current = true;
     }, POPUP_OPEN_DELAY_MS);
     return () => window.clearTimeout(timer);
-  }, [calc.monthlySavings]);
+  }, [simulatorReached, calc.monthlySavings]);
 
   function openDiagManually() {
     setDiagOpen(true);
@@ -166,7 +189,7 @@ export function EconomySimulator({
   }
 
   return (
-    <div className={cn("relative rounded-3xl overflow-hidden border border-slate-200/70 bg-white shadow-pop", className)}>
+    <div ref={simulatorRef} className={cn("relative rounded-3xl overflow-hidden border border-slate-200/70 bg-white shadow-pop", className)}>
       {/* TOP BAR */}
       <div className="sim-topbar flex items-center justify-between px-6 md:px-8 py-5 border-b border-slate-200/70">
         <div className="shimmer" />
