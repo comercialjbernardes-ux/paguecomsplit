@@ -57,7 +57,7 @@ export function HomeHero({ whatsappMessage }: HomeHeroProps) {
               </li>
               <li className="inline-flex items-center gap-2">
                 <Check className="h-4 w-4 text-accent-700" strokeWidth={2.5} aria-hidden />
-                Maquininha grátis
+                Sem taxa de adesão
               </li>
               <li className="inline-flex items-center gap-2">
                 <Check className="h-4 w-4 text-accent-700" strokeWidth={2.5} aria-hidden />
