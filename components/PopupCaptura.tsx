@@ -161,7 +161,7 @@ export function PopupCaptura({
             type="submit"
             variant="default"
             size="lg"
-            className="w-full"
+            className="w-full cta-glow-primary cta-shimmer"
           >
             <MessageCircle className="h-4 w-4" aria-hidden />
             Quero meu diagnóstico gratuito
