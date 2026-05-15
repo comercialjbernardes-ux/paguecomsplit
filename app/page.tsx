@@ -93,7 +93,7 @@ export default function HomePage() {
         {/* 6. Segmentos */}
         <section id="segmentos" className="bg-white border-y border-slate-100">
           <div className="container-page py-12 md:py-16">
-            <div className="max-w-2xl mb-8">
+            <div className="max-w-2xl mx-auto text-center mb-10">
               <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
                 Aprofunde no seu caso
               </p>
