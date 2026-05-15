@@ -69,18 +69,20 @@ export default function TermosDeUsoPage() {
     <>
       <NavBar />
       <main>
-        <section className="gradient-hero">
-          <div className="container-page pt-14 pb-10 md:pt-20 md:pb-12">
-            <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-              Legal
-            </p>
-            <h1 className="font-display text-4xl md:text-5xl font-extrabold text-primary-600 leading-[1.05] tracking-tight max-w-3xl text-balance">
-              Termos de Uso
-            </h1>
-            <p className="mt-4 text-base text-text/80 max-w-2xl">
-              Regras de uso da página institucional, do simulador e do canal
-              de captação. Última atualização: 13 de maio de 2026.
-            </p>
+        <section className="gradient-hero overflow-hidden">
+          <div className="container-page relative pt-14 pb-12 md:pt-20 md:pb-14">
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="inline-flex items-center gap-2 rounded-full bg-accent-50 border border-accent-200 text-accent-700 px-4 py-1.5 text-xs font-bold uppercase tracking-[.2em] mb-5">
+                Legal
+              </p>
+              <h1 className="font-display text-4xl md:text-5xl lg:text-[52px] font-extrabold text-primary-600 leading-[1.05] tracking-tight text-balance">
+                Termos de Uso
+              </h1>
+              <p className="mt-5 text-base md:text-lg text-text/75 max-w-2xl mx-auto text-pretty">
+                Regras de uso da página institucional, do simulador e do canal
+                de captação. Última atualização: 13 de maio de 2026.
+              </p>
+            </div>
           </div>
         </section>
 

@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Vault, ArrowRight, ShieldCheck, Building2 } from "lucide-react";
+import { Vault, ArrowRight, ShieldCheck, Building2, Check } from "lucide-react";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { StepByStep } from "@/components/sections/StepByStep";
 import { TrustBadges } from "@/components/TrustBadges";
-import { Button } from "@/components/ui/button";
 import { CTAWhatsApp } from "@/components/CTAWhatsApp";
 
 const SITE_URL =
@@ -49,103 +48,152 @@ const FAQS = [
   },
 ];
 
+const CARDS = [
+  {
+    icon: Vault,
+    title: "O conceito",
+    body: "O Cofre Digital recebe o pagamento, separa a parte do parceiro, e só depois deposita a sua. A divisão é gerida na origem da transação.",
+    bg: "linear-gradient(160deg, #EFF4F9 0%, #DCE6F0 100%)",
+  },
+  {
+    icon: ShieldCheck,
+    title: "A regulação",
+    body: "Infraestrutura Cappta, regulada pelo BACEN. A mesma base usada por adquirentes consolidados — split é a prática padrão do mercado de adquirência.",
+    bg: "linear-gradient(160deg, #E6FAF4 0%, #C9F1DF 100%)",
+  },
+  {
+    icon: Building2,
+    title: "A consequência",
+    body: "Você passa a tributar só a sua margem real. O dinheiro do seu parceiro nunca virou sua receita — e nunca entra no seu DAS.",
+    bg: "linear-gradient(160deg, #FFF4ED 0%, #FFE0CB 100%)",
+  },
+];
+
 export default function ComoFuncionaPage() {
   return (
     <>
       <NavBar />
       <main>
-        <section className="gradient-hero">
-          <div className="container-page pt-14 pb-14 md:pt-20 md:pb-16">
-            <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-4">
-              Como funciona
-            </p>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-primary-600 leading-[1.05] tracking-tight max-w-3xl text-balance">
-              Cada parte é separada antes de gerar imposto.
-            </h1>
-            <p className="mt-5 text-lg md:text-xl text-text/80 max-w-2xl text-pretty">
-              Em 3 ideias: o problema, o fluxo, o amparo. Sem juridiquês.
-            </p>
-            <p className="mt-5 text-sm font-semibold text-primary-600/80">
-              Cappta · +R$ 7 bi/ano processados · Regulado BACEN
-            </p>
-          </div>
-        </section>
-
-        <section className="container-page py-12 md:py-16">
-          <div className="grid gap-6 md:grid-cols-3 max-w-5xl">
-            <Card
-              icon={<Vault className="h-7 w-7" aria-hidden />}
-              title="O conceito"
-              body="O Cofre Digital recebe o pagamento, separa a parte do parceiro, e só depois deposita a sua. A divisão é gerida na origem da transação."
-            />
-            <Card
-              icon={<ShieldCheck className="h-7 w-7" aria-hidden />}
-              title="A regulação"
-              body="Infraestrutura Cappta, regulada pelo BACEN. A mesma base usada por adquirentes consolidados — split é a prática padrão do mercado de adquirência."
-            />
-            <Card
-              icon={<Building2 className="h-7 w-7" aria-hidden />}
-              title="A consequência"
-              body="Você passa a tributar só a sua margem real. O dinheiro do seu parceiro nunca virou sua receita — e nunca entra no seu DAS."
-            />
-          </div>
-        </section>
-
-        <StepByStep />
-
-        <section className="bg-white border-y border-slate-100">
-          <div className="container-page py-12 md:py-16">
-            <div className="max-w-3xl">
-              <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-                Perguntas frequentes
+        {/* Hero */}
+        <section className="gradient-hero overflow-hidden">
+          <div className="container-page relative pt-14 pb-16 md:pt-20 md:pb-20">
+            <div className="max-w-3xl mx-auto text-center">
+              <p className="inline-flex items-center gap-2 rounded-full bg-accent-50 border border-accent-200 text-accent-700 px-4 py-1.5 text-xs font-bold uppercase tracking-[.2em] mb-5">
+                <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
+                Como funciona
               </p>
-              <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-8 text-balance">
-                As dúvidas que sempre aparecem.
-              </h2>
-              <dl className="space-y-6">
-                {FAQS.map((f) => (
-                  <div
-                    key={f.q}
-                    className="rounded-xl border border-slate-100 bg-bg p-5 md:p-6"
-                  >
-                    <dt className="font-display text-lg font-bold text-primary-600 mb-2">
-                      {f.q}
-                    </dt>
-                    <dd className="text-text/80 leading-relaxed text-pretty">
-                      {f.a}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              <h1 className="font-display text-4xl md:text-5xl lg:text-[58px] font-extrabold text-primary-600 leading-[1.05] tracking-tight text-balance">
+                Cada parte é separada antes de gerar imposto.
+              </h1>
+              <p className="mt-6 text-lg md:text-xl text-text/75 max-w-2xl mx-auto text-pretty">
+                Em 3 ideias: <strong className="text-primary-600">o problema</strong>,{" "}
+                <strong className="text-primary-600">o fluxo</strong>,{" "}
+                <strong className="text-primary-600">o amparo</strong>. Sem juridiquês.
+              </p>
+              <div className="mt-7 inline-flex items-center gap-2 rounded-full bg-primary-600 text-white px-4 py-2 text-xs font-semibold shadow-pop">
+                <ShieldCheck className="h-3.5 w-3.5 text-accent-300" aria-hidden />
+                Cappta · +R$ 7 bi/ano · Regulado BACEN
+              </div>
             </div>
           </div>
         </section>
 
+        {/* 3 cards conceito/regulação/consequência */}
+        <section className="container-page py-14 md:py-20">
+          <ul className="grid gap-5 md:grid-cols-3" role="list">
+            {CARDS.map((c) => (
+              <li
+                key={c.title}
+                className="group relative overflow-hidden rounded-3xl border-2 border-slate-200/60 p-6 md:p-7 transition-all duration-500 ease-out hover:-translate-y-2 hover:border-accent-400 hover:shadow-pop"
+                style={{ background: c.bg }}
+              >
+                <div
+                  className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                  style={{ background: "radial-gradient(circle at 70% 0%, rgba(0,200,150,.22), transparent 65%)" }}
+                  aria-hidden
+                />
+                <span className="relative inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-accent-700 mb-5 shadow-[0_4px_12px_-4px_rgba(10,37,64,.12)] transition-all group-hover:bg-primary-600 group-hover:text-accent-200 group-hover:scale-105">
+                  <c.icon className="h-7 w-7" aria-hidden />
+                </span>
+                <h3 className="relative font-display text-xl font-bold text-primary-600 mb-2 leading-tight transition-colors group-hover:text-accent-700">
+                  {c.title}
+                </h3>
+                <p className="relative text-[15px] text-text/70 leading-relaxed text-pretty">
+                  {c.body}
+                </p>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        {/* Passo a passo (reusa componente v2) */}
+        <StepByStep />
+
+        {/* FAQ */}
+        <section className="bg-white border-y border-slate-100">
+          <div className="container-page py-14 md:py-20">
+            <div className="max-w-2xl mx-auto text-center mb-12">
+              <p className="text-xs font-bold uppercase tracking-[.25em] text-accent-600 mb-3">
+                Perguntas frequentes
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 text-balance leading-[1.1]">
+                As dúvidas que sempre aparecem.
+              </h2>
+            </div>
+
+            <dl className="space-y-3 max-w-3xl mx-auto">
+              {FAQS.map((f) => (
+                <details
+                  key={f.q}
+                  className="faq-item group rounded-2xl border border-slate-200/70 bg-white p-6 md:p-7 hover:border-accent-300 open:border-accent-300"
+                >
+                  <summary className="font-display text-lg font-bold text-primary-600 cursor-pointer flex items-center justify-between gap-3">
+                    <span>{f.q}</span>
+                    <span className="chev flex-none inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-50 text-accent-700 group-hover:bg-accent-100" aria-hidden>
+                      <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+                    </span>
+                  </summary>
+                  <dd className="mt-4 text-text/80 leading-relaxed text-pretty">{f.a}</dd>
+                </details>
+              ))}
+            </dl>
+          </div>
+        </section>
+
+        {/* Trust badges */}
         <TrustBadges />
 
-        <section className="container-page py-12 md:py-16">
-          <div className="rounded-2xl bg-primary-600 text-white p-8 md:p-12 text-center">
-            <h2 className="font-display text-2xl md:text-3xl font-bold mb-3 text-balance">
-              Não seja mais tributado pela receita do parceiro.
-            </h2>
-            <p className="text-white/70 mb-6 max-w-xl mx-auto text-pretty">
-              Calcule sua economia em 30 segundos ou fale direto com um
-              especialista no WhatsApp — a gente refaz a conta com os seus
-              números reais.
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Button asChild variant="default" size="lg">
-                <Link href="/#simulador">
+        {/* CTA final */}
+        <section className="container-page py-14 md:py-20">
+          <div className="relative rounded-3xl bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white p-6 md:p-10 lg:p-14 overflow-hidden shadow-pop">
+            <div className="absolute -top-32 -right-24 w-80 h-80 rounded-full bg-accent-500/25 blur-3xl" aria-hidden />
+            <div className="absolute -bottom-28 left-1/3 w-72 h-72 rounded-full bg-accent-300/10 blur-3xl" aria-hidden />
+
+            <div className="relative max-w-2xl mx-auto text-center">
+              <p className="text-xs font-bold uppercase tracking-[.25em] text-accent-300 mb-4">
+                Próximo passo
+              </p>
+              <h2 className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold mb-4 text-balance leading-[1.05]">
+                Não seja mais tributado pela receita do parceiro.
+              </h2>
+              <p className="text-white/70 mb-7 max-w-xl mx-auto text-pretty">
+                Calcule sua economia em 30 segundos ou fale direto com um
+                especialista — a gente refaz a conta com os seus números reais.
+              </p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <CTAWhatsApp
+                  message="Oi, li como funciona o split em paguecomsplit.com.br e quero falar com um especialista."
+                  label="Quero falar com especialista"
+                  size="lg"
+                />
+                <Link
+                  href="/#simulador"
+                  className="btn btn-on-dark-outline btn-lg cta-glow-light cta-shimmer cta-shimmer-dark"
+                >
                   Calcular minha economia
-                  <ArrowRight className="h-4 w-4" aria-hidden />
+                  <ArrowRight className="h-4 w-4 arrow" aria-hidden />
                 </Link>
-              </Button>
-              <CTAWhatsApp
-                message="Oi, li como funciona o split em paguecomsplit.com.br e quero falar com um especialista."
-                label="Quero falar com especialista"
-                variant="primary"
-                size="lg"
-              />
+              </div>
             </div>
           </div>
         </section>
@@ -154,28 +202,6 @@ export default function ComoFuncionaPage() {
       </main>
       <Footer />
     </>
-  );
-}
-
-function Card({
-  icon,
-  title,
-  body,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  body: string;
-}) {
-  return (
-    <div className="rounded-xl border border-slate-100 bg-white p-6 shadow-soft">
-      <span className="inline-flex h-12 w-12 items-center justify-center rounded-lg bg-accent-50 text-accent-600 mb-4">
-        {icon}
-      </span>
-      <h3 className="font-display text-lg font-bold text-primary-600 mb-2">
-        {title}
-      </h3>
-      <p className="text-sm text-muted leading-relaxed text-pretty">{body}</p>
-    </div>
   );
 }
 

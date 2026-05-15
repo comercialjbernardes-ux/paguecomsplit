@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
+import { ArrowRight } from "lucide-react";
 import { CTAWhatsApp } from "@/components/CTAWhatsApp";
 import { getAllPosts, getPostBySlug, formatDate, POST_SLUGS } from "@/lib/blog";
 import type { PostSection } from "@/lib/blog";
@@ -239,48 +240,62 @@ export default function BlogPostPage({
         </article>
 
         {/* CTA footer */}
-        <div className="mt-16 rounded-2xl bg-primary-50 border border-primary-100 p-8 text-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-2">
-            Diagnóstico gratuito
-          </p>
-          <h2 className="font-display text-2xl font-extrabold text-primary-700 mb-3">
-            Quer saber o número exato para o seu CNPJ?
-          </h2>
-          <p className="text-text/70 mb-6 text-sm">
-            O diagnóstico leva 15 minutos. Nada de spam — só os números reais
-            do seu caso.
-          </p>
-          <CTAWhatsApp
-            message="Oi, li um artigo no blog do paguecomsplit.com.br e quero o diagnóstico gratuito para o meu CNPJ."
-            label="Quero meu diagnóstico gratuito"
-            size="lg"
-          />
+        <div
+          className="mt-16 relative rounded-3xl border-2 border-accent-300 p-7 md:p-9 overflow-hidden text-center"
+          style={{ background: "linear-gradient(135deg, #E6FAF4 0%, #B9F2DF 100%)" }}
+        >
+          <div className="absolute -top-20 -right-16 w-56 h-56 rounded-full bg-accent-500/20 blur-3xl" aria-hidden />
+          <div className="relative">
+            <p className="text-[11px] font-bold uppercase tracking-[.25em] text-accent-700 mb-3">
+              Diagnóstico gratuito
+            </p>
+            <h2 className="font-display text-2xl md:text-3xl font-extrabold text-primary-600 mb-3 text-balance leading-[1.1]">
+              Quer saber o número exato para o seu CNPJ?
+            </h2>
+            <p className="text-text/75 mb-6 text-pretty max-w-lg mx-auto">
+              O diagnóstico leva 15 minutos. Nada de spam — só os números
+              reais do seu caso.
+            </p>
+            <CTAWhatsApp
+              message="Oi, li um artigo no blog do paguecomsplit.com.br e quero o diagnóstico gratuito para o meu CNPJ."
+              label="Quero meu diagnóstico gratuito"
+              size="lg"
+            />
+          </div>
         </div>
 
         {/* Related articles */}
         {related.length > 0 && (
           <section className="mt-16" aria-label="Artigos relacionados">
-            <h2 className="font-display text-xl font-bold text-primary-700 mb-6">
+            <p className="text-xs font-bold uppercase tracking-[.25em] text-accent-600 mb-3">
               Leia também
+            </p>
+            <h2 className="font-display text-2xl font-bold text-primary-600 mb-6 leading-tight">
+              Mais sobre split e Simples Nacional
             </h2>
-            <ul className="space-y-4">
-              {related.map((rel) => (
-                <li key={rel.slug}>
-                  <Link
-                    href={`/blog/${rel.slug}`}
-                    className="group flex items-start gap-3 rounded-xl border border-border p-4 hover:border-primary-300 transition-colors"
-                  >
-                    <div className="flex-1">
-                      <p className="text-xs text-accent-600 font-semibold uppercase tracking-wider mb-1">
+            <ul className="grid gap-4 md:grid-cols-3" role="list">
+              {related.map((rel, i) => {
+                const bgClass = `seg-bg-${((i % 7) + 1)}`;
+                return (
+                  <li key={rel.slug}>
+                    <Link
+                      href={`/blog/${rel.slug}`}
+                      className={`seg-card ${bgClass} group block h-full`}
+                    >
+                      <div className="seg-glow" />
+                      <div className="seg-check">
+                        <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
+                      </div>
+                      <p className="text-[10px] font-bold uppercase tracking-[.18em] text-accent-700 bg-white/70 px-2.5 py-1 rounded-full inline-flex mb-3">
                         {rel.category}
                       </p>
-                      <p className="text-sm font-semibold text-primary-700 group-hover:text-primary-500 transition-colors leading-snug">
+                      <p className="font-display text-base md:text-[17px] font-bold text-primary-600 leading-snug">
                         {rel.title}
                       </p>
-                    </div>
-                  </Link>
-                </li>
-              ))}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           </section>
         )}
