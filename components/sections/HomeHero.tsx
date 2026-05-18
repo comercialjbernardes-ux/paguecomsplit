@@ -79,8 +79,8 @@ export function HomeHero({ whatsappMessage }: HomeHeroProps) {
               </div>
 
               <Image
-                src="/hero/atendente-cafe.jpg"
-                alt="Atendente do Café do Mercado segurando maquininha mostrando R$ 57,80"
+                src="/hero/atendente-cafe.png"
+                alt="Atendente segurando maquininha paguecomsplit mostrando valor na tela"
                 width={1000}
                 height={1250}
                 priority
