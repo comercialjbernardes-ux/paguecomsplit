@@ -1,9 +1,17 @@
+import Image from "next/image";
 import Link from "next/link";
 import { AlertOctagon, Check, ShieldCheck } from "lucide-react";
 import { CTAWhatsApp } from "@/components/CTAWhatsApp";
 import type { Segment } from "@/lib/segments";
 
 export function SegmentHero({ segment }: { segment: Segment }) {
+  const monthlyClient =
+    segment.example.annual_revenue / 12;
+  const monthlyMargem =
+    (segment.example.annual_revenue - segment.example.repasse_value) / 12;
+  const monthlyParceiro =
+    segment.example.repasse_value / 12;
+
   return (
     <section className="gradient-hero overflow-hidden">
       <div className="container-page relative pt-14 pb-16 md:pt-20 md:pb-20">
@@ -15,7 +23,7 @@ export function SegmentHero({ segment }: { segment: Segment }) {
               Evite bitributação.
             </p>
 
-            <h1 className="font-display text-4xl md:text-5xl lg:text-[58px] font-extrabold text-primary-600 leading-[1.05] tracking-tight text-balance">
+            <h1 className="font-display text-4xl md:text-5xl lg:text-[54px] font-extrabold text-primary-600 leading-[1.05] tracking-tight text-balance">
               {segment.headline}
             </h1>
 
@@ -71,63 +79,89 @@ export function SegmentHero({ segment }: { segment: Segment }) {
             </ul>
           </div>
 
-          {/* ILUSTRAÇÃO LATERAL — split visualization */}
+          {/* PHOTO + POPUPS + ARROWS — espelha o HomeHero, mas com a foto e os valores do segmento. */}
           <div className="lg:col-span-5 order-first lg:order-last">
-            <div className="relative mx-auto w-full max-w-md">
-              <div className="absolute -inset-6 -z-10 pointer-events-none" aria-hidden>
-                <div className="absolute right-2 top-4 w-60 h-60 rounded-full bg-accent-200/45 blur-3xl" />
-                <div className="absolute left-0 bottom-4 w-48 h-48 rounded-full bg-warm-500/15 blur-3xl" />
+            <div
+              className="hero-photo-wrap mx-auto w-full"
+              aria-label={`Operação típica do segmento ${segment.name}: cliente paga, a parte do parceiro vai direto para ele, e você tributa só a sua margem.`}
+            >
+              {/* backdrop blobs */}
+              <div className="absolute -inset-8 -z-10 pointer-events-none" aria-hidden>
+                <div className="absolute right-2 top-4 w-72 h-72 rounded-full bg-accent-200/45 blur-3xl" />
+                <div className="absolute left-0 bottom-4 w-60 h-60 rounded-full bg-warm-500/15 blur-3xl" />
               </div>
 
-              <div
-                className="relative rounded-3xl border border-slate-200/70 p-6 md:p-7 shadow-pop overflow-hidden"
-                style={{ background: "linear-gradient(160deg, #FFFFFF 0%, #F0F4F9 100%)" }}
+              <Image
+                src={segment.photo.src}
+                alt={segment.photo.alt}
+                width={1000}
+                height={1250}
+                priority
+                fetchPriority="high"
+                sizes="(min-width: 1024px) 42vw, 100vw"
+                className="hero-photo"
+              />
+
+              {/* ARROWS */}
+              <svg
+                className="hero-arrows hidden sm:block"
+                viewBox="0 0 80 100"
+                preserveAspectRatio="none"
+                aria-hidden
               >
-                <p className="text-[10px] font-bold uppercase tracking-[.25em] text-primary-600/60 mb-4">
-                  Operação típica · {segment.name}
-                </p>
+                <defs>
+                  <marker id="arrowNavySeg"   viewBox="0 0 12 12" refX="10" refY="6" markerWidth="6" markerHeight="6" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0 0 L12 6 L0 12 L3 6 Z" fill="#0A2540" />
+                  </marker>
+                  <marker id="arrowAccentSeg" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="6" markerHeight="6" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0 0 L12 6 L0 12 L3 6 Z" fill="#00A07A" />
+                  </marker>
+                  <marker id="arrowWarmSeg"   viewBox="0 0 12 12" refX="10" refY="6" markerWidth="6" markerHeight="6" orient="auto" markerUnits="strokeWidth">
+                    <path d="M0 0 L12 6 L0 12 L3 6 Z" fill="#E85A26" />
+                  </marker>
+                </defs>
+                <path className="line" d="M 18 20 C 24 38, 32 54, 40 66" stroke="#0A2540" markerEnd="url(#arrowNavySeg)" />
+                <path className="line" d="M 66 54 C 58 60, 50 64, 44 68" stroke="#00A07A" markerEnd="url(#arrowAccentSeg)" />
+                <path className="line" d="M 20 80 C 26 76, 32 74, 38 73" stroke="#E85A26" markerEnd="url(#arrowWarmSeg)" />
+              </svg>
 
-                <svg viewBox="0 0 320 280" className="w-full h-auto" aria-hidden>
-                  {/* VALOR central */}
-                  <g transform="translate(110 8)">
-                    <rect x="3" y="4" width="100" height="60" rx="14" fill="#0A2540" opacity=".18" />
-                    <rect width="100" height="60" rx="14" fill="#0A2540" />
-                    <text x="50" y="22" textAnchor="middle" fontFamily="Sora" fontSize="7" fontWeight="800" fill="#7FE6C4" letterSpacing="1.5">CLIENTE PAGA</text>
-                    <text x="50" y="46" textAnchor="middle" fontFamily="Sora" fontSize="18" fontWeight="900" fill="white">R$ {Math.round(segment.example.repasse_value / segment.example.repasse_percent * 100 / 12 / 100) * 100}</text>
-                  </g>
+              {/* POP A: cliente paga */}
+              <div className="hero-pop hero-pop-navy float-a hidden sm:block" style={{ top: "4%", left: "-20px" }}>
+                <p className="pop-eye text-accent-300">Cliente paga</p>
+                <p className="pop-val">{formatMoneyShort(monthlyClient)}</p>
+                <p className="pop-sub">Cartão · PIX · link · boleto</p>
+              </div>
 
-                  {/* Fork */}
-                  <g transform="translate(150 80)">
-                    <line x1="10" y1="0" x2="10" y2="20" stroke="#0A2540" strokeWidth="3" strokeLinecap="round" />
-                    <line x1="10" y1="20" x2="-50" y2="50" stroke="#00C896" strokeWidth="3" strokeLinecap="round" />
-                    <line x1="10" y1="20" x2="70" y2="50" stroke="#FF6B35" strokeWidth="3" strokeLinecap="round" />
-                    <circle cx="10" cy="20" r="6" fill="#0A2540" />
-                  </g>
+              {/* POP B: sua margem */}
+              <div className="hero-pop hero-pop-accent float-b hidden sm:block" style={{ top: "40%", right: "-22px" }}>
+                <p className="pop-eye">Sua margem · tributa</p>
+                <p className="pop-val">{formatMoneyShort(monthlyMargem)}</p>
+                <p className="pop-sub">DAS só sobre isso</p>
+              </div>
 
-                  {/* Sua margem */}
-                  <g transform="translate(14 152)">
-                    <rect x="3" y="4" width="130" height="100" rx="16" fill="#0A2540" opacity=".12" />
-                    <rect width="130" height="100" rx="16" fill="white" stroke="#00C896" strokeWidth="2.5" />
-                    <text x="14" y="24" fontFamily="Sora" fontSize="8" fontWeight="800" fill="#00785C" letterSpacing="1.5">SUA MARGEM</text>
-                    <rect x="14" y="30" width="40" height="3" rx="1.5" fill="#7FE6C4" />
-                    <text x="14" y="62" fontFamily="Sora" fontSize="20" fontWeight="900" fill="#0A2540">{formatShort((segment.example.annual_revenue - segment.example.repasse_value) / 12)}</text>
-                    <text x="14" y="84" fontFamily="Plus Jakarta Sans" fontSize="9" fill="#6B7280">tributa só isso</text>
-                  </g>
+              {/* POP C: do parceiro */}
+              <div className="hero-pop hero-pop-warm float-c hidden sm:block" style={{ bottom: "14%", left: "-26px" }}>
+                <p className="pop-eye">{segment.parceiro_short}</p>
+                <p className="pop-val">{formatMoneyShort(monthlyParceiro)}</p>
+                <p className="pop-sub">Fora do seu DAS</p>
+              </div>
 
-                  {/* Do parceiro */}
-                  <g transform="translate(176 152)">
-                    <rect x="3" y="4" width="130" height="100" rx="16" fill="#0A2540" opacity=".12" />
-                    <rect width="130" height="100" rx="16" fill="white" stroke="#FF6B35" strokeWidth="2.5" />
-                    <text x="14" y="24" fontFamily="Sora" fontSize="8" fontWeight="800" fill="#C24A1F" letterSpacing="1.5">DO PARCEIRO</text>
-                    <rect x="14" y="30" width="40" height="3" rx="1.5" fill="#FFB89A" />
-                    <text x="14" y="62" fontFamily="Sora" fontSize="20" fontWeight="900" fill="#0A2540">{formatShort(segment.example.repasse_value / 12)}</text>
-                    <text x="14" y="84" fontFamily="Plus Jakarta Sans" fontSize="9" fill="#6B7280">fora do seu DAS</text>
-                  </g>
+              {/* BACEN badge */}
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-2 rounded-full bg-primary-600 text-white px-4 py-2 text-[11px] font-semibold shadow-pop whitespace-nowrap z-[3]">
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#7FE6C4"
+                  strokeWidth="2.2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-3.5 w-3.5"
+                  aria-hidden
+                >
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                  <polyline points="9 12 11 14 15 10" />
                 </svg>
-
-                <p className="mt-4 text-center text-xs text-text/55">
-                  Valores médios do segmento. Use o simulador para o seu caso.
-                </p>
+                Regulado BACEN · Infra Cappta
               </div>
             </div>
           </div>
@@ -137,9 +171,18 @@ export function SegmentHero({ segment }: { segment: Segment }) {
   );
 }
 
-function formatShort(value: number): string {
+/**
+ * Formata valor para o popup ("R$ 13,5k", "R$ 40k", "R$ 800").
+ * Otimizado para os valores mensais médios dos segmentos.
+ */
+function formatMoneyShort(value: number): string {
   if (value >= 1000) {
-    return `R$ ${(value / 1000).toFixed(1).replace(".", ",")}k`;
+    const k = value / 1000;
+    const formatted =
+      Math.abs(k - Math.round(k)) < 0.05
+        ? Math.round(k).toString()
+        : k.toFixed(1).replace(".", ",");
+    return `R$ ${formatted}k`;
   }
   return `R$ ${Math.round(value)}`;
 }

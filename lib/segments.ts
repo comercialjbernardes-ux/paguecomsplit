@@ -15,6 +15,11 @@ export type SegmentTestimonial = {
   segment: string;
 };
 
+export type SegmentPhoto = {
+  src: string;
+  alt: string;
+};
+
 export type Segment = {
   slug: string;
   name: string;
@@ -28,6 +33,10 @@ export type Segment = {
   meta_title: string;
   meta_description: string;
   keywords: string[];
+  /** Foto do segmento exibida no SegmentHero (formato 4:5, 1000×1250). */
+  photo: SegmentPhoto;
+  /** Rótulo curto do bloco laranja ("Do parceiro") no hero — máx. ~28 caracteres. */
+  parceiro_short: string;
 };
 
 export const segments: Segment[] = [
@@ -58,6 +67,11 @@ export const segments: Segment[] = [
       "reduzir imposto restaurante simples nacional",
       "maquininha restaurante gorjeta",
     ],
+    photo: {
+      src: "/hero/restaurante.jpg",
+      alt: "Atendente em café segurando maquininha durante pagamento",
+    },
+    parceiro_short: "Gorjeta do garçom",
   },
   {
     slug: "veterinaria",
@@ -87,6 +101,11 @@ export const segments: Segment[] = [
       "reduzir imposto clinica veterinaria",
       "maquininha veterinaria simples nacional",
     ],
+    photo: {
+      src: "/hero/veterinaria.jpg",
+      alt: "Veterinária examinando cachorro golden com tutora no consultório",
+    },
+    parceiro_short: "Honorário do veterinário",
   },
   {
     slug: "estetica",
@@ -117,6 +136,11 @@ export const segments: Segment[] = [
       "reduzir imposto clinica estetica",
       "maquininha estetica simples nacional",
     ],
+    photo: {
+      src: "/hero/estetica.jpg",
+      alt: "Esteticista realizando procedimento facial em cliente",
+    },
+    parceiro_short: "Profissional parceira",
   },
   {
     slug: "odontologia",
@@ -146,6 +170,11 @@ export const segments: Segment[] = [
       "reduzir imposto consultorio dentista",
       "maquininha odontologia simples nacional",
     ],
+    photo: {
+      src: "/hero/odontologia.jpg",
+      alt: "Dentista e auxiliar realizando procedimento em paciente",
+    },
+    parceiro_short: "Protético / especialista",
   },
   {
     slug: "petshop",
@@ -175,6 +204,11 @@ export const segments: Segment[] = [
       "reduzir imposto petshop simples nacional",
       "maquininha petshop groomer",
     ],
+    photo: {
+      src: "/hero/petshop.jpg",
+      alt: "Groomer tosando yorkshire em mesa de banho e tosa",
+    },
+    parceiro_short: "Banho e tosa parceiro",
   },
   {
     slug: "oficina",
@@ -204,6 +238,11 @@ export const segments: Segment[] = [
       "reduzir imposto oficina simples nacional",
       "maquininha oficina mecanica",
     ],
+    photo: {
+      src: "/hero/oficina.jpg",
+      alt: "Mecânico testando bateria de veículo com aparelho de diagnóstico",
+    },
+    parceiro_short: "Peças / mecânico",
   },
   {
     slug: "construcao",
@@ -231,6 +270,11 @@ export const segments: Segment[] = [
       "split pagamento construcao",
       "reduzir imposto material construcao simples nacional",
     ],
+    photo: {
+      src: "/hero/construcao.jpg",
+      alt: "Empilhadeira em depósito de material de construção",
+    },
+    parceiro_short: "Empreiteiro parceiro",
   },
   {
     slug: "vestuario",
@@ -260,6 +304,11 @@ export const segments: Segment[] = [
       "reduzir imposto loja roupa simples nacional",
       "maquininha vestuario comissao vendedora",
     ],
+    photo: {
+      src: "/hero/vestuario.jpg",
+      alt: "Arara com peças de roupa e vitrine de loja de vestuário",
+    },
+    parceiro_short: "Comissão da vendedora",
   },
   {
     slug: "academia",
@@ -289,6 +338,11 @@ export const segments: Segment[] = [
       "reduzir imposto academia simples nacional",
       "maquininha academia personal trainer",
     ],
+    photo: {
+      src: "/hero/academia.jpg",
+      alt: "Aluna treinando com halteres em academia",
+    },
+    parceiro_short: "Cachê do personal",
   },
   {
     slug: "industria",
@@ -318,6 +372,11 @@ export const segments: Segment[] = [
       "reduzir imposto industria simples nacional",
       "maquininha industria fornecedor",
     ],
+    photo: {
+      src: "/hero/industria.jpg",
+      alt: "Operários industriais com EPI trabalhando em torno mecânico",
+    },
+    parceiro_short: "Matéria-prima / serviço",
   },
 ];
 
