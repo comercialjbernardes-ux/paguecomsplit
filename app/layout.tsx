@@ -1,3 +1,4 @@
+// build: 2026-05-20
 import type { Metadata } from "next";
 import { Sora, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
