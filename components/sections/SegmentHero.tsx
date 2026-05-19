@@ -104,7 +104,7 @@ export function SegmentHero({ segment }: { segment: Segment }) {
 
               {/* ARROWS */}
               <svg
-                className="hero-arrows hidden sm:block"
+                className="hero-arrows"
                 viewBox="0 0 80 100"
                 preserveAspectRatio="none"
                 aria-hidden
@@ -125,22 +125,22 @@ export function SegmentHero({ segment }: { segment: Segment }) {
                 <path className="line" d="M 20 80 C 26 76, 32 74, 38 73" stroke="#E85A26" markerEnd="url(#arrowWarmSeg)" />
               </svg>
 
-              {/* POP A: cliente paga */}
-              <div className="hero-pop hero-pop-navy float-a hidden sm:block" style={{ top: "4%", left: "-20px" }}>
+              {/* POP A: cliente paga — mobile: dentro da foto; sm+: sobrepõe à esquerda */}
+              <div className="hero-pop hero-pop-navy float-a top-[4%] left-2 sm:left-[-20px]">
                 <p className="pop-eye text-accent-300">Cliente paga</p>
                 <p className="pop-val">{formatMoneyShort(monthlyClient)}</p>
                 <p className="pop-sub">Cartão · PIX · link · boleto</p>
               </div>
 
-              {/* POP B: sua margem */}
-              <div className="hero-pop hero-pop-accent float-b hidden sm:block" style={{ top: "40%", right: "-22px" }}>
+              {/* POP B: sua margem — mobile: dentro da foto; sm+: sobrepõe à direita */}
+              <div className="hero-pop hero-pop-accent float-b top-[40%] right-2 sm:right-[-22px]">
                 <p className="pop-eye">Sua margem · tributa</p>
                 <p className="pop-val">{formatMoneyShort(monthlyMargem)}</p>
                 <p className="pop-sub">DAS só sobre isso</p>
               </div>
 
-              {/* POP C: do parceiro */}
-              <div className="hero-pop hero-pop-warm float-c hidden sm:block" style={{ bottom: "14%", left: "-26px" }}>
+              {/* POP C: do parceiro — mobile: dentro da foto; sm+: sobrepõe à esquerda */}
+              <div className="hero-pop hero-pop-warm float-c bottom-[14%] left-2 sm:left-[-26px]">
                 <p className="pop-eye">{segment.parceiro_short}</p>
                 <p className="pop-val">{formatMoneyShort(monthlyParceiro)}</p>
                 <p className="pop-sub">Fora do seu DAS</p>
