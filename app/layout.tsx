@@ -22,7 +22,7 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Pague com Split | Reduza o DAS no Simples Nacional",
+    default: "Evite Bitributação no Simples Nacional | Pague com Split",
     template: "%s | paguecomsplit.com.br",
   },
   description:
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     siteName: "paguecomsplit.com.br",
     url: "https://paguecomsplit.com.br",
-    title: "Pague com Split | Reduza o DAS no Simples Nacional",
+    title: "Evite Bitributação no Simples Nacional | Pague com Split",
     description:
       "Split de pagamento que tira a receita do parceiro do seu DAS. A SplitTech administra a divisão antes do imposto incidir — você tributa só a sua margem real.",
     images: [
@@ -48,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pague com Split | Reduza o DAS no Simples Nacional",
+    title: "Evite Bitributação no Simples Nacional | Pague com Split",
     description:
       "Split de pagamento que tira a receita do parceiro do seu DAS. Você tributa só a sua margem real.",
     images: ["/og-image.png"],
