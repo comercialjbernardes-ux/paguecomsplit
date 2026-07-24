@@ -4,12 +4,12 @@ import {
   TrendingUp,
   Clock,
   Link2,
-  Copy,
   ChevronRight,
   BadgeCheck,
 } from "lucide-react";
 import { getCurrentUser } from "@/lib/getCurrentUser";
 import { redirect } from "next/navigation";
+import { CopyLinkButton } from "@/components/CopyLinkButton";
 
 export const metadata = {
   title: "Dashboard",
@@ -278,35 +278,5 @@ function ProfileRow({ label, value }: { label: string; value: string }) {
         {value}
       </dd>
     </div>
-  );
-}
-
-function CopyLinkButton({ link }: { link: string }) {
-  return (
-    <button
-      type="button"
-      data-copy={link}
-      onClick={() => {
-        if (typeof navigator !== "undefined") {
-          navigator.clipboard
-            .writeText(link)
-            .then(() => {
-              const btn = document.querySelector("[data-copy]") as HTMLElement;
-              if (btn) {
-                btn.textContent = "Copiado!";
-                setTimeout(() => {
-                  btn.innerHTML =
-                    '<svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg> Copiar link';
-                }, 2000);
-              }
-            })
-            .catch(() => {});
-        }
-      }}
-      className="inline-flex items-center gap-1.5 rounded-lg bg-accent-500 hover:bg-accent-600 text-white text-xs font-semibold px-3 py-2 w-full justify-center transition-colors"
-    >
-      <Copy className="h-3.5 w-3.5" aria-hidden />
-      Copiar link
-    </button>
   );
 }
