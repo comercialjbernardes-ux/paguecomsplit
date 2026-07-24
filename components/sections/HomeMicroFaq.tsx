@@ -36,54 +36,40 @@ const FAQ_JSON_LD = {
 
 export function HomeMicroFaq() {
   return (
-    <section
-      aria-label="Perguntas frequentes"
-      className="bg-white border-y border-slate-100"
-    >
+    <section aria-label="Perguntas frequentes" className="bg-white border-y border-slate-100">
       <div className="container-page py-12 md:py-16">
-        <div className="max-w-2xl mb-8">
-          <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
-            Perguntas frequentes
-          </p>
-          <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 text-balance">
+        <div className="max-w-2xl mx-auto text-center mb-10">
+          <p className="text-xs font-bold uppercase tracking-[.25em] text-accent-600 mb-3">Perguntas frequentes</p>
+          <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 text-balance leading-[1.1]">
             Antes de chamar no WhatsApp, talvez você queira saber:
           </h2>
         </div>
 
-        <dl className="space-y-4 max-w-3xl">
+        <dl className="space-y-3 max-w-3xl mx-auto">
           {FAQS.map((f) => (
             <details
               key={f.q}
-              className="group rounded-xl border border-slate-100 bg-bg p-5 md:p-6 open:bg-white open:border-slate-200"
+              className="faq-item group rounded-2xl border border-slate-200/70 bg-white p-6 md:p-7 hover:border-accent-300 open:border-accent-300"
             >
-              <summary className="font-display text-lg font-bold text-primary-600 cursor-pointer list-none flex items-center justify-between gap-3">
+              <summary className="font-display text-lg font-bold text-primary-600 cursor-pointer flex items-center justify-between gap-3">
                 <span>{f.q}</span>
-                <span
-                  className="flex-none text-accent-600 group-open:rotate-90 transition-transform"
-                  aria-hidden
-                >
-                  <ArrowRight className="h-5 w-5" />
+                <span className="chev flex-none inline-flex h-8 w-8 items-center justify-center rounded-full bg-accent-50 text-accent-700 group-hover:bg-accent-100" aria-hidden>
+                  <ArrowRight className="h-4 w-4" strokeWidth={2.5} />
                 </span>
               </summary>
-              <dd className="mt-3 text-text/80 leading-relaxed text-pretty">
-                {f.a}
-              </dd>
+              <dd className="mt-4 text-text/80 leading-relaxed text-pretty">{f.a}</dd>
             </details>
           ))}
         </dl>
 
-        <div className="mt-8">
-          <Link
-            href="/como-funciona"
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary-600 hover:text-accent-700"
-          >
+        <div className="mt-10 text-center">
+          <Link href="/como-funciona" className="btn btn-link text-sm" style={{ fontWeight: 600 }}>
             Ver explicação completa em /como-funciona
-            <ArrowRight className="h-4 w-4" aria-hidden />
+            <ArrowRight className="h-4 w-4 arrow" aria-hidden />
           </Link>
         </div>
       </div>
 
-      {/* JSON-LD FAQPage */}
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger

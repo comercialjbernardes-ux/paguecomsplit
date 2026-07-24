@@ -5,7 +5,7 @@ export function NarrativaPonte() {
       className="bg-bg border-b border-slate-100"
     >
       <div className="container-page py-10 md:py-12">
-        <p className="max-w-3xl font-display text-xl md:text-2xl text-text leading-snug text-pretty">
+        <p className="max-w-3xl mx-auto text-center font-display text-xl md:text-2xl text-text leading-snug text-pretty">
           Você não percebe, mas todo mês paga imposto sobre a{" "}
           <strong className="text-warm-500">gorjeta do seu garçom</strong>,
           sobre a <strong className="text-warm-500">peça que o seu mecânico instala</strong>,

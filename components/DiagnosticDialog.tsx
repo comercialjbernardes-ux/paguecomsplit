@@ -226,7 +226,7 @@ export function DiagnosticDialog({ open, onOpenChange, context }: Props) {
               type="submit"
               variant="default"
               size="lg"
-              className="w-full"
+              className="w-full cta-glow-primary cta-shimmer"
               disabled={serverState.status === "loading"}
             >
               {serverState.status === "loading" ? (

@@ -23,29 +23,34 @@ export default function HomePage() {
     <>
       <NavBar />
       <main>
-        {/* 1. Hero (com imagem) */}
+        {/* 1. Hero */}
         <HomeHero whatsappMessage={HOME_WHATSAPP} />
 
-        {/* 1.5 Narrativa-ponte (tom conversa, prepara terreno) */}
+        {/* 1.5 Narrativa-ponte */}
         <NarrativaPonte />
 
-        {/* 2. O que e split */}
+        {/* 2. O que é split */}
         <SplitExplainer />
 
         {/* 3. Como funciona — diagrama */}
         <HomeHowItWorks />
 
-        {/* 4. Bitributacao silenciosa (numeros) */}
-        <section className="bg-primary-600 text-white">
-          <div className="container-page py-12 md:py-16">
-            <p className="text-xs font-bold uppercase tracking-widest text-accent-300 mb-3 text-center">
+        {/* 4. Bitributação silenciosa (bloco escuro com 3 stats) */}
+        <section className="relative bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 text-white overflow-hidden">
+          <div className="absolute -top-40 -right-40 w-[480px] h-[480px] rounded-full bg-accent-500/15 blur-3xl" aria-hidden />
+          <div className="absolute -bottom-40 -left-40 w-[420px] h-[420px] rounded-full bg-warm-500/10 blur-3xl" aria-hidden />
+
+          <div className="relative container-page py-16 md:py-24">
+            <p className="text-xs font-bold uppercase tracking-[.25em] text-accent-300 mb-4 text-center">
               Bitributação silenciosa
             </p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-center text-balance max-w-3xl mx-auto">
-              Você paga DAS sobre dinheiro que repassa. O seu parceiro paga DAS sobre o mesmo dinheiro. Isso é bitributação.
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-center text-balance max-w-4xl mx-auto leading-[1.1]">
+              Você paga DAS sobre dinheiro que repassa. O seu parceiro paga DAS
+              sobre o mesmo dinheiro.{" "}
+              <span className="text-warm-500">Isso é bitributação.</span>
             </h2>
 
-            <div className="mt-10 grid gap-8 md:grid-cols-3">
+            <div className="mt-14 grid gap-10 md:gap-6 md:grid-cols-3">
               <StatBlock
                 value={50}
                 suffix="%+"
@@ -69,26 +74,26 @@ export default function HomePage() {
         </section>
 
         {/* 5. Simulador */}
-        <section id="simulador" className="container-page py-12 md:py-16">
-          <div className="max-w-2xl mb-8">
-            <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
+        <section id="simulador" className="container-page py-14 md:py-20">
+          <div className="max-w-2xl mx-auto text-center mb-12">
+            <p className="text-xs font-bold uppercase tracking-[.2em] text-accent-600 mb-3">
               Simulador
             </p>
-            <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-600 mb-3 text-balance">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-600 mb-4 text-balance leading-[1.05]">
               Quanto você poderia economizar por mês?
             </h2>
-            <p className="text-muted text-pretty">
-              Escolha seu segmento e veja o resultado em tempo real. O
-              simulador respeita as faixas reais do Simples Nacional.
+            <p className="text-lg text-muted text-pretty">
+              Escolha seu segmento e veja o resultado em tempo real. O simulador
+              respeita as faixas reais do Simples Nacional.
             </p>
           </div>
           <EconomySimulator whatsappMessage={HOME_WHATSAPP} />
         </section>
 
-        {/* 6. Escolha seu segmento */}
+        {/* 6. Segmentos */}
         <section id="segmentos" className="bg-white border-y border-slate-100">
           <div className="container-page py-12 md:py-16">
-            <div className="max-w-2xl mb-8">
+            <div className="max-w-2xl mx-auto text-center mb-10">
               <p className="text-xs font-bold uppercase tracking-widest text-accent-600 mb-3">
                 Aprofunde no seu caso
               </p>
@@ -106,18 +111,18 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 7. Trust */}
+        {/* 7. Trust badges */}
         <TrustBadges />
 
-        {/* 7.5 Micro-FAQ (alimenta FAQPage schema) */}
+        {/* 7.5 Micro-FAQ */}
         <HomeMicroFaq />
 
-        {/* 8. Representantes teaser */}
+        {/* 8. Representantes */}
         <RepresentantesTeaser />
       </main>
       <Footer />
 
-      {/* ItemList JSON-LD — sitelinks / navegação de segmentos */}
+      {/* ItemList JSON-LD */}
       <script
         type="application/ld+json"
         // eslint-disable-next-line react/no-danger
@@ -156,15 +161,15 @@ function StatBlock({
   desc: string;
 }) {
   return (
-    <div className="text-center md:text-left">
-      <p className="font-display text-5xl md:text-6xl font-extrabold text-white leading-none tracking-tight">
+    <div className="relative text-center md:text-left">
+      <div className="absolute -left-4 top-0 h-full w-0.5 bg-gradient-to-b from-accent-300/60 via-accent-400/30 to-transparent hidden md:block" aria-hidden />
+      <p className="font-display text-6xl md:text-7xl font-extrabold text-white leading-[.9] tracking-tight tabular-nums">
         {prefix}
         <AnimatedNumber value={value} />
-        {suffix}
+        {suffix && <span className="text-accent-300">{suffix}</span>}
       </p>
-      <p className="mt-3 font-semibold text-accent-300">{label}</p>
-      <p className="text-sm text-white/60 mt-1 text-pretty">{desc}</p>
+      <p className="mt-4 font-display font-bold text-lg text-accent-300">{label}</p>
+      <p className="text-sm text-white/55 mt-2 text-pretty leading-relaxed">{desc}</p>
     </div>
   );
 }
-

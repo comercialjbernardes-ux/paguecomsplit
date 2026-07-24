@@ -1,3 +1,4 @@
+// build: 2026-05-20
 import type { Metadata } from "next";
 import { Sora, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
@@ -21,7 +22,7 @@ const jakarta = Plus_Jakarta_Sans({
 
 export const metadata: Metadata = {
   title: {
-    default: "Pague com Split | Reduza o DAS no Simples Nacional",
+    default: "Evite Bitributação no Simples Nacional | Pague com Split",
     template: "%s | paguecomsplit.com.br",
   },
   description:
@@ -32,7 +33,7 @@ export const metadata: Metadata = {
     locale: "pt_BR",
     siteName: "paguecomsplit.com.br",
     url: "https://paguecomsplit.com.br",
-    title: "Pague com Split | Reduza o DAS no Simples Nacional",
+    title: "Evite Bitributação no Simples Nacional | Pague com Split",
     description:
       "Split de pagamento que tira a receita do parceiro do seu DAS. A SplitTech administra a divisão antes do imposto incidir — você tributa só a sua margem real.",
     images: [
@@ -47,7 +48,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Pague com Split | Reduza o DAS no Simples Nacional",
+    title: "Evite Bitributação no Simples Nacional | Pague com Split",
     description:
       "Split de pagamento que tira a receita do parceiro do seu DAS. Você tributa só a sua margem real.",
     images: ["/og-image.png"],
@@ -55,11 +56,23 @@ export const metadata: Metadata = {
   robots: { index: true, follow: true },
 };
 
+const AHREFS_KEY =
+  process.env.NEXT_PUBLIC_AHREFS_KEY || "814MJ82gad3xu39Np4lWJQ";
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="pt-BR" className={`${sora.variable} ${jakarta.variable}`}>
+      {/* Ahrefs Web Analytics — tag nativa no <head> para detecção correta pelo bot */}
+      <head>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script
+          src="https://analytics.ahrefs.com/analytics.js"
+          data-key={AHREFS_KEY}
+          async
+        />
+      </head>
       <body className="min-h-screen bg-bg text-text antialiased">
         <OrganizationJsonLd />
         <RepTracker />

@@ -126,6 +126,9 @@ export const SEGMENT_ANEXO: Record<string, AnexoKey> = {
   petshop: "I",
   oficina: "III",
   construcao: "I",
+  vestuario: "I",
+  academia: "III",
+  industria: "I",
 };
 
 /**

@@ -15,6 +15,11 @@ export type SegmentTestimonial = {
   segment: string;
 };
 
+export type SegmentPhoto = {
+  src: string;
+  alt: string;
+};
+
 export type Segment = {
   slug: string;
   name: string;
@@ -28,6 +33,10 @@ export type Segment = {
   meta_title: string;
   meta_description: string;
   keywords: string[];
+  /** Foto do segmento exibida no SegmentHero (formato 4:5, 1000×1250). */
+  photo: SegmentPhoto;
+  /** Rótulo curto do bloco laranja ("Do parceiro") no hero — máx. ~28 caracteres. */
+  parceiro_short: string;
 };
 
 export const segments: Segment[] = [
@@ -58,6 +67,11 @@ export const segments: Segment[] = [
       "reduzir imposto restaurante simples nacional",
       "maquininha restaurante gorjeta",
     ],
+    photo: {
+      src: "/hero/restaurante.jpg",
+      alt: "Atendente em café segurando maquininha durante pagamento",
+    },
+    parceiro_short: "Gorjeta do garçom",
   },
   {
     slug: "veterinaria",
@@ -87,6 +101,11 @@ export const segments: Segment[] = [
       "reduzir imposto clinica veterinaria",
       "maquininha veterinaria simples nacional",
     ],
+    photo: {
+      src: "/hero/veterinaria.jpg",
+      alt: "Veterinária examinando cachorro golden com tutora no consultório",
+    },
+    parceiro_short: "Honorário do veterinário",
   },
   {
     slug: "estetica",
@@ -117,6 +136,11 @@ export const segments: Segment[] = [
       "reduzir imposto clinica estetica",
       "maquininha estetica simples nacional",
     ],
+    photo: {
+      src: "/hero/estetica.jpg",
+      alt: "Esteticista realizando procedimento facial em cliente",
+    },
+    parceiro_short: "Profissional parceira",
   },
   {
     slug: "odontologia",
@@ -146,6 +170,11 @@ export const segments: Segment[] = [
       "reduzir imposto consultorio dentista",
       "maquininha odontologia simples nacional",
     ],
+    photo: {
+      src: "/hero/odontologia.jpg",
+      alt: "Dentista e auxiliar realizando procedimento em paciente",
+    },
+    parceiro_short: "Protético / especialista",
   },
   {
     slug: "petshop",
@@ -175,6 +204,11 @@ export const segments: Segment[] = [
       "reduzir imposto petshop simples nacional",
       "maquininha petshop groomer",
     ],
+    photo: {
+      src: "/hero/petshop.jpg",
+      alt: "Groomer tosando yorkshire em mesa de banho e tosa",
+    },
+    parceiro_short: "Banho e tosa parceiro",
   },
   {
     slug: "oficina",
@@ -204,6 +238,11 @@ export const segments: Segment[] = [
       "reduzir imposto oficina simples nacional",
       "maquininha oficina mecanica",
     ],
+    photo: {
+      src: "/hero/oficina.jpg",
+      alt: "Mecânico testando bateria de veículo com aparelho de diagnóstico",
+    },
+    parceiro_short: "Peças / mecânico",
   },
   {
     slug: "construcao",
@@ -231,6 +270,113 @@ export const segments: Segment[] = [
       "split pagamento construcao",
       "reduzir imposto material construcao simples nacional",
     ],
+    photo: {
+      src: "/hero/construcao.jpg",
+      alt: "Empilhadeira em depósito de material de construção",
+    },
+    parceiro_short: "Empreiteiro parceiro",
+  },
+  {
+    slug: "vestuario",
+    name: "Vestuário",
+    headline: "Vestuário: a comissão da vendedora parceira fora do seu DAS.",
+    pain:
+      "A comissão das vendedoras e representantes comerciais entra como sua receita tributável.",
+    third_party: "Vendedoras comissionadas e representantes comerciais",
+    hook_question:
+      "Quanto da comissão das suas vendedoras entrou no seu DAS este ano?",
+    example: {
+      annual_revenue: 480000,
+      repasse_percent: 25,
+      repasse_value: 120000,
+      tax_rate: 0.073,
+      annual_savings: 8760,
+      monthly_savings: 730,
+    },
+    whatsapp_message:
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar a comissão das vendedoras do meu DAS.",
+    meta_title:
+      "Split de Pagamento para Vestuário | Comissão fora do DAS",
+    meta_description:
+      "A comissão das vendedoras parceiras não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
+    keywords: [
+      "split pagamento vestuario",
+      "reduzir imposto loja roupa simples nacional",
+      "maquininha vestuario comissao vendedora",
+    ],
+    photo: {
+      src: "/hero/vestuario.jpg",
+      alt: "Arara com peças de roupa e vitrine de loja de vestuário",
+    },
+    parceiro_short: "Comissão da vendedora",
+  },
+  {
+    slug: "academia",
+    name: "Academias",
+    headline: "Academia: o cachê do personal trainer parceiro fora do seu DAS.",
+    pain:
+      "O cachê dos personal trainers e instrutores parceiros infla seu faturamento tributável.",
+    third_party: "Personal trainers e instrutores parceiros",
+    hook_question:
+      "Quanto do cachê dos seus personal trainers entrou no seu DAS?",
+    example: {
+      annual_revenue: 300000,
+      repasse_percent: 50,
+      repasse_value: 150000,
+      tax_rate: 0.06,
+      annual_savings: 9000,
+      monthly_savings: 750,
+    },
+    whatsapp_message:
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar o cachê dos personal trainers do meu DAS.",
+    meta_title:
+      "Split de Pagamento para Academias | Personal trainer fora do DAS",
+    meta_description:
+      "O cachê do personal trainer parceiro não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
+    keywords: [
+      "split pagamento academia",
+      "reduzir imposto academia simples nacional",
+      "maquininha academia personal trainer",
+    ],
+    photo: {
+      src: "/hero/academia.jpg",
+      alt: "Aluna treinando com halteres em academia",
+    },
+    parceiro_short: "Cachê do personal",
+  },
+  {
+    slug: "industria",
+    name: "Indústria",
+    headline: "Indústria: a matéria-prima do fornecedor fora da sua receita tributável.",
+    pain:
+      "A matéria-prima e os serviços terceirizados entram na sua receita e inflam o seu DAS.",
+    third_party: "Fornecedores de matéria-prima e serviços terceirizados",
+    hook_question:
+      "Quanto da matéria-prima repassada entrou no seu DAS este ano?",
+    example: {
+      annual_revenue: 600000,
+      repasse_percent: 45,
+      repasse_value: 270000,
+      tax_rate: 0.073,
+      annual_savings: 19710,
+      monthly_savings: 1643,
+    },
+    whatsapp_message:
+      "Oi, vi o paguecomsplit.com.br e quero entender como tirar a matéria-prima terceirizada do meu DAS.",
+    meta_title:
+      "Split de Pagamento para Indústria | Matéria-prima fora do DAS",
+    meta_description:
+      "A matéria-prima do fornecedor não é sua receita. A SplitTech administra a divisão antes do DAS incidir — você tributa só a sua margem real.",
+    keywords: [
+      "split pagamento industria",
+      "reduzir imposto industria simples nacional",
+      "maquininha industria fornecedor",
+    ],
+    photo: {
+      src: "/hero/industria.jpg",
+      alt: "Operários industriais com EPI trabalhando em torno mecânico",
+    },
+    parceiro_short: "Matéria-prima / serviço",
   },
 ];
 
