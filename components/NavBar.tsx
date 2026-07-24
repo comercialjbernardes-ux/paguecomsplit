@@ -43,7 +43,7 @@ export function NavBar() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link href="/representantes" className="hidden sm:inline-flex btn btn-outline btn-sm">
+          <Link href="/login" className="hidden sm:inline-flex btn btn-outline btn-sm">
             Entrar
           </Link>
           <a
