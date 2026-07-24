@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { LogIn } from "lucide-react";
 import { CTAWhatsApp } from "./CTAWhatsApp";
 
 export function NavBar() {
@@ -24,12 +25,23 @@ export function NavBar() {
           </Link>
         </nav>
 
-        <CTAWhatsApp
-          message="Oi, vim do paguecomsplit.com.br e quero entender como deixar de pagar DAS sobre a receita do meu parceiro."
-          label="Quero economizar"
-          size="sm"
-          variant="default"
-        />
+        <div className="flex items-center gap-3">
+          <Link
+            href="/login"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-text/60 hover:text-primary-600 transition-colors"
+          >
+            <LogIn className="h-4 w-4" aria-hidden />
+            Entrar
+          </Link>
+          <CTAWhatsApp
+            message="Oi, vim do paguecomsplit.com.br e quero entender como deixar de pagar DAS sobre a receita do meu parceiro."
+            label="Quero economizar"
+            size="sm"
+            variant="default"
+          />
+        </div>
       </div>
     </header>
   );
